@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 # ── Paths ─────────────────────────────────────────────────────────────────────
 _NEXCHECKER_DIR = Path(__file__).resolve().parent.parent.parent
 STATE_FILE      = _NEXCHECKER_DIR / "myntra_state.json"
-BOT_PROFILE_DIR = _NEXCHECKER_DIR / "myntra_bot_profile"   # dedicated bot profile
+BOT_PROFILE_DIR = _NEXCHECKER_DIR / "myntra_chrome_profile"   # share working profile
 
 HEAL_WAIT = 3.0   # seconds -- same as myntra_check.py
 
@@ -101,9 +101,6 @@ async def _open_context(playwright):
         locale="en-IN",
         timezone_id="Asia/Kolkata",
         args=launch_args,
-    )
-    await context.add_init_script(
-        "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"
     )
     page = context.pages[0] if context.pages else await context.new_page()
     return context, page
