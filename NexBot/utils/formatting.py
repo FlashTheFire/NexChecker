@@ -116,7 +116,7 @@ def build_result_card(
     if otp_code:
         otp_line = f"\n\n🔐 <b>{sc('Otp Code')} »</b>  <code>{otp_code}</code>"
     else:
-        otp_line = f"\n\n⏳  <b>{sc('Waiting For Sms…')}</b>  <code>({sc('Auto-cancel in 10m')})</code>"
+        otp_line = f"\n\n⏳  <b>{sc('Waiting For Sms…')}</b>" #<code>({sc('Auto-cancel in 10m')})</code>
 
     return (
         f"<blockquote><b>📦 {sc('Myntra')} [</b> 💎 {cost_str} <b>][ 🇮🇳 ]</b></blockquote>\n\n"
