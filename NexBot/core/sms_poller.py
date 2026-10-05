@@ -164,6 +164,7 @@ async def _run_poller(
     # Re-polling same SMS every 5s → same id → skipped.
     seen_ids:       set[str]  = set()
     seen_codes:     list[str] = []   # for "All Codes" history display only
+    new_sms_count:  int       = 0    # SMSes received in THIS session (not pre-seeded)
     cancel_removed: bool      = False
     elapsed:        int       = 0
 
@@ -319,6 +320,7 @@ async def _run_poller(
 
                 # ── New unique SMS ────────────────────────────────────────────
                 seen_ids.add(sms_id)
+                new_sms_count += 1
                 if code not in seen_codes:
                     seen_codes.append(code)
 
@@ -373,7 +375,7 @@ async def _run_poller(
         except Exception as exc:
             logger.warning("[SmsPoller] poll error order=%s: %s", order_id, exc)
 
-    logger.info("[SmsPoller] done order=%s sms_count=%d", order_id, len(seen_ids))
+    logger.info("[SmsPoller] done order=%s sms_count=%d", order_id, new_sms_count)
     _sms_pollers.pop(user_id, None)
 
 
