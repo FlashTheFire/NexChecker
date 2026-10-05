@@ -202,8 +202,8 @@ def build_auto_cancel_card(
     return (
         f"<blockquote><b>📦 {sc('Myntra')} [{cost_tag}</b> 🇮🇳 <b>]</b></blockquote>\n\n"
         f"📱 <b>{sc('Number')} »</b> <code>{cc}</code> <code>{nat}</code>\n\n"
-        f"⏱️  <b>{sc('Auto-Cancelled')}</b> — {sc('No Sms Received in 10 Min')}\n"
-        f"❌  <b>{sc('Order Is Cancelled')}</b>  <code>[{sc('Refunded')}]</code>"
+        #f"⏱️  <b>{sc('Auto-Cancelled')}</b> — {sc('No Sms Received in 10 Min')}\n"
+        f"⏱️  <b>{sc('Order Is Cancelled')}</b>  <code>[{sc('Refunded')}]</code>"
     )
 
 
