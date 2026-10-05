@@ -115,6 +115,8 @@ def build_result_card(
     otp_line = ""
     if otp_code:
         otp_line = f"\n\n🔐 <b>{sc('Otp Code')} »</b>  <code>{otp_code}</code>"
+    else:
+        otp_line = f"\n\n⏳  <b>{sc('Waiting For Sms…')}</b>  <code>({sc('Auto-cancel in 10m')})</code>"
 
     return (
         f"<blockquote><b>📦 {sc('Myntra')} [</b> 💎 {cost_str} <b>][ 🇮🇳 ]</b></blockquote>\n\n"
@@ -184,6 +186,23 @@ def build_refunded_card(
     return (
         f"<blockquote><b>📦 {sc('Myntra')} [{cost_tag}</b> 🇮🇳 <b>]</b></blockquote>\n\n"
         f"📱 <b>{sc('Number')} »</b> <code>{cc}</code> <code>{nat}</code>\n\n"
+        f"❌  <b>{sc('Order Is Cancelled')}</b>  <code>[{sc('Refunded')}]</code>"
+    )
+
+
+def build_auto_cancel_card(
+    number:   str | int,
+    order_id: str,
+    attempt:  int,
+    cost:     int | float = 0,
+) -> str:
+    """Auto-cancelled card — no SMS received after 10m timeout."""
+    cc, nat  = _split_phone(number)
+    cost_tag = f" 💎 {format_balance(cost)}" if cost else ""
+    return (
+        f"<blockquote><b>📦 {sc('Myntra')} [{cost_tag}</b> 🇮🇳 <b>]</b></blockquote>\n\n"
+        f"📱 <b>{sc('Number')} »</b> <code>{cc}</code> <code>{nat}</code>\n\n"
+        f"⏱️  <b>{sc('Auto-Cancelled')}</b> — {sc('No Sms Received in 10 Min')}\n"
         f"❌  <b>{sc('Order Is Cancelled')}</b>  <code>[{sc('Refunded')}]</code>"
     )
 
