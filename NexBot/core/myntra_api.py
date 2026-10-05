@@ -26,7 +26,8 @@ _NEXCHECKER_DIR = Path(__file__).resolve().parent.parent.parent
 STATE_FILE      = _NEXCHECKER_DIR / "myntra_state.json"
 BOT_PROFILE_DIR = _NEXCHECKER_DIR / "myntra_chrome_profile"   # share working profile
 
-HEAL_WAIT = 3.0   # seconds -- same as myntra_check.py
+HEAL_WAIT      = 3.0   # seconds -- same as myntra_check.py
+HEAL_HOME_WAIT = 5.0   # seconds -- extra wait after homepage reload (Akamai JS solve time)
 
 
 # ── Helpers -- identical to myntra_check.py ───────────────────────────────────
@@ -107,7 +108,7 @@ async def _open_context(playwright):
 
 
 async def _ensure_forgot_page(page) -> None:
-    """Exact copy of myntra_check.py ensure_forgot_page()."""
+    """Navigate to /forgot and wait for the page to settle."""
     try:
         await page.goto(
             "https://www.myntra.com/forgot",
@@ -117,6 +118,30 @@ async def _ensure_forgot_page(page) -> None:
         await page.wait_for_timeout(2000)
     except Exception as e:
         logger.warning("[Myntra] goto warning: %s", e)
+
+
+async def _heal_challenge(page) -> None:
+    """Full Akamai challenge recovery.
+
+    Akamai's crypto provider requires its JS bundle to run on a real page load.
+    Reloading /forgot alone stays on the same 428 edge response.
+    The correct heal path:
+      1. Navigate to homepage  →  Akamai JS executes + fresh sensor/cookie written
+      2. Short wait            →  let the JS challenge complete in the headless tab
+      3. Navigate to /forgot   →  now carries valid Akamai cookies → API responds normally
+    """
+    try:
+        logger.info("[Myntra] Heal: loading homepage to refresh Akamai cookies…")
+        await page.goto(
+            "https://www.myntra.com/",
+            wait_until="domcontentloaded",
+            timeout=60_000,
+        )
+        await page.wait_for_timeout(int(HEAL_HOME_WAIT * 1000))   # let Akamai JS run
+    except Exception as e:
+        logger.warning("[Myntra] Heal homepage goto failed: %s", e)
+    # Now land on /forgot with fresh cookies
+    await _ensure_forgot_page(page)
 
 
 async def _api_call(page, mobile: str) -> Dict[str, Any]:
@@ -186,8 +211,13 @@ async def _api_call(page, mobile: str) -> Dict[str, Any]:
     }
 
 
-async def _check_with_heal(page, mobile: str, max_heal: int = 2) -> Dict[str, Any]:
-    """Exact copy of myntra_check.py check_with_heal()."""
+async def _check_with_heal(page, mobile: str, max_heal: int = 3) -> Dict[str, Any]:
+    """API call with Akamai challenge auto-recovery.
+
+    Heal strategy per attempt:
+      attempt 1 → normal /forgot reload (fast path, handles transient 428s)
+      attempt 2+ → full homepage reload to re-seed Akamai cookies (proper fix)
+    """
     last = None
     for attempt in range(1, max_heal + 1):
         r    = await _api_call(page, mobile)
@@ -195,9 +225,15 @@ async def _check_with_heal(page, mobile: str, max_heal: int = 2) -> Dict[str, An
         if r.get("status") in ("REGISTERED", "NOT_REGISTERED"):
             return r
         if r.get("status") == "CHALLENGE":
-            logger.info("[Myntra] CHALLENGE heal %d/%d -- reload /forgot", attempt, max_heal)
-            await _ensure_forgot_page(page)
-            await page.wait_for_timeout(int(HEAL_WAIT * 1000))
+            if attempt == 1:
+                # Fast-path: simple /forgot reload (works for transient edge hiccups)
+                logger.info("[Myntra] CHALLENGE heal %d/%d -- reload /forgot", attempt, max_heal)
+                await _ensure_forgot_page(page)
+                await page.wait_for_timeout(int(HEAL_WAIT * 1000))
+            else:
+                # Full heal: homepage → fresh Akamai cookies → /forgot
+                logger.info("[Myntra] CHALLENGE heal %d/%d -- full homepage reload", attempt, max_heal)
+                await _heal_challenge(page)
             continue
         if r.get("status") == "ERROR":
             await _ensure_forgot_page(page)
