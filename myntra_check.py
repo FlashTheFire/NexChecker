@@ -18,6 +18,9 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 BASE = Path(__file__).resolve().parent
 STATE_FILE = BASE / "myntra_state.json"
 PROFILE_DIR = BASE / "myntra_chrome_profile"
@@ -37,6 +40,15 @@ def decide(http_status: int, data: Any) -> str:
         return "UNKNOWN"
     if data.get("sec-cp-challenge") or data.get("provider") == "crypto" or http_status == 428:
         return "CHALLENGE"
+
+    raw_text = data.get("raw_text", "")
+    if list(data.keys()) == ["raw_text"]:
+        lower = raw_text.lower()
+        if any(x in lower for x in ("<html", "challenge", "captcha", "cloudflare", "cf-ray",
+                                     "just a moment", "checking your browser", "enable javascript", "site maintenance")):
+            return "CHALLENGE"
+        return "UNKNOWN"
+
     code = data.get("code")
     msg = (data.get("message") or "").lower()
     if code == 2002 or "does not exist" in msg:

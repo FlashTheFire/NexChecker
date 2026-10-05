@@ -52,7 +52,8 @@ def decide(http_status: int, data: Any) -> str:
         # HTML challenge indicators
         lower = raw_text.lower()
         if any(x in lower for x in ("<html", "challenge", "captcha", "cloudflare", "cf-ray",
-                                     "just a moment", "checking your browser", "enable javascript")):
+                                     "just a moment", "checking your browser", "enable javascript",
+                                     "site maintenance", "oops! something went wrong")):
             return "CHALLENGE"
         # Unknown HTML we can't interpret — don't claim REGISTERED
         return "UNKNOWN"
@@ -74,25 +75,35 @@ def decide(http_status: int, data: Any) -> str:
 
 
 async def _open_context(playwright):
-    """Launch persistent Chrome/Chromium context.
-    - Windows: real Google Chrome (channel='chrome'), headless=False
-    - Linux:   Playwright Chromium (channel=''), headless=True (no display)
-    """
+    """Launch persistent Chrome context (real Google Chrome on both Windows & Linux)."""
     import sys
+    from utils.config import MYNTRA_PROXY
     is_linux = sys.platform.startswith("linux")
     BOT_PROFILE_DIR.mkdir(parents=True, exist_ok=True)
+
+    proxy_cfg = {"server": MYNTRA_PROXY} if MYNTRA_PROXY else None
+
+    launch_args = [
+        "--disable-blink-features=AutomationControlled",
+        "--disable-http2",
+    ]
+    if is_linux:
+        launch_args.extend(["--no-sandbox", "--disable-dev-shm-usage"])
+    else:
+        launch_args.append("--window-position=-10000,-10000")  # park off-screen on Windows
+
     context = await playwright.chromium.launch_persistent_context(
         user_data_dir=str(BOT_PROFILE_DIR),
-        channel="" if is_linux else "chrome",   # Linux: bundled chromium; Windows: real Chrome
-        headless=is_linux,                        # Linux: headless; Windows: headed (avoids CF block)
+        channel="chrome",   # real Google Chrome on BOTH Windows & Linux
+        headless=is_linux,
+        proxy=proxy_cfg,
         viewport={"width": 1366, "height": 768},
         locale="en-IN",
         timezone_id="Asia/Kolkata",
-        args=[
-            "--disable-blink-features=AutomationControlled",
-            "--disable-http2",
-            "--window-position=-10000,-10000",  # park off-screen -- won't bother you
-        ],
+        args=launch_args,
+    )
+    await context.add_init_script(
+        "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"
     )
     page = context.pages[0] if context.pages else await context.new_page()
     return context, page
