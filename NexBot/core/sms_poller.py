@@ -24,6 +24,7 @@ from telebot.async_telebot import AsyncTeleBot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, CopyTextButton
 
 from core.nexnum_api import nexnum_client
+from utils.config import AUTO_CANCEL_TIMEOUT
 from utils.formatting import sc, build_result_card, extract_10
 
 logger = logging.getLogger(__name__)
@@ -179,6 +180,14 @@ async def _run_poller(
                 seen_codes.append(last_otp)
             if seen_ids:
                 logger.info("[SmsPoller] pre-seeded %d seen ids for order=%s", len(seen_ids), order_id)
+            purchased_at_str = _prev.get("purchased_at")
+            if purchased_at_str:
+                p_dt = datetime.fromisoformat(purchased_at_str)
+                now_dt = datetime.now() if p_dt.tzinfo is None else datetime.now(timezone.utc)
+                diff = int((now_dt - p_dt).total_seconds())
+                if diff > 0:
+                    elapsed = diff
+                    logger.info("[SmsPoller] order=%s resumed at elapsed=%ds", order_id, elapsed)
     except Exception:
         pass
 
@@ -195,6 +204,34 @@ async def _run_poller(
 
             if raw in ("ACCESS_CANCEL", "STATUS_CANCEL", "ACCESS_ACTIVATION"):
                 logger.info("[SmsPoller] terminal %s order=%s", raw, order_id)
+                break
+
+            # ── 10-Minute Auto-Cancel (No SMS received & no user inputs) ──────
+            if not seen_ids and elapsed >= AUTO_CANCEL_TIMEOUT:
+                logger.info(
+                    "[SmsPoller] order=%s reached %ds without SMS — auto-cancelling & updating card",
+                    order_id, elapsed,
+                )
+                from handlers.myntra_checker import try_immediate_cancel, safe_edit, _refunded_markup
+                from utils.formatting import build_auto_cancel_card
+                from core import user_store as _us
+
+                # 1. Cancel on NexNum (order > 10m is well past 60s cooldown)
+                await try_immediate_cancel(api_key, order_id)
+
+                # 2. Update user_store
+                await _us.update_order(user_id, {
+                    "status": "REFUNDED",
+                    "auto_cancelled": True,
+                })
+                await _us.increment_stat(user_id, "cancelled")
+
+                # 3. Auto-update the message in Telegram
+                await safe_edit(
+                    bot, chat_id, msg_id,
+                    build_auto_cancel_card(number, order_id, attempt, cost),
+                    _refunded_markup(order_id),
+                )
                 break
 
             if raw != "STATUS_OK" or not sms_list:

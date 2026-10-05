@@ -33,5 +33,7 @@ NO_NUMBERS_RETRY:  int   = 3     # Retries when NexNum returns NO_NUMBERS
 NO_NUMBERS_DELAY:  float = 3.0   # Seconds to wait between NO_NUMBERS retries
 
 # ── Cancel queue timing ───────────────────────────────────────────────────────
-CANCEL_MIN_AGE:    float = 62.0  # Min seconds since purchase before cancel attempt
-CANCEL_POLL_SECS:  int   = 30    # Background cancel-worker wake interval (seconds)
+CANCEL_MIN_AGE:      float = 60    # Min seconds since purchase before cancel attempt
+CANCEL_POLL_SECS:    int   = 30    # Background cancel-worker wake interval (seconds)
+AUTO_CANCEL_TIMEOUT: int   = 10 * 60  # 10 minutes: auto-cancel order if no SMS received
+
