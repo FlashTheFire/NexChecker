@@ -371,10 +371,6 @@ class CallbackHandler:
         if raw_status == "STATUS_OK" and otp_code:
             # ── 1. Edit result card to show OTP (Cancel button removed) ──────
             from core.sms_poller import _result_markup_no_cancel, _sms_store
-            # Check if poller already delivered this exact code — prevents duplicate
-            # notifications when the user taps Refresh right after auto-send fires.
-            already_notified = _sms_store.get(order_id, {}).get("code") == otp_code
-
             _sms_store[order_id] = {"code": otp_code, "full_sms": full_sms}
             await safe_edit(
                 self.bot, chat_id, msg_id,
@@ -388,21 +384,18 @@ class CallbackHandler:
                 "status":        "COMPLETED",
             })
 
-            # ── 2. Send SMS notification ONLY if poller hasn't sent it already ─
-            if not already_notified:
-                from core.sms_poller import _sms_notification_text, _sms_msg_markup
-                try:
-                    await self.bot.send_message(
-                        chat_id=chat_id,
-                        text=_sms_notification_text(number, otp_code, full_sms, sender, [otp_code]),
-                        parse_mode="HTML",
-                        reply_to_message_id=msg_id,
-                        reply_markup=_sms_msg_markup(order_id, otp_code, full_sms),
-                    )
-                except Exception as e:
-                    logger.warning("[Refresh] send_message failed: %s", e)
-            else:
-                logger.info("[Refresh] skipped duplicate notify code=%s order=%s", otp_code, order_id)
+            # ── 2. Always send notification (user explicitly tapped Refresh) ──
+            from core.sms_poller import _sms_notification_text, _sms_msg_markup
+            try:
+                await self.bot.send_message(
+                    chat_id=chat_id,
+                    text=_sms_notification_text(number, otp_code, full_sms, sender, [otp_code]),
+                    parse_mode="HTML",
+                    reply_to_message_id=msg_id,
+                    reply_markup=_sms_msg_markup(order_id, otp_code, full_sms),
+                )
+            except Exception as e:
+                logger.warning("[Refresh] send_message failed: %s", e)
 
         elif raw_status in ("STATUS_WAIT_CODE", "STATUS_WAIT_RETRY"):
             # Already answered above — send a follow-up message so user sees feedback
