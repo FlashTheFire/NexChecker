@@ -144,7 +144,7 @@ async def main() -> None:
 
     logger.info("Polling started…")
     try:
-        await bot.polling(none_stop=True, interval=0, timeout=20)
+        await bot.polling(none_stop=True, interval=0, timeout=20, skip_pending=True)
     except (KeyboardInterrupt, SystemExit):
         pass
     finally:
