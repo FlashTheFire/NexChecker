@@ -1,0 +1,4 @@
+pyTelegramBotAPI[async]>=4.22.0
+aiohttp>=3.10.0
+python-dotenv>=1.0.0
+playwright>=1.40.0

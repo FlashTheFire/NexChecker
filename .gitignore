@@ -1,0 +1,27 @@
+# NexChecker Bot — Sensitive files
+.env
+*.pem
+*.pem.pem
+
+# Browser profile (large + contains auth cookies)
+myntra_bot_profile/
+myntra_profile_auth.zip
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Data / storage
+NexBot/data/
+*.json
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
