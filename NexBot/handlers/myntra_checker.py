@@ -555,7 +555,8 @@ class MyntraCheckerHandler:
                 mobile   = extract_10(number)   # 10-digit, no country prefix
 
                 # Persist current order immediately — also clear any stale OTP
-                # from a previous order so the new poller starts with a blank slate.
+                # and seen SMS ids from a previous order so the new poller
+                # starts with a completely blank slate.
                 await user_store.update_order(user_id, {
                     "order_id":      order_id,
                     "number":        number,
@@ -566,6 +567,9 @@ class MyntraCheckerHandler:
                     "myn_result":    "",           # cleared — filled after Myntra check
                     "last_otp":      "",           # ← clears stale OTP from prev order
                     "last_full_sms": "",           # ← clears stale SMS from prev order
+                    "seen_sms_ids": [],            # ← clears stale seen ids from prev order
+                    "otp_received_at": None,       # ← clears stale timestamp
+                    "auto_cancelled": False,       # ← reset flag
                     "message_id":    msg_id,
                     "chat_id":       chat_id,
                     "attempt":       attempt,
