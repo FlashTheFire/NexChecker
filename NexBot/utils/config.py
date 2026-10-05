@@ -15,8 +15,9 @@ NEXNUM_BASE_URL: str  = "https://nexnum.in/stubs/handler_api.php"
 SERVICE_CODE:    str  = "nl"    # Myntra service code on NexNum
 COUNTRY_CODE:    str  = "22"    # India
 
-# ── Myntra API ────────────────────────────────────────────────────────────────
+# ── Myntra API & Proxy ────────────────────────────────────────────────────────
 MYNTRA_FORGOT_URL: str = "https://www.myntra.com/gateway/auth/v1/forgetpassword"
+MYNTRA_PROXY:      str = os.getenv("MYNTRA_PROXY", "")  # e.g. "http://user:pass@host:port" or "socks5://127.0.0.1:1080"
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 DATA_DIR: Path = BASE_DIR / "data" / "users"
