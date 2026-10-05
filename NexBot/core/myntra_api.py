@@ -37,11 +37,27 @@ def normalize_mobile(mobile: str) -> str:
 
 
 def decide(http_status: int, data: Any) -> str:
-    """Exact copy of myntra_check.py decide()."""
+    """Decode Myntra forgetpassword API response into REGISTERED/NOT_REGISTERED/CHALLENGE/UNKNOWN."""
     if not isinstance(data, dict):
         return "UNKNOWN"
+
+    # ── Explicit challenge signals ────────────────────────────────────────────
     if data.get("sec-cp-challenge") or data.get("provider") == "crypto" or http_status == 428:
         return "CHALLENGE"
+
+    # ── JSON parse failed → body was HTML (CF challenge, bot-detection page) ─
+    # data only contains "raw_text" when JSON.parse() threw — i.e., we got HTML.
+    raw_text = data.get("raw_text", "")
+    if list(data.keys()) == ["raw_text"]:
+        # HTML challenge indicators
+        lower = raw_text.lower()
+        if any(x in lower for x in ("<html", "challenge", "captcha", "cloudflare", "cf-ray",
+                                     "just a moment", "checking your browser", "enable javascript")):
+            return "CHALLENGE"
+        # Unknown HTML we can't interpret — don't claim REGISTERED
+        return "UNKNOWN"
+
+    # ── Real JSON API response ────────────────────────────────────────────────
     code = data.get("code")
     msg  = (data.get("message") or "").lower()
     if code == 2002 or "does not exist" in msg:
@@ -49,6 +65,8 @@ def decide(http_status: int, data: Any) -> str:
     if code == 2030:
         return "REGISTERED"
     if http_status == 200:
+        # Real API: 200 with JSON body = OTP sent = user exists
+        # Only safe here because we already ruled out raw_text-only (HTML) responses above
         return "REGISTERED"
     if any(x in msg for x in ("email", "password", "otp", "recover")) and "does not exist" not in msg:
         return "REGISTERED"
@@ -135,9 +153,22 @@ async def _api_call(page, mobile: str) -> Dict[str, Any]:
             "error": (api or {}).get("error", "empty"),
         }
 
-    data        = api.get("json") or {"raw_text": api.get("text")}
+    data        = api.get("json") or {"raw_text": api.get("text", "")}
     http_status = api.get("http") or 0
     status      = decide(http_status, data if isinstance(data, dict) else {})
+
+    # Log raw response for debugging — critical for catching CF/HTML responses on AWS
+    logger.debug(
+        "[Myntra] mobile=%s http=%s status=%s raw_keys=%s snippet=%.120s",
+        mobile, http_status, status, list(data.keys()) if isinstance(data, dict) else "?",
+        str(data),
+    )
+    if status == "CHALLENGE":
+        logger.warning(
+            "[Myntra] CHALLENGE on mobile=%s http=%s raw=%.200s",
+            mobile, http_status, str(data),
+        )
+
     return {
         "status": status,
         "mobile": mobile,
