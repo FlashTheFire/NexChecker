@@ -13,6 +13,7 @@ Features:
   • Restored on bot restart:
       REGISTERED/CHECKING → resume polling (pre-seeds seen ids)
       COMPLETED           → re-edit card with saved OTP immediately
+  • Auto-cancel at 10m: if BAD_STATUS → OTP arrived late → delivered to user
 """
 from __future__ import annotations
 
@@ -209,16 +210,83 @@ async def _run_poller(
             # ── 10-Minute Auto-Cancel (No SMS received & no user inputs) ──────
             if not seen_ids and elapsed >= AUTO_CANCEL_TIMEOUT:
                 logger.info(
-                    "[SmsPoller] order=%s reached %ds without SMS — auto-cancelling & updating card",
+                    "[SmsPoller] order=%s reached %ds without SMS — auto-cancelling",
                     order_id, elapsed,
                 )
                 from handlers.myntra_checker import try_immediate_cancel, safe_edit, _refunded_markup
                 from utils.formatting import build_auto_cancel_card
+                from core.nexnum_api import NexNumStatus
                 from core import user_store as _us
 
-                # 1. Cancel on NexNum (order > 10m is well past 60s cooldown)
-                await try_immediate_cancel(api_key, order_id)
+                # 1. Attempt cancel on NexNum (well past 60s cooldown at 10m)
+                cancel_result = await try_immediate_cancel(api_key, order_id)
 
+                # ── BAD_STATUS: OTP arrived while we weren't looking ──────────
+                if cancel_result in NexNumStatus.CANCEL_TERMINAL:
+                    logger.info(
+                        "[SmsPoller] BAD_STATUS on auto-cancel order=%s — fetching getStatus for late SMS",
+                        order_id,
+                    )
+                    try:
+                        late_res  = await nexnum_client.get_status(api_key, order_id)
+                        late_sms  = late_res.get("sms", [])
+                        # Pick first SMS entry with a code
+                        late_entry = next(
+                            (s for s in late_sms if s.get("code", "").strip()),
+                            None,
+                        )
+                        if late_entry:
+                            l_code    = late_entry.get("code",     "").strip()
+                            l_full    = late_entry.get("text",     "").strip()
+                            l_sender  = late_entry.get("sender",   "").strip()
+                            l_dt_raw  = late_entry.get("dateTime", "")
+
+                            logger.info(
+                                "[SmsPoller] late SMS found order=%s code=%s — notifying user",
+                                order_id, l_code,
+                            )
+
+                            # Persist as COMPLETED with the late OTP
+                            _sms_store[order_id] = {"code": l_code, "full_sms": l_full}
+                            await _persist_otp(user_id, l_code, l_full)
+
+                            # Edit card to show the late OTP (no cancel btn)
+                            try:
+                                from utils.formatting import build_result_card
+                                _order_snap = await _us.get_last_order(user_id)
+                                _myn = _order_snap.get("myn_result") or myn_status
+                                await bot.edit_message_text(
+                                    chat_id=chat_id,
+                                    message_id=msg_id,
+                                    text=build_result_card(number, _myn, order_id, attempt, cost, l_code),
+                                    parse_mode="HTML",
+                                    reply_markup=_result_markup_no_cancel(order_id),
+                                )
+                            except Exception as _e:
+                                logger.warning("[SmsPoller] late SMS card edit failed: %s", _e)
+
+                            # Send the SMS notification with a 🕐 Late badge
+                            late_text = (
+                                _sms_notification_text(number, l_code, l_full, l_sender, [l_code], l_dt_raw)
+                                + f"\n\n⚠️  <b>{sc('Late Sms — Received After Auto-Cancel')}</b>"
+                            )
+                            try:
+                                await bot.send_message(
+                                    chat_id=chat_id,
+                                    text=late_text,
+                                    parse_mode="HTML",
+                                    reply_to_message_id=msg_id,
+                                    reply_markup=_sms_msg_markup(order_id, l_code, l_full),
+                                )
+                            except Exception as _e:
+                                logger.warning("[SmsPoller] late SMS send failed: %s", _e)
+
+                            break  # done — OTP delivered
+                    except Exception as _exc:
+                        logger.warning("[SmsPoller] late SMS getStatus failed: %s", _exc)
+                    # Fall through to normal auto-cancel card if getStatus failed
+
+                # ── Normal auto-cancel flow ───────────────────────────────────
                 # 2. Update user_store
                 await _us.update_order(user_id, {
                     "status": "REFUNDED",
