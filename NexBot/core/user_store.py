@@ -53,6 +53,7 @@ def _default_data(user_id: int) -> Dict[str, Any]:
             "chat_id":       None,
             "purchased_at":  None,
         },
+        "purchases": [],              # full history — one entry per finalized order
         "preferences": {
             "filter":       "ANY",
             "max_attempts": 20,
@@ -127,11 +128,24 @@ async def delete_api_key(user_id: int) -> None:
 
 
 async def update_order(user_id: int, order: Dict[str, Any]) -> None:
-    """Merge ``order`` dict into last_order and save."""
+    """Merge ``order`` dict into last_order and save.
+
+    Whenever a terminal status (COMPLETED / REFUNDED) is written for the
+    first time on an order, a snapshot is automatically appended to
+    ``purchases[]`` so the full history is preserved.
+    """
+    TERMINAL = ("COMPLETED", "REFUNDED")
     async with _get_lock(user_id):
         path = _user_path(user_id)
         data = await asyncio.to_thread(_read_sync, path, user_id)
+        prev_status = data["last_order"].get("status")
         data["last_order"].update(order)
+        new_status  = data["last_order"].get("status")
+
+        # Auto-append to purchases[] when an order first reaches a terminal state
+        if new_status in TERMINAL and prev_status not in TERMINAL:
+            _append_purchase_sync(data)
+
         await asyncio.to_thread(_write_sync, path, data)
 
 
@@ -178,12 +192,77 @@ async def get_stats(user_id: int) -> Dict[str, Any]:
     return data.get("stats", {})
 
 
+# ── Purchase history ──────────────────────────────────────────────────────────
+
+def _append_purchase_sync(data: Dict[str, Any]) -> None:
+    """Append a snapshot of last_order to purchases[].  Called inside the lock.
+
+    Only records orders that have an order_id (i.e. real purchases, not
+    IDLE placeholders).  Deduplicates by order_id so double-calls are safe.
+    """
+    order = data.get("last_order", {})
+    order_id = order.get("order_id")
+    if not order_id:
+        return
+
+    purchases: list = data.setdefault("purchases", [])
+
+    # Dedup: if we already have an entry for this order_id, update it in-place
+    for i, p in enumerate(purchases):
+        if p.get("order_id") == order_id:
+            purchases[i] = _purchase_snapshot(order)
+            return
+
+    purchases.append(_purchase_snapshot(order))
+
+
+def _purchase_snapshot(order: Dict[str, Any]) -> Dict[str, Any]:
+    """Build a clean purchase record from a last_order dict."""
+    return {
+        "order_id":      order.get("order_id"),
+        "number":        order.get("number"),
+        "service":       order.get("service"),
+        "country":       order.get("country"),
+        "cost":          order.get("cost", 0),
+        "status":        order.get("status"),           # COMPLETED / REFUNDED
+        "myn_result":    order.get("myn_result", ""),   # REGISTERED / NOT_REGISTERED
+        "last_otp":      order.get("last_otp", ""),
+        "last_full_sms": order.get("last_full_sms", ""),
+        "otp_received_at": order.get("otp_received_at"),
+        "attempt":       order.get("attempt", 1),
+        "purchased_at":  order.get("purchased_at"),
+        "auto_cancelled": order.get("auto_cancelled", False),
+        "finalized_at":  datetime.now(timezone.utc).isoformat(),
+    }
+
+
+async def append_purchase(user_id: int) -> None:
+    """Public helper — manually append the current last_order to purchases[].
+
+    Use this when the auto-trigger in update_order() doesn't fire
+    (e.g., status was already terminal on a previous write).
+    """
+    async with _get_lock(user_id):
+        path = _user_path(user_id)
+        data = await asyncio.to_thread(_read_sync, path, user_id)
+        _append_purchase_sync(data)
+        await asyncio.to_thread(_write_sync, path, data)
+
+
+async def get_purchases(user_id: int) -> list:
+    """Return full purchase history for a user, newest first."""
+    data = await load_user(user_id)
+    return list(reversed(data.get("purchases", [])))
+
+
 async def load_all_active_orders(max_age_minutes: int = 19) -> list[Dict[str, Any]]:
     """Scan all user JSON files and return orders needing startup handling.
 
     Returns:
-      - REGISTERED / CHECKING  → resume poller (may still get OTP)
-      - COMPLETED              → re-edit card with saved OTP (no poller needed)
+      - REGISTERED / CHECKING  -> resume poller (may still get OTP)
+      - COMPLETED              -> re-edit card with saved OTP (no poller needed)
+
+    Side-effect: migrates any file missing purchases[] on first startup.
     """
     from datetime import timedelta
     results = []
@@ -199,6 +278,14 @@ async def load_all_active_orders(max_age_minutes: int = 19) -> list[Dict[str, An
             data    = await asyncio.to_thread(_read_sync, path, 0)
             order   = data.get("last_order", {})
             api_key = data.get("api_key")
+
+            # -- Startup migration: add purchases[] if missing
+            if "purchases" not in data:
+                data["purchases"] = []
+                if order.get("status") in ("COMPLETED", "REFUNDED") and order.get("order_id"):
+                    _append_purchase_sync(data)
+                await asyncio.to_thread(_write_sync, path, data)
+                logger.info("user_store: migrated purchases[] for user=%s", user_id)
 
             if not api_key:
                 continue
@@ -230,9 +317,10 @@ async def load_all_active_orders(max_age_minutes: int = 19) -> list[Dict[str, An
                 "status":        status,
                 "cost":          order.get("cost",         0),
                 "attempt":       order.get("attempt",      1),
-                "last_otp":      order.get("last_otp"),           # only set for COMPLETED
-                "last_full_sms": order.get("last_full_sms", ""),  # full SMS text for Copy button
+                "last_otp":      order.get("last_otp"),
+                "last_full_sms": order.get("last_full_sms", ""),
                 "purchased_at":  purchased_at_str,
+                "myn_result":    order.get("myn_result", ""),
             })
         except Exception as exc:
             logger.warning("load_all_active_orders: skipping %s: %s", path, exc)
