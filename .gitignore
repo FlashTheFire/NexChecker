@@ -3,8 +3,11 @@
 *.pem
 *.pem.pem
 
-# Browser profile (large + contains auth cookies)
+# Browser profiles (large binary files + auth cookies, platform-specific)
 myntra_bot_profile/
+zepto_chrome_profile/
+*_chrome_profile/
+*_bot_profile/
 myntra_profile_auth.zip
 
 # Python
