@@ -252,7 +252,6 @@ async def _run_poller(
 
                             # Edit card to show the late OTP (no cancel btn)
                             try:
-                                from utils.formatting import build_result_card
                                 _order_snap = await _us.get_last_order(user_id)
                                 _myn = _order_snap.get("myn_result") or myn_status
                                 await bot.edit_message_text(
@@ -451,7 +450,10 @@ async def restore_pollers(bot: AsyncTeleBot) -> int:
                         uid, order_id, saved_otp,
                     )
                 except Exception as e:
-                    logger.warning("[SmsPoller] repair COMPLETED card failed: %s", e)
+                    if "message is not modified" in str(e).lower():
+                        logger.debug("[SmsPoller] COMPLETED card already up-to-date user=%s", uid)
+                    else:
+                        logger.warning("[SmsPoller] repair COMPLETED card failed: %s", e)
             count += 1
 
         else:
