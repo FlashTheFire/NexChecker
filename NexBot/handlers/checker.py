@@ -68,55 +68,70 @@ async def _bg_cancel_worker() -> None:
     Failed cancels are re-queued up to max_retry times, then dropped.
     """
     logger.info("[CancelWorker] background task started — polling every %ds", CANCEL_POLL_SECS)
-    while True:
-        await asyncio.sleep(CANCEL_POLL_SECS)
+    try:
+        while True:
+            await asyncio.sleep(CANCEL_POLL_SECS)
 
-        if not _cancel_queue:
-            continue
-
-        now   = time.monotonic()
-        ready = [p for p in _cancel_queue if (now - p.queued_at) >= CANCEL_MIN_AGE]
-        if not ready:
-            logger.debug("[CancelWorker] %d order(s) still cooling down", len(_cancel_queue))
-            continue
-
-        logger.info("[CancelWorker] firing %d parallel cancel(s)", len(ready))
-
-        results = await asyncio.gather(
-            *(nexnum_client.set_status(p.api_key, p.order_id, 8) for p in ready),
-            return_exceptions=True,
-        )
-
-        for p, res in zip(ready, results):
-            if isinstance(res, Exception):
-                p.retries += 1
-                if p.retries >= p.max_retry:
-                    logger.warning("[CancelWorker] giving up on order %s after %d retries (exception)", p.order_id, p.retries)
-                    _cancel_queue.remove(p)
-                else:
-                    p.queued_at = time.monotonic()
+            if not _cancel_queue:
                 continue
 
-            code   = res.get("code",   "") if isinstance(res, dict) else ""
-            status = res.get("status", "") if isinstance(res, dict) else ""
+            now   = time.monotonic()
+            ready = [p for p in _cancel_queue if (now - p.queued_at) >= CANCEL_MIN_AGE]
+            if not ready:
+                logger.debug("[CancelWorker] %d order(s) still cooling down", len(_cancel_queue))
+                continue
 
-            if res.get("ok"):
-                logger.info("[CancelWorker] cancel %s → success", p.order_id)
-                _cancel_queue.remove(p)
-            elif code in NexNumStatus.CANCEL_TERMINAL:
-                logger.warning("[CancelWorker] terminal '%s' for %s — order finalised (OTP received / cancelled / completed), dropping", code, p.order_id)
-                _cancel_queue.remove(p)
-            elif res.get("early_denied"):
-                p.queued_at = time.monotonic()
-                logger.debug("[CancelWorker] EARLY_CANCEL_DENIED %s — cooling", p.order_id)
-            else:
-                p.retries += 1
-                if p.retries >= p.max_retry:
-                    logger.warning("[CancelWorker] giving up on %s after %d retries (status=%s code=%s)", p.order_id, p.retries, status, code)
+            logger.info("[CancelWorker] firing %d parallel cancel(s)", len(ready))
+
+            results = await asyncio.gather(
+                *(nexnum_client.set_status(p.api_key, p.order_id, 8) for p in ready),
+                return_exceptions=True,
+            )
+
+            for p, res in zip(ready, results):
+                if isinstance(res, Exception):
+                    p.retries += 1
+                    if p.retries >= p.max_retry:
+                        logger.warning("[CancelWorker] giving up on order %s after %d retries (exception)", p.order_id, p.retries)
+                        _cancel_queue.remove(p)
+                    else:
+                        p.queued_at = time.monotonic()
+                    continue
+
+                code   = res.get("code",   "") if isinstance(res, dict) else ""
+                status = res.get("status", "") if isinstance(res, dict) else ""
+
+                if res.get("ok"):
+                    logger.info("[CancelWorker] cancel %s → success", p.order_id)
                     _cancel_queue.remove(p)
-                else:
+                elif code in NexNumStatus.CANCEL_TERMINAL:
+                    logger.warning("[CancelWorker] terminal '%s' for %s — order finalised (OTP received / cancelled / completed), dropping", code, p.order_id)
+                    _cancel_queue.remove(p)
+                elif res.get("early_denied"):
                     p.queued_at = time.monotonic()
-                    logger.debug("[CancelWorker] re-queued %s (retry %d, code=%s)", p.order_id, p.retries, code)
+                    logger.debug("[CancelWorker] EARLY_CANCEL_DENIED %s — cooling", p.order_id)
+                else:
+                    p.retries += 1
+                    if p.retries >= p.max_retry:
+                        logger.warning("[CancelWorker] giving up on %s after %d retries (status=%s code=%s)", p.order_id, p.retries, status, code)
+                        _cancel_queue.remove(p)
+                    else:
+                        p.queued_at = time.monotonic()
+                        logger.debug("[CancelWorker] re-queued %s (retry %d, code=%s)", p.order_id, p.retries, code)
+    except asyncio.CancelledError:
+        logger.debug("[CancelWorker] background task stopped cleanly")
+
+
+async def stop_cancel_worker() -> None:
+    """Gracefully cancel and await the shared background cancel worker."""
+    global _cancel_worker_task
+    if _cancel_worker_task and not _cancel_worker_task.done():
+        _cancel_worker_task.cancel()
+        try:
+            await _cancel_worker_task
+        except (asyncio.CancelledError, Exception):
+            pass
+    _cancel_worker_task = None
 
 
 def schedule_deferred_cancel(api_key: str, order_id: str) -> None:
