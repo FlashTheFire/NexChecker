@@ -72,20 +72,30 @@ def save_meta(ok: bool, note: str = ""):
     )
 
 
-async def open_context(playwright, headless: bool = False):
+async def open_context(playwright, headless: bool = False, proxy: str = ""):
     """Same technique: persistent real Chrome profile."""
     PROFILE_DIR.mkdir(parents=True, exist_ok=True)
+    is_linux = sys.platform.startswith("linux")
+    launch_args = [
+        "--disable-blink-features=AutomationControlled",
+        "--disable-http2",
+    ]
+    if is_linux:
+        launch_args.extend(["--no-sandbox", "--disable-dev-shm-usage"])
+    elif headless:
+        launch_args.append("--window-position=-10000,-10000")
+
+    proxy_cfg = {"server": proxy} if proxy else None
+
     context = await playwright.chromium.launch_persistent_context(
         user_data_dir=str(PROFILE_DIR),
         channel="chrome",
-        headless=headless,
+        headless=is_linux if is_linux else False,
         viewport={"width": 1366, "height": 768},
         locale="en-IN",
         timezone_id="Asia/Kolkata",
-        args=[
-            "--disable-blink-features=AutomationControlled",
-            "--disable-http2",
-        ],
+        args=launch_args,
+        proxy=proxy_cfg,
     )
     page = context.pages[0] if context.pages else await context.new_page()
     return context, page
@@ -102,6 +112,20 @@ async def ensure_forgot_page(page) -> None:
         await page.wait_for_timeout(2000)
     except Exception as e:
         print(f"[!] goto warning: {e}")
+
+
+async def heal_challenge(page) -> None:
+    """Full Akamai challenge recovery: homepage -> JS sensor -> /forgot."""
+    try:
+        await page.goto(
+            "https://www.myntra.com/",
+            wait_until="domcontentloaded",
+            timeout=60000,
+        )
+        await page.wait_for_timeout(5000)
+    except Exception as e:
+        print(f"[!] heal homepage warning: {e}")
+    await ensure_forgot_page(page)
 
 
 async def api_call(page, mobile: str) -> dict:
@@ -158,7 +182,7 @@ async def api_call(page, mobile: str) -> dict:
     }
 
 
-async def check_with_heal(page, mobile: str, max_heal: int = 2) -> dict:
+async def check_with_heal(page, mobile: str, max_heal: int = 3) -> dict:
     """Call API; on CHALLENGE reload /forgot and retry."""
     last = None
     for attempt in range(1, max_heal + 1):
@@ -168,10 +192,14 @@ async def check_with_heal(page, mobile: str, max_heal: int = 2) -> dict:
             save_meta(True, "ok")
             return r
         if r.get("status") == "CHALLENGE":
-            print(f"    heal {attempt}/{max_heal}: reload /forgot ...")
             save_meta(False, "challenge")
-            await ensure_forgot_page(page)
-            await page.wait_for_timeout(int(HEAL_WAIT * 1000))
+            if attempt == 1:
+                print(f"    heal {attempt}/{max_heal}: reload /forgot ...")
+                await ensure_forgot_page(page)
+                await page.wait_for_timeout(int(HEAL_WAIT * 1000))
+            else:
+                print(f"    heal {attempt}/{max_heal}: full homepage reload ...")
+                await heal_challenge(page)
             continue
         if r.get("status") == "ERROR":
             await ensure_forgot_page(page)
@@ -179,6 +207,69 @@ async def check_with_heal(page, mobile: str, max_heal: int = 2) -> dict:
             continue
         break
     return last or {"status": "ERROR", "mobile": mobile, "error": "no result"}
+
+
+class MyntraChecker:
+    """Persistent Myntra Chrome checker instance."""
+
+    def __init__(self) -> None:
+        self._playwright = None
+        self._context    = None
+        self._page       = None
+        self._lock       = asyncio.Lock()
+        self._ready      = False
+
+    async def startup(self, headless: bool = False, proxy: str = "") -> None:
+        if self._ready and self._page:
+            return
+        from playwright.async_api import async_playwright
+        self._playwright = await async_playwright().start()
+        self._context, self._page = await open_context(self._playwright, headless=headless, proxy=proxy)
+        await ensure_forgot_page(self._page)
+        self._ready = True
+
+    async def shutdown(self) -> None:
+        if self._context:
+            try:
+                await self._context.storage_state(path=str(STATE_FILE))
+            except Exception:
+                pass
+            try:
+                await self._context.close()
+            except Exception:
+                pass
+        if self._playwright:
+            try:
+                await self._playwright.stop()
+            except Exception:
+                pass
+        self._ready = False
+        self._page = None
+        self._context = None
+        self._playwright = None
+
+    async def check_number(self, mobile: str) -> dict:
+        if not self._ready or self._page is None:
+            await self.startup()
+        async with self._lock:
+            return await check_with_heal(self._page, mobile)
+
+    async def reload_page(self) -> None:
+        if self._ready and self._page:
+            async with self._lock:
+                await ensure_forgot_page(self._page)
+
+    @property
+    def is_ready(self) -> bool:
+        return self._ready
+
+
+myntra_checker = MyntraChecker()
+
+
+async def check_myntra(mobile: str) -> dict:
+    """Check a single mobile number against Myntra."""
+    return await myntra_checker.check_number(mobile)
 
 
 async def warmup(headless: bool = False) -> bool:
