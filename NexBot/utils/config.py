@@ -9,20 +9,20 @@ load_dotenv(BASE_DIR / ".env")
 
 # ── Telegram ──────────────────────────────────────────────────────────────────
 BOT_TOKEN: str = os.getenv("BOT_TOKEN", "")
+SERVICE_CODE:           str = MYNTRA_SERVICE_CODE    # Legacy alias kept for backward compat
+COUNTRY_CODE:           str = "22"    # India
 
 # ── NexNum API ────────────────────────────────────────────────────────────────
 NEXNUM_BASE_URL: str  = "https://nexnum.in/stubs/handler_api.php"
 
-# Legacy per-service defaults (kept for backward compat; authoritative values
-# are in utils/platforms.py PlatformDef entries).
-SERVICE_CODE:    str  = "nl"    # Myntra service code on NexNum
-COUNTRY_CODE:    str  = "22"    # India
+# Service codes on NexNum — configurable via .env
+MYNTRA_SERVICE_CODE:    str = os.getenv("MYNTRA_SERVICE_CODE", os.getenv("SERVICE_CODE", "nl"))
 
-# BigBasket service code — override via BB_SERVICE_CODE env var if needed
-BB_SERVICE_CODE: str  = os.getenv("BB_SERVICE_CODE", "bb")
+# BigBasket service code — override via BIGBASKET_SERVICE_CODE or BIGBASKET_SERVICE_CODE env var
+BIGBASKET_SERVICE_CODE: str = os.getenv("BIGBASKET_SERVICE_CODE", os.getenv("BIGBASKET_SERVICE_CODE", "bb"))
 
-# Flipkart service code — override via FK_SERVICE_CODE env var if needed (default "fk")
-FK_SERVICE_CODE: str  = os.getenv("FK_SERVICE_CODE", "fk")
+# Flipkart service code — override via FLIPKART_SERVICE_CODE or FK_SERVICE_CODE env var (default "xt")
+FLIPKART_SERVICE_CODE:  str = os.getenv("FLIPKART_SERVICE_CODE", os.getenv("FK_SERVICE_CODE", "xt"))
 
 # ── Myntra API & Proxy ────────────────────────────────────────────────────────
 MYNTRA_PROXY:    str = os.getenv("MYNTRA_PROXY", "")  # e.g. "http://user:pass@host:port"
