@@ -27,7 +27,8 @@ FLIPKART_SERVICE_CODE:  str = os.getenv("FLIPKART_SERVICE_CODE", os.getenv("FK_S
 FK_SERVICE_CODE:        str = FLIPKART_SERVICE_CODE
 
 # ── Myntra API & Proxy ────────────────────────────────────────────────────────
-MYNTRA_PROXY:    str = os.getenv("MYNTRA_PROXY", "")  # e.g. "http://user:pass@host:port"
+PROXY:        str = os.getenv("PROXY", os.getenv("MYNTRA_PROXY", ""))
+MYNTRA_PROXY: str = PROXY  # alias for backward compatibility
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 DATA_DIR: Path = BASE_DIR / "data" / "users"
