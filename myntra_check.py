@@ -231,7 +231,8 @@ class MyntraChecker:
     async def shutdown(self) -> None:
         if self._context:
             try:
-                await self._context.storage_state(path=str(STATE_FILE))
+                if self._page and not self._page.is_closed():
+                    await self._context.storage_state(path=str(STATE_FILE))
             except Exception:
                 pass
             try:
