@@ -1,12 +1,15 @@
 """NexBot — Text formatting helpers.
 
-Mirrors the NexNum bot style exactly:
-  - blockquote header with service + status tag + flag
-  - Number split into <code>+91</code> <code>XXXXX XXXXX</code>
-  - Status line with small caps + ! suffix
+All card builders accept an optional ``platform`` argument (a PlatformDef).
+When omitted (or None), they fall back to Myntra defaults so existing call
+sites that haven't been updated yet continue to work unchanged.
 """
 from __future__ import annotations
 from datetime import datetime
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from utils.platforms import PlatformDef
 
 # ── Unicode small-caps map ────────────────────────────────────────────────────
 _SC: dict[str, str] = {
@@ -39,6 +42,18 @@ def code(text: str) -> str:
 
 def bold(text: str) -> str:
     return f"<b>{text}</b>"
+
+
+# ── Platform helpers ──────────────────────────────────────────────────────────
+
+def _plat_label(platform: "PlatformDef | None") -> str:
+    return platform.label if platform else "Myntra"
+
+def _plat_icon(platform: "PlatformDef | None") -> str:
+    return platform.icon if platform else "📦"
+
+def _plat_flag(platform: "PlatformDef | None") -> str:
+    return platform.flag if platform else "🇮🇳"
 
 
 # ── Phone formatting ──────────────────────────────────────────────────────────
@@ -84,12 +99,13 @@ def build_result_card(
     status:   str,
     order_id: str,
     attempt:  int,
-    cost:     int | float,        # price per number from getNumber "cost" field
+    cost:     int | float,
     otp_code: str | None = None,
+    platform: "PlatformDef | None" = None,
 ) -> str:
     """NexNum bot style result card.
 
-    <blockquote><b>📦 Mʏɴᴛʀᴀ [</b> 💎 9.00 <b>][</b> Rᴇɢɪꜱᴛᴇʀᴇᴅ <b>][ 🇮🇳 ]</b></blockquote>
+    <blockquote><b>📦 Mʏɴᴛʀᴀ [</b> 💎 9.00 <b>][ 🇮🇳 ]</b></blockquote>
 
     📱 <b>Nᴜᴍʙᴇʀ »</b> <code>+91</code> <code>82524 48734</code>
 
@@ -97,18 +113,19 @@ def build_result_card(
     """
     cc, nat = _split_phone(number)
 
+    label    = sc(_plat_label(platform))
+    icon     = _plat_icon(platform)
+    flag     = _plat_flag(platform)
+
     if status == "REGISTERED":
-        icon        = "✅"
+        stat_icon   = "✅"
         status_text = sc("Status Is Registered")
-        status_tag  = sc("Registered")
     elif status == "NOT_REGISTERED":
-        icon        = "🛑"
+        stat_icon   = "🛑"
         status_text = sc("Status Is Not Registered")
-        status_tag  = sc("Not Registered")
     else:
-        icon        = "⚠️"
+        stat_icon   = "⚠️"
         status_text = sc("Status Unknown")
-        status_tag  = sc(status.replace("_", " ").title())
 
     cost_str = f"{float(cost):.2f}"
 
@@ -116,13 +133,13 @@ def build_result_card(
     if otp_code:
         otp_line = f"\n\n🔐 <b>{sc('Otp Code')} »</b>  <code>{otp_code}</code>"
     else:
-        otp_line = f"\n\n⏳  <b>{sc('Waiting For Sms…')}</b>" #<code>({sc('Auto-cancel in 10m')})</code>
+        otp_line = f"\n\n⏳  <b>{sc('Waiting For Sms…')}</b>"
 
     return (
-        f"<blockquote><b>📦 {sc('Myntra')} [</b> 💎 {cost_str} <b>][ 🇮🇳 ]</b></blockquote>\n\n"
+        f"<blockquote><b>{icon} {label} [</b> 💎 {cost_str} <b>][ {flag} ]</b></blockquote>\n\n"
         f"📱 <b>{sc('Number')} »</b> <code>{cc}</code> <code>{nat}</code>"
         f"{otp_line}\n\n"
-        f"{icon}  <b>{status_text}!</b>"
+        f"{stat_icon}  <b>{status_text}!</b>"
     )
 
 
@@ -131,8 +148,13 @@ def build_progress_msg(
     phase:       str,
     filter_mode: str,
     number:      str = "",
+    platform:    "PlatformDef | None" = None,
 ) -> str:
     """Live progress card — blockquote header matching the result card style."""
+    label = sc(_plat_label(platform))
+    flag  = _plat_flag(platform)
+    icon  = _plat_icon(platform)
+
     filter_labels = {
         "REGISTERED":     f"✅ {sc('Registered')}",
         "NOT_REGISTERED": f"🛑 {sc('Not Registered')}",
@@ -146,7 +168,7 @@ def build_progress_msg(
         number_line = f"\n📱 <b>{sc('Number')} »</b> <code>{cc}</code> <code>{nat}</code>"
 
     return (
-        f"<blockquote><b>📦 {sc('Myntra')} [</b> 🇮🇳 <b>][</b> {f_label} <b>]</b></blockquote>"
+        f"<blockquote><b>{icon} {label} [</b> {flag} <b>][</b> {f_label} <b>]</b></blockquote>"
         f"{number_line}\n\n"
         f"⏳  <b>{sc('Attempt')} #{attempt}</b>  —  {phase}\n"
         f"<code>{sc('Attempts')}: {attempt} / 20</code>"
@@ -163,7 +185,7 @@ def build_stopped_msg(attempt: int, reason: str = "user") -> str:
         return (
             f"🔚  <b>{sc('Max Attempts Reached')}</b>\n\n"
             f"<blockquote>{sc('Reached Limit Of')} {attempt} {sc('Attempts Without A Match')}.\n"
-            f"{sc('Try Again With /myntra')}</blockquote>"
+            f"{sc('Try Again From The Main Menu')}</blockquote>"
         )
     elif reason == "no_balance":
         return (
@@ -179,12 +201,16 @@ def build_refunded_card(
     order_id: str,
     attempt:  int,
     cost:     int | float = 0,
+    platform: "PlatformDef | None" = None,
 ) -> str:
     """Cancelled / refunded card — matches result card blockquote style."""
     cc, nat  = _split_phone(number)
     cost_tag = f" 💎 {format_balance(cost)}" if cost else ""
+    label    = sc(_plat_label(platform))
+    flag     = _plat_flag(platform)
+    icon     = _plat_icon(platform)
     return (
-        f"<blockquote><b>📦 {sc('Myntra')} [{cost_tag}</b> 🇮🇳 <b>]</b></blockquote>\n\n"
+        f"<blockquote><b>{icon} {label} [{cost_tag}</b> {flag} <b>]</b></blockquote>\n\n"
         f"📱 <b>{sc('Number')} »</b> <code>{cc}</code> <code>{nat}</code>\n\n"
         f"❌  <b>{sc('Order Is Cancelled')}</b>  <code>[{sc('Refunded')}]</code>"
     )
@@ -195,14 +221,17 @@ def build_auto_cancel_card(
     order_id: str,
     attempt:  int,
     cost:     int | float = 0,
+    platform: "PlatformDef | None" = None,
 ) -> str:
     """Auto-cancelled card — no SMS received after 10m timeout."""
     cc, nat  = _split_phone(number)
     cost_tag = f" 💎 {format_balance(cost)}" if cost else ""
+    label    = sc(_plat_label(platform))
+    flag     = _plat_flag(platform)
+    icon     = _plat_icon(platform)
     return (
-        f"<blockquote><b>📦 {sc('Myntra')} [{cost_tag}</b> 🇮🇳 <b>]</b></blockquote>\n\n"
+        f"<blockquote><b>{icon} {label} [{cost_tag}</b> {flag} <b>]</b></blockquote>\n\n"
         f"📱 <b>{sc('Number')} »</b> <code>{cc}</code> <code>{nat}</code>\n\n"
-        #f"⏱️  <b>{sc('Auto-Cancelled')}</b> — {sc('No Sms Received in 10 Min')}\n"
         f"⏱️  <b>{sc('Order Is Cancelled')}</b>  <code>[{sc('Refunded')}]</code>"
     )
 
@@ -216,17 +245,11 @@ def build_welcome_msg(has_key: bool, balance: float | None = None) -> str:
         if has_key
         else f"\n🔑  <b>{sc('Api Key')}:</b>  <code>{sc('Not Set')}</code>"
     )
-    cmd_line = (
-        f"\n\n<b>{sc('Commands')}:</b>\n"
-        f"/myntra  —  {sc('Start Myntra Checker')}\n"
-        f"/mystats —  {sc('View Your Stats')}"
-    )
     return (
-        f"🤖  <b>NᴇxCʜᴇᴄᴋᴇʀ</b>\n"
-        f"{blockquote(sc('Myntra Registration Checker Via Real NexNum Virtual SIMs'))}"
+        f"🤖  <b>Nᴇxᴄʜᴇᴄᴋᴇʀ</b>\n"
+        f"{blockquote(sc('Multi-Platform Registration Checker Via Real NexNum Virtual SIMs'))}"
         f"\n{bal_line}"
         f"{key_line}"
-        #f"{cmd_line}"
     )
 
 

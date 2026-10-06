@@ -1,4 +1,4 @@
-"""NexBot — Global configuration constants."""
+"""NexBot — Global configuration constants (platform-agnostic)."""
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -12,12 +12,17 @@ BOT_TOKEN: str = os.getenv("BOT_TOKEN", "")
 
 # ── NexNum API ────────────────────────────────────────────────────────────────
 NEXNUM_BASE_URL: str  = "https://nexnum.in/stubs/handler_api.php"
+
+# Legacy per-service defaults (kept for backward compat; authoritative values
+# are in utils/platforms.py PlatformDef entries).
 SERVICE_CODE:    str  = "nl"    # Myntra service code on NexNum
 COUNTRY_CODE:    str  = "22"    # India
 
+# BigBasket service code — override via BB_SERVICE_CODE env var if needed
+BB_SERVICE_CODE: str  = os.getenv("BB_SERVICE_CODE", "bb")
+
 # ── Myntra API & Proxy ────────────────────────────────────────────────────────
-MYNTRA_FORGOT_URL: str = "https://www.myntra.com/gateway/auth/v1/forgetpassword"
-MYNTRA_PROXY:      str = os.getenv("MYNTRA_PROXY", "")  # e.g. "http://user:pass@host:port" or "socks5://127.0.0.1:1080"
+MYNTRA_PROXY:    str = os.getenv("MYNTRA_PROXY", "")  # e.g. "http://user:pass@host:port"
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 DATA_DIR: Path = BASE_DIR / "data" / "users"

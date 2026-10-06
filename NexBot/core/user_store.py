@@ -39,6 +39,7 @@ def _default_data(user_id: int) -> Dict[str, Any]:
         "api_key": None,
         "api_key_set_at": None,
         "last_order": {
+            "platform":      "myntra",  # platform key — default for backward compat
             "order_id":      None,
             "number":        None,
             "service":       None,
@@ -219,6 +220,7 @@ def _append_purchase_sync(data: Dict[str, Any]) -> None:
 def _purchase_snapshot(order: Dict[str, Any]) -> Dict[str, Any]:
     """Build a clean purchase record from a last_order dict."""
     return {
+        "platform":      order.get("platform", "myntra"),  # ← include platform
         "order_id":      order.get("order_id"),
         "number":        order.get("number"),
         "service":       order.get("service"),
@@ -309,6 +311,7 @@ async def load_all_active_orders(max_age_minutes: int = 19) -> list[Dict[str, An
 
             results.append({
                 "user_id":       user_id,
+                "platform":      order.get("platform", "myntra"),  # ← platform key
                 "api_key":       api_key,
                 "order_id":      order["order_id"],
                 "number":        order["number"],

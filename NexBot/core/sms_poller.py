@@ -43,12 +43,12 @@ IST = timezone(timedelta(hours=5, minutes=30))
 
 # ── Markup helpers ────────────────────────────────────────────────────────────
 
-def _result_markup_no_cancel(order_id: str) -> InlineKeyboardMarkup:
+def _result_markup_no_cancel(order_id: str, platform_key: str = "myntra") -> InlineKeyboardMarkup:
     """Result card buttons WITHOUT Cancel (shown after first OTP received)."""
     kb = InlineKeyboardMarkup(row_width=2)
     kb.row(
-        InlineKeyboardButton(f"🛒  {sc('Buy Next')}",    callback_data=f"myntra_next:{order_id}"),
-        InlineKeyboardButton(f"🔄  {sc('Refresh Sms')}", callback_data=f"myntra_refresh:{order_id}"),
+        InlineKeyboardButton(f"🛒  {sc('Buy Next')}",    callback_data=f"nex:next:{platform_key}:{order_id}"),
+        InlineKeyboardButton(f"🔄  {sc('Refresh Sms')}", callback_data=f"nex:refresh:{platform_key}:{order_id}"),
     )
     return kb
 
@@ -104,7 +104,7 @@ def _sms_notification_text(
 
     header = (
         f"<blockquote><b>🗨️ {sc('New Message Received')} "
-        f"[ <code>+91</code> <code>{digits}</code> ]{time_part}</b></blockquote>\n"
+        f"[ <code>+91</code> <code>{digits}</code> ]</b></blockquote>\n" # {time_part} 
     )
     sender_line = f"\n📨 <b>{sc('Sender')} »</b>  <code>{sender}</code>" if sender else ""
     otp_line    = f"\n🔐 <b>{sc('Otp Code')} »</b>  <code>{code}</code>"
@@ -147,16 +147,17 @@ async def _persist_otp(
 # ── Poller coroutine ──────────────────────────────────────────────────────────
 
 async def _run_poller(
-    bot:        AsyncTeleBot,
-    user_id:    int,
-    chat_id:    int,
-    msg_id:     int,
-    api_key:    str,
-    order_id:   str,
-    number:     str,
-    myn_status: str,
-    cost:       int | float,
-    attempt:    int,
+    bot:         AsyncTeleBot,
+    user_id:     int,
+    chat_id:     int,
+    msg_id:      int,
+    api_key:     str,
+    order_id:    str,
+    number:      str,
+    myn_status:  str,
+    cost:        int | float,
+    attempt:     int,
+    platform_key: str = "myntra",
 ) -> None:
     # Dedup by SMS id, NOT by code.
     # NexNum assigns a unique id per received SMS.
@@ -214,10 +215,13 @@ async def _run_poller(
                     "[SmsPoller] order=%s reached %ds without SMS — auto-cancelling",
                     order_id, elapsed,
                 )
-                from handlers.myntra_checker import try_immediate_cancel, safe_edit, _refunded_markup
+                from handlers.checker import try_immediate_cancel, safe_edit, make_refunded_markup
                 from utils.formatting import build_auto_cancel_card
+                from utils.platforms import get_platform
                 from core.nexnum_api import NexNumStatus
                 from core import user_store as _us
+
+                _plat = get_platform(platform_key)
 
                 # 1. Attempt cancel on NexNum (well past 60s cooldown at 10m)
                 cancel_result = await try_immediate_cancel(api_key, order_id)
@@ -258,9 +262,9 @@ async def _run_poller(
                                 await bot.edit_message_text(
                                     chat_id=chat_id,
                                     message_id=msg_id,
-                                    text=build_result_card(number, _myn, order_id, attempt, cost, l_code),
+                                    text=build_result_card(number, _myn, order_id, attempt, cost, l_code, platform=_plat),
                                     parse_mode="HTML",
-                                    reply_markup=_result_markup_no_cancel(order_id),
+                                    reply_markup=_result_markup_no_cancel(order_id, platform_key),
                                 )
                             except Exception as _e:
                                 logger.warning("[SmsPoller] late SMS card edit failed: %s", _e)
@@ -297,8 +301,8 @@ async def _run_poller(
                 # 3. Auto-update the message in Telegram
                 await safe_edit(
                     bot, chat_id, msg_id,
-                    build_auto_cancel_card(number, order_id, attempt, cost),
-                    _refunded_markup(order_id),
+                    build_auto_cancel_card(number, order_id, attempt, cost, platform=_plat),
+                    make_refunded_markup(platform_key, order_id),
                 )
                 break
 
@@ -336,12 +340,14 @@ async def _run_poller(
                 # ── 1. Edit result card (only on first OTP — cancel removed once) ─
                 if not cancel_removed:
                     try:
+                        from utils.platforms import get_platform as _gp
+                        _plat_rc = _gp(platform_key)
                         await bot.edit_message_text(
                             chat_id=chat_id,
                             message_id=msg_id,
-                            text=build_result_card(number, myn_status, order_id, attempt, cost, code),
+                            text=build_result_card(number, myn_status, order_id, attempt, cost, code, platform=_plat_rc),
                             parse_mode="HTML",
-                            reply_markup=_result_markup_no_cancel(order_id),
+                            reply_markup=_result_markup_no_cancel(order_id, platform_key),
                         )
                         cancel_removed = True
                     except Exception as e:
@@ -350,7 +356,7 @@ async def _run_poller(
                         try:
                             await bot.edit_message_reply_markup(
                                 chat_id=chat_id, message_id=msg_id,
-                                reply_markup=_result_markup_no_cancel(order_id),
+                                reply_markup=_result_markup_no_cancel(order_id, platform_key),
                             )
                         except Exception:
                             pass
@@ -382,24 +388,25 @@ async def _run_poller(
 # ── Public API ────────────────────────────────────────────────────────────────
 
 def start_sms_poller(
-    bot:        AsyncTeleBot,
-    user_id:    int,
-    chat_id:    int,
-    msg_id:     int,
-    api_key:    str,
-    order_id:   str,
-    number:     str,
-    myn_status: str         = "REGISTERED",
-    cost:       int | float = 0,
-    attempt:    int         = 1,
+    bot:          AsyncTeleBot,
+    user_id:      int,
+    chat_id:      int,
+    msg_id:       int,
+    api_key:      str,
+    order_id:     str,
+    number:       str,
+    myn_status:   str         = "REGISTERED",
+    cost:         int | float = 0,
+    attempt:      int         = 1,
+    platform_key: str         = "myntra",
 ) -> None:
     """Start (or restart) the SMS poller for a user. Fire-and-forget."""
     stop_sms_poller(user_id)
     task = asyncio.get_event_loop().create_task(
-        _run_poller(bot, user_id, chat_id, msg_id, api_key, order_id, number, myn_status, cost, attempt)
+        _run_poller(bot, user_id, chat_id, msg_id, api_key, order_id, number, myn_status, cost, attempt, platform_key)
     )
     _sms_pollers[user_id] = task
-    logger.info("[SmsPoller] task created user=%s order=%s", user_id, order_id)
+    logger.info("[SmsPoller] task created user=%s order=%s platform=%s", user_id, order_id, platform_key)
 
 
 def stop_sms_poller(user_id: int) -> None:
@@ -436,6 +443,9 @@ async def restore_pollers(bot: AsyncTeleBot) -> int:
             saved_sms  = entry.get("last_full_sms") or ""
             if saved_otp:
                 _sms_store[order_id] = {"code": saved_otp, "full_sms": saved_sms}
+                pkey = entry.get("platform", "myntra")
+                from utils.platforms import get_platform as _gp
+                _plat = _gp(pkey)
                 try:
                     await bot.edit_message_text(
                         chat_id=entry["chat_id"],
@@ -443,9 +453,10 @@ async def restore_pollers(bot: AsyncTeleBot) -> int:
                         text=build_result_card(
                             entry["number"], myn_status, order_id,
                             entry["attempt"], entry["cost"], saved_otp,
+                            platform=_plat,
                         ),
                         parse_mode="HTML",
-                        reply_markup=_result_markup_no_cancel(order_id),
+                        reply_markup=_result_markup_no_cancel(order_id, pkey),
                     )
                     logger.info(
                         "[SmsPoller] repaired COMPLETED card user=%s order=%s otp=%s",
@@ -461,7 +472,8 @@ async def restore_pollers(bot: AsyncTeleBot) -> int:
         else:
             # REGISTERED / CHECKING — restart active poller
             # Pre-seeding of seen_ids happens inside _run_poller from user_store.
-            logger.info("[SmsPoller] restoring poller user=%s order=%s", uid, order_id)
+            pkey = entry.get("platform", "myntra")
+            logger.info("[SmsPoller] restoring poller user=%s order=%s platform=%s", uid, order_id, pkey)
             start_sms_poller(
                 bot=bot,
                 user_id=uid,
@@ -473,6 +485,7 @@ async def restore_pollers(bot: AsyncTeleBot) -> int:
                 myn_status=myn_status,
                 cost=entry.get("cost", 0),
                 attempt=entry.get("attempt", 1),
+                platform_key=pkey,
             )
             count += 1
 
