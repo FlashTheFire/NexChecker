@@ -1,312 +1,104 @@
-"""NexBot -- Myntra checker.
+"""NexBot — Myntra checker API wrapper.
 
-Uses the EXACT same technique as the working myntra_check.py:
-  - channel="chrome"  (real Google Chrome, not Playwright Chromium)
-  - launch_persistent_context with myntra_bot_profile/
-  - ensure_forgot_page() -> api_call() -> check_with_heal()
-  - Same decide() logic, same HEAL_WAIT
-
-Profile: myntra_bot_profile/  (separate from user's Chrome profile -- no ProcessSingleton)
-Warmup:  warmup.py opens the same profile headed so the user can confirm the page.
+Wraps myntra_check.py into the unified Checker interface:
+  - check_number(mobile) → {"status": "REGISTERED"|"NOT_REGISTERED"|"UNKNOWN"|"ERROR", ...}
+  - startup()  → starts Chrome context via myntra_check.py
+  - shutdown() → closes Chrome context and saves state
+  - is_ready   → True when Chrome page is active
 """
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
-import time
-import uuid
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
-# ── Paths ─────────────────────────────────────────────────────────────────────
+# Resolve myntra_check.py relative to the NexChecker root (parent of NexBot)
 _NEXCHECKER_DIR = Path(__file__).resolve().parent.parent.parent
-STATE_FILE      = _NEXCHECKER_DIR / "myntra_state.json"
-BOT_PROFILE_DIR = _NEXCHECKER_DIR / "myntra_chrome_profile"   # share working profile
 
-HEAL_WAIT      = 3.0   # seconds -- same as myntra_check.py
-HEAL_HOME_WAIT = 5.0   # seconds -- extra wait after homepage reload (Akamai JS solve time)
-
-
-# ── Helpers -- identical to myntra_check.py ───────────────────────────────────
-
-def normalize_mobile(mobile: str) -> str:
-    digits = "".join(c for c in str(mobile) if c.isdigit())
-    return digits[-10:] if len(digits) >= 10 else digits
-
-
-def decide(http_status: int, data: Any) -> str:
-    """Decode Myntra forgetpassword API response into REGISTERED/NOT_REGISTERED/CHALLENGE/UNKNOWN."""
-    if not isinstance(data, dict):
-        return "UNKNOWN"
-
-    # ── Explicit challenge signals ────────────────────────────────────────────
-    if data.get("sec-cp-challenge") or data.get("provider") == "crypto" or http_status == 428:
-        return "CHALLENGE"
-
-    # ── JSON parse failed → body was HTML (CF challenge, bot-detection page) ─
-    # data only contains "raw_text" when JSON.parse() threw — i.e., we got HTML.
-    raw_text = data.get("raw_text", "")
-    if list(data.keys()) == ["raw_text"]:
-        # HTML challenge indicators
-        lower = raw_text.lower()
-        if any(x in lower for x in ("<html", "challenge", "captcha", "cloudflare", "cf-ray",
-                                     "just a moment", "checking your browser", "enable javascript",
-                                     "site maintenance", "oops! something went wrong")):
-            return "CHALLENGE"
-        # Unknown HTML we can't interpret — don't claim REGISTERED
-        return "UNKNOWN"
-
-    # ── Real JSON API response ────────────────────────────────────────────────
-    code = data.get("code")
-    msg  = (data.get("message") or "").lower()
-    if code == 2002 or "does not exist" in msg:
-        return "NOT_REGISTERED"
-    if code == 2030:
-        return "REGISTERED"
-    if http_status == 200:
-        # Real API: 200 with JSON body = OTP sent = user exists
-        # Only safe here because we already ruled out raw_text-only (HTML) responses above
-        return "REGISTERED"
-    if any(x in msg for x in ("email", "password", "otp", "recover")) and "does not exist" not in msg:
-        return "REGISTERED"
-    return "UNKNOWN"
-
-
-async def _open_context(playwright):
-    """Launch persistent Chrome context (real Google Chrome on both Windows & Linux)."""
-    import sys
-    from utils.config import MYNTRA_PROXY
-    is_linux = sys.platform.startswith("linux")
-    BOT_PROFILE_DIR.mkdir(parents=True, exist_ok=True)
-
-    proxy_cfg = {"server": MYNTRA_PROXY} if MYNTRA_PROXY else None
-
-    launch_args = [
-        "--disable-blink-features=AutomationControlled",
-        "--disable-http2",
-    ]
-    if is_linux:
-        launch_args.extend(["--no-sandbox", "--disable-dev-shm-usage"])
-    else:
-        launch_args.append("--window-position=-10000,-10000")  # park off-screen on Windows
-
-    context = await playwright.chromium.launch_persistent_context(
-        user_data_dir=str(BOT_PROFILE_DIR),
-        channel="chrome",   # real Google Chrome on BOTH Windows & Linux
-        headless=is_linux,
-        proxy=proxy_cfg,
-        viewport={"width": 1366, "height": 768},
-        locale="en-IN",
-        timezone_id="Asia/Kolkata",
-        args=launch_args,
-    )
-    page = context.pages[0] if context.pages else await context.new_page()
-    return context, page
-
-
-async def _ensure_forgot_page(page) -> None:
-    """Navigate to /forgot and wait for the page to settle."""
-    try:
-        await page.goto(
-            "https://www.myntra.com/forgot",
-            wait_until="domcontentloaded",
-            timeout=60_000,
-        )
-        await page.wait_for_timeout(2000)
-    except Exception as e:
-        logger.warning("[Myntra] goto warning: %s", e)
-
-
-async def _heal_challenge(page) -> None:
-    """Full Akamai challenge recovery.
-
-    Akamai's crypto provider requires its JS bundle to run on a real page load.
-    Reloading /forgot alone stays on the same 428 edge response.
-    The correct heal path:
-      1. Navigate to homepage  →  Akamai JS executes + fresh sensor/cookie written
-      2. Short wait            →  let the JS challenge complete in the headless tab
-      3. Navigate to /forgot   →  now carries valid Akamai cookies → API responds normally
-    """
-    try:
-        logger.info("[Myntra] Heal: loading homepage to refresh Akamai cookies…")
-        await page.goto(
-            "https://www.myntra.com/",
-            wait_until="domcontentloaded",
-            timeout=60_000,
-        )
-        await page.wait_for_timeout(int(HEAL_HOME_WAIT * 1000))   # let Akamai JS run
-    except Exception as e:
-        logger.warning("[Myntra] Heal homepage goto failed: %s", e)
-    # Now land on /forgot with fresh cookies
-    await _ensure_forgot_page(page)
-
-
-async def _api_call(page, mobile: str) -> Dict[str, Any]:
-    """Exact copy of myntra_check.py api_call() -- fetch inside page."""
-    device_id = str(uuid.uuid4())
-    api = await page.evaluate(
-        """async ({ mobile, deviceId }) => {
-            try {
-                const res = await fetch(
-                    'https://www.myntra.com/gateway/auth/v1/forgetpassword',
-                    {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': '*/*',
-                            'Origin': 'https://www.myntra.com',
-                            'Referer': 'https://www.myntra.com/forgot',
-                            'x-myntraweb': 'Yes',
-                            'x-requested-with': 'browser',
-                            'deviceid': deviceId,
-                            'x-meta-app': 'deviceId=' + deviceId + ';reqChannel=web;channel=web;'
-                        },
-                        body: JSON.stringify({ phoneNumber: mobile })
-                    }
-                );
-                const text = await res.text();
-                let json = null;
-                try { json = JSON.parse(text); } catch (e) {}
-                return { http: res.status, json, text: text.slice(0, 500) };
-            } catch (e) {
-                return { error: e.toString() };
-            }
-        }""",
-        {"mobile": mobile, "deviceId": device_id},
-    )
-
-    if not api or api.get("error"):
-        return {
-            "status": "ERROR",
-            "mobile": mobile,
-            "error": (api or {}).get("error", "empty"),
-        }
-
-    data        = api.get("json") or {"raw_text": api.get("text", "")}
-    http_status = api.get("http") or 0
-    status      = decide(http_status, data if isinstance(data, dict) else {})
-
-    # Log raw response for debugging — critical for catching CF/HTML responses on AWS
-    logger.debug(
-        "[Myntra] mobile=%s http=%s status=%s raw_keys=%s snippet=%.120s",
-        mobile, http_status, status, list(data.keys()) if isinstance(data, dict) else "?",
-        str(data),
-    )
-    if status == "CHALLENGE":
-        logger.warning(
-            "[Myntra] CHALLENGE on mobile=%s http=%s raw=%.200s",
-            mobile, http_status, str(data),
-        )
-
-    return {
-        "status": status,
-        "mobile": mobile,
-        "http":   http_status,
-        "raw":    data,
-        "via":    "playwright",
-    }
-
-
-async def _check_with_heal(page, mobile: str, max_heal: int = 3) -> Dict[str, Any]:
-    """API call with Akamai challenge auto-recovery.
-
-    Heal strategy per attempt:
-      attempt 1 → normal /forgot reload (fast path, handles transient 428s)
-      attempt 2+ → full homepage reload to re-seed Akamai cookies (proper fix)
-    """
-    last = None
-    for attempt in range(1, max_heal + 1):
-        r    = await _api_call(page, mobile)
-        last = r
-        if r.get("status") in ("REGISTERED", "NOT_REGISTERED"):
-            return r
-        if r.get("status") == "CHALLENGE":
-            if attempt == 1:
-                # Fast-path: simple /forgot reload (works for transient edge hiccups)
-                logger.info("[Myntra] CHALLENGE heal %d/%d -- reload /forgot", attempt, max_heal)
-                await _ensure_forgot_page(page)
-                await page.wait_for_timeout(int(HEAL_WAIT * 1000))
-            else:
-                # Full heal: homepage → fresh Akamai cookies → /forgot
-                logger.info("[Myntra] CHALLENGE heal %d/%d -- full homepage reload", attempt, max_heal)
-                await _heal_challenge(page)
-            continue
-        if r.get("status") == "ERROR":
-            await _ensure_forgot_page(page)
-            await page.wait_for_timeout(1500)
-            continue
-        break
-    return last or {"status": "ERROR", "mobile": mobile, "error": "no result"}
-
-
-# ── Bot singleton -- ONE persistent Chrome context for the whole session ───────
 
 class MyntraChecker:
-    """Manages ONE persistent Chrome context -- same as myntra_check.py run_bulk()."""
+    """Manages Myntra registration checks.
+
+    Delegates to check_myntra() in myntra_check.py.
+    """
 
     def __init__(self) -> None:
-        self._playwright = None
-        self._context    = None
-        self._page       = None
-        self._lock       = asyncio.Lock()
-        self._ready      = False
+        self._lock  = asyncio.Lock()
+        self._ready = False
+
+    # ── Lifecycle ─────────────────────────────────────────────────────────────
 
     async def startup(self) -> None:
-        """Open real Chrome context + navigate to /forgot. Same as run_bulk() init."""
-        if self._ready:
-            return
-        logger.info("[Myntra] Starting Chrome context (headless, myntra_bot_profile)...")
+        """Launch real Chrome context via myntra_check."""
         try:
-            from playwright.async_api import async_playwright
-            self._playwright = await async_playwright().start()
-            self._context, self._page = await _open_context(self._playwright)
-            await _ensure_forgot_page(self._page)   # same as run_bulk()
-            self._ready = True
-            logger.info("[Myntra] Ready -- %s", BOT_PROFILE_DIR.name)
+            import sys
+            root_str = str(_NEXCHECKER_DIR)
+            if root_str not in sys.path:
+                sys.path.insert(0, root_str)
+            from utils.config import PROXY
+            import myntra_check
+
+            is_linux = sys.platform.startswith("linux")
+            await myntra_check.myntra_checker.startup(headless=is_linux, proxy=PROXY)
+            self._ready = myntra_check.myntra_checker.is_ready
+            logger.info("[Myntra] Ready — Chrome profile active via myntra_check")
         except Exception as exc:
-            logger.error("[Myntra] Failed to start: %s", exc)
+            logger.error("[Myntra] Failed to start Chrome: %s", exc)
             self._ready = False
 
     async def shutdown(self) -> None:
-        """Persist cookies and close -- same as run_bulk() teardown."""
-        if self._context:
-            try:
-                await self._context.storage_state(path=str(STATE_FILE))
-                logger.info("[Myntra] State saved -> %s", STATE_FILE.name)
-            except Exception as exc:
-                logger.warning("[Myntra] Could not save state: %s", exc)
-            try:
-                await self._context.close()
-            except Exception:
-                pass
-        if self._playwright:
-            try:
-                await self._playwright.stop()
-            except Exception:
-                pass
+        """Close Chrome context and persist state."""
+        try:
+            import sys
+            root_str = str(_NEXCHECKER_DIR)
+            if root_str not in sys.path:
+                sys.path.insert(0, root_str)
+            import myntra_check
+
+            await myntra_check.myntra_checker.shutdown()
+        except Exception as exc:
+            logger.warning("[Myntra] shutdown warning: %s", exc)
         self._ready = False
 
+    # ── Check ─────────────────────────────────────────────────────────────────
+
     async def check_number(self, mobile: str) -> Dict[str, Any]:
-        """Check mobile. asyncio.Lock -- one check at a time (page is not concurrent-safe)."""
-        if not self._ready or self._page is None:
-            return {
-                "status": "ERROR",
-                "mobile": mobile,
-                "http":   0,
-                "raw":    {},
-                "error":  "Chrome not ready -- run warmup.py first",
-            }
+        """Check a single mobile number against Myntra.
+
+        Returns a dict with at minimum:
+          {"status": "REGISTERED" | "NOT_REGISTERED" | "UNKNOWN" | "ERROR"}
+        """
         async with self._lock:
-            return await _check_with_heal(self._page, mobile)
+            try:
+                import sys
+                root_str = str(_NEXCHECKER_DIR)
+                if root_str not in sys.path:
+                    sys.path.insert(0, root_str)
+                from myntra_check import check_myntra  # type: ignore
+
+                result = await check_myntra(mobile)
+                return result
+            except Exception as exc:
+                logger.error("[Myntra] check_number error: %s", exc)
+                return {"status": "ERROR", "mobile": mobile, "error": str(exc)}
 
     async def reload_page(self) -> None:
-        if self._ready and self._page:
-            async with self._lock:
-                await _ensure_forgot_page(self._page)
+        """Reload /forgot page if needed."""
+        try:
+            import sys
+            root_str = str(_NEXCHECKER_DIR)
+            if root_str not in sys.path:
+                sys.path.insert(0, root_str)
+            import myntra_check
+
+            await myntra_check.myntra_checker.reload_page()
+        except Exception as exc:
+            logger.warning("[Myntra] reload_page error: %s", exc)
+
+    # ── Properties ────────────────────────────────────────────────────────────
 
     @property
     def is_ready(self) -> bool:
