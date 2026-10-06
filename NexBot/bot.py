@@ -1,4 +1,8 @@
 """NexBot — Entry point.
+
+To add a new platform: just add a PlatformDef to utils/platforms.py.
+bot.py loops over PLATFORMS automatically — zero manual wiring needed.
+
 Run:  python bot.py
 """
 import asyncio
@@ -7,17 +11,18 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+NEXCHECKER_ROOT = ROOT.parent   # D:/Nex-Projects/NexChecker  (for bigbasket_check.py, etc.)
+for p in (str(ROOT), str(NEXCHECKER_ROOT)):
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 from telebot.async_telebot import AsyncTeleBot
 from telebot.types import BotCommand
 
 from utils.config import BOT_TOKEN
 from core.nexnum_api import nexnum_client
-from core.myntra_api import myntra_checker
 from handlers.start import StartHandler
-from handlers.myntra_checker import MyntraCheckerHandler, _active_sessions, _session_tasks
+from handlers.checker import CheckerHandler
 from handlers.callbacks import CallbackHandler
 
 logging.basicConfig(
@@ -27,27 +32,48 @@ logging.basicConfig(
 )
 logger = logging.getLogger("NexBot")
 
-# ── Bot + handler instances ───────────────────────────────────────────────────
-bot        = AsyncTeleBot(BOT_TOKEN, parse_mode="HTML")
+# ── Bot instance ──────────────────────────────────────────────────────────────
+bot = AsyncTeleBot(BOT_TOKEN, parse_mode="HTML")
+
+# ── Platform registry + one CheckerHandler per platform ──────────────────────
+from utils.platforms import get_platforms
+PLATFORMS = get_platforms()
+
+checkers: dict[str, CheckerHandler] = {
+    key: CheckerHandler(bot, platform)
+    for key, platform in PLATFORMS.items()
+}
+
+# ── Handler instances ─────────────────────────────────────────────────────────
 start_hdlr = StartHandler(bot)
-checker    = MyntraCheckerHandler(bot)
-cb_hdlr    = CallbackHandler(bot, checker, start_hdlr=start_hdlr)
+cb_hdlr    = CallbackHandler(bot, checkers, start_hdlr=start_hdlr)
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Command handlers
+# Command handlers — one per platform + shared commands
 # ─────────────────────────────────────────────────────────────────────────────
 
 @bot.message_handler(commands=["start"])
-async def cmd_start(msg):   await start_hdlr.handle_start(msg)
-
-@bot.message_handler(commands=["myntra"])
-async def cmd_myntra(msg):  await checker.handle_myntra_command(msg)
+async def cmd_start(msg):
+    await start_hdlr.handle_start(msg)
 
 @bot.message_handler(commands=["mystats"])
-async def cmd_stats(msg):   await start_hdlr.handle_mystats(msg)
+async def cmd_stats(msg):
+    await start_hdlr.handle_mystats(msg)
 
 @bot.message_handler(commands=["help"])
-async def cmd_help(msg):    await start_hdlr.handle_help(msg)
+async def cmd_help(msg):
+    await start_hdlr.handle_help(msg)
+
+# Dynamically register /<platform> commands from the registry
+def _make_platform_handler(checker: CheckerHandler):
+    async def _handler(msg):
+        await checker.handle_command(msg)
+    return _handler
+
+for _key, _checker in checkers.items():
+    bot.message_handler(commands=[_checker.platform.command])(
+        _make_platform_handler(_checker)
+    )
 
 
 # ── Intercept API key input (any plain text while waiting for key) ─────────────
@@ -55,51 +81,59 @@ async def cmd_help(msg):    await start_hdlr.handle_help(msg)
 async def catch_text(msg):
     await start_hdlr.handle_text_message(msg)
 
+
 # ─────────────────────────────────────────────────────────────────────────────
-# Callback dispatcher
+# Callback dispatcher — handles both nex: (new) and myntra_ (legacy)
 # ─────────────────────────────────────────────────────────────────────────────
 
-@bot.callback_query_handler(func=lambda c: c.data.startswith("myntra_"))
-async def cb_myntra(call):
+@bot.callback_query_handler(func=lambda c: (
+    c.data.startswith("nex:") or
+    c.data.startswith("myntra_") or
+    c.data.startswith("sms_copy_")
+))
+async def cb_dispatch(call):
     await cb_hdlr.dispatch(call)
 
-
-@bot.callback_query_handler(func=lambda c: c.data.startswith("sms_copy_"))
-async def cb_sms_copy(call):
-    await cb_hdlr.dispatch(call)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Startup / shutdown
 # ─────────────────────────────────────────────────────────────────────────────
 
 async def set_commands() -> None:
-    await bot.set_my_commands([
+    """Register all platform commands + shared commands with Telegram."""
+    commands = [
         BotCommand("start",   "Start the bot / main menu"),
-        BotCommand("myntra",  "Start Myntra registration checker"),
         BotCommand("mystats", "View your check statistics"),
         BotCommand("help",    "Show help & usage"),
-    ])
+    ]
+    for platform in PLATFORMS.values():
+        commands.append(BotCommand(platform.command, platform.description))
+    await bot.set_my_commands(commands)
 
 
 async def on_shutdown() -> None:
     """Graceful shutdown — cancel tasks, close sessions, save state."""
     logger.info("⏹  Shutting down NexBot…")
 
-    # 1. Stop Telegram polling so no new updates arrive
+    # 1. Stop Telegram polling
     try:
         await bot.close_session()
     except Exception:
         pass
 
-    # 2. Cancel all active checker session tasks
-    logger.info("Cancelling %d active session(s)…", len(_session_tasks))
-    for uid, task in list(_session_tasks.items()):
-        if task and not task.done():
-            task.cancel()
-    if _session_tasks:
-        await asyncio.gather(*_session_tasks.values(), return_exceptions=True)
-    _active_sessions.clear()
-    _session_tasks.clear()
+    # 2. Cancel all active checker session tasks (across ALL platforms)
+    total_tasks = 0
+    for key, checker in checkers.items():
+        for uid, task in list(checker.session_tasks.items()):
+            if task and not task.done():
+                task.cancel()
+                total_tasks += 1
+        if checker.session_tasks:
+            await asyncio.gather(*checker.session_tasks.values(), return_exceptions=True)
+        checker.active_sessions.clear()
+        checker.session_tasks.clear()
+    if total_tasks:
+        logger.info("Cancelled %d active session task(s)", total_tasks)
 
     # 3. Cancel all SMS pollers
     try:
@@ -113,11 +147,15 @@ async def on_shutdown() -> None:
     except Exception:
         pass
 
-    # 4. Close aiohttp session (fixes "Unclosed client session" warning)
+    # 4. Close aiohttp session
     await nexnum_client.close()
 
-    # 5. Save Playwright state + close Chrome
-    await myntra_checker.shutdown()
+    # 5. Shutdown all platform checkers (save Playwright state, close Chrome, etc.)
+    for key, platform in PLATFORMS.items():
+        try:
+            await platform.checker.shutdown()
+        except Exception as exc:
+            logger.warning("Shutdown error for %s: %s", key, exc)
 
     logger.info("✅ NexBot stopped cleanly.")
 
@@ -131,10 +169,18 @@ async def main() -> None:
     logger.info("✅ Bot started: @%s", me.username)
 
     await set_commands()
-    await checker.startup()   # starts cancel worker
 
-    asyncio.create_task(myntra_checker.startup(), name="myntra_startup")
-    logger.info("Playwright startup running in background...")
+    # Start cancel worker (shared across all platforms — only one needed)
+    await next(iter(checkers.values())).startup()
+
+    # Start all platform checkers that need warmup (e.g. Myntra Chrome context)
+    # Non-warmup platforms (BigBasket) just do a state file check
+    for key, platform in PLATFORMS.items():
+        if platform.needs_warmup:
+            asyncio.create_task(platform.checker.startup(), name=f"{key}_startup")
+            logger.info("Playwright startup running in background... (%s)", key)
+        else:
+            asyncio.create_task(platform.checker.startup(), name=f"{key}_startup")
 
     # Restore SMS pollers for any active orders from the previous session
     from core.sms_poller import restore_pollers

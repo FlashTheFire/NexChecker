@@ -68,16 +68,13 @@ class StartHandler:
         parts   = message.text.strip().split(maxsplit=1)
 
         if len(parts) >= 2 and parts[1].strip():
-            # Inline: /setkey nxn_xxx — validate + save immediately
             api_key = parts[1].strip()
-            # Try to delete the command message (contains the key)
             try:
                 await self.bot.delete_message(chat_id, message.message_id)
             except Exception:
                 pass
             await self._validate_and_save(user_id, chat_id, api_key, reply_to=None)
         else:
-            # No key given — show the interactive prompt
             await self._show_key_prompt(user_id, chat_id)
 
     # ── Key prompt screen ─────────────────────────────────────────────────────
@@ -87,7 +84,7 @@ class StartHandler:
         Edits the existing message to the prompt screen.
         """
         kb = InlineKeyboardMarkup()
-        kb.add(InlineKeyboardButton(f"❌  {sc('Cancel')}", callback_data="myntra_setkey_cancel"))
+        kb.add(InlineKeyboardButton(f"❌  {sc('Cancel')}", callback_data="nex:setkey_cancel:global"))
 
         prompt_text = (
             f"<blockquote><b>🔑 {sc('Set Api Key')}</b></blockquote>\n\n"
@@ -100,15 +97,11 @@ class StartHandler:
 
         try:
             await self.bot.edit_message_text(
-                chat_id=chat_id,
-                message_id=msg_id,
-                text=prompt_text,
-                reply_markup=kb,
-                parse_mode="HTML",
+                chat_id=chat_id, message_id=msg_id,
+                text=prompt_text, reply_markup=kb, parse_mode="HTML",
             )
         except Exception:
-            # Fallback: send new
-            sent = await self.bot.send_message(chat_id, prompt_text, reply_markup=kb, parse_mode="HTML")
+            sent   = await self.bot.send_message(chat_id, prompt_text, reply_markup=kb, parse_mode="HTML")
             msg_id = sent.message_id
 
         _waiting_key[user_id] = msg_id
@@ -116,7 +109,7 @@ class StartHandler:
     async def _show_key_prompt(self, user_id: int, chat_id: int) -> None:
         """Send a fresh key prompt message (for /setkey with no args)."""
         kb = InlineKeyboardMarkup()
-        kb.add(InlineKeyboardButton(f"❌  {sc('Cancel')}", callback_data="myntra_setkey_cancel"))
+        kb.add(InlineKeyboardButton(f"❌  {sc('Cancel')}", callback_data="nex:setkey_cancel:global"))
 
         sent = await self.bot.send_message(
             chat_id,
@@ -142,30 +135,25 @@ class StartHandler:
         chat_id = message.chat.id
         text    = (message.text or "").strip()
 
-        # Not waiting for a key from this user
         if user_id not in _waiting_key:
             return False
 
         prompt_msg_id = _waiting_key[user_id]
 
-        # Always delete the user's message immediately (contains sensitive key)
         try:
             await self.bot.delete_message(chat_id, message.message_id)
         except Exception:
             pass
 
         if _NEXNUM_KEY_RE.match(text):
-            # Valid key format — validate + save
             del _waiting_key[user_id]
             await self._validate_and_save(user_id, chat_id, text, reply_to=prompt_msg_id)
         else:
-            # Wrong format — re-show error on the prompt message
             kb = InlineKeyboardMarkup()
-            kb.add(InlineKeyboardButton(f"❌  {sc('Cancel')}", callback_data="myntra_setkey_cancel"))
+            kb.add(InlineKeyboardButton(f"❌  {sc('Cancel')}", callback_data="nex:setkey_cancel:global"))
             try:
                 await self.bot.edit_message_text(
-                    chat_id=chat_id,
-                    message_id=prompt_msg_id,
+                    chat_id=chat_id, message_id=prompt_msg_id,
                     text=(
                         f"<blockquote><b>🔑 {sc('Set Api Key')}</b></blockquote>\n\n"
                         f"⚠️  <b>{sc('Invalid Key Format.')}</b>\n"
@@ -173,8 +161,7 @@ class StartHandler:
                         f"📨  {sc('Please Send Your Key Again')}:\n\n"
                         f"<code>nxn_live_xxxxxxxxxxxxxxxxxxxxxxx</code>"
                     ),
-                    reply_markup=kb,
-                    parse_mode="HTML",
+                    reply_markup=kb, parse_mode="HTML",
                 )
             except Exception:
                 pass
@@ -184,21 +171,9 @@ class StartHandler:
     # ── Validate + save key ───────────────────────────────────────────────────
 
     async def _validate_and_save(
-        self,
-        user_id:  int,
-        chat_id:  int,
-        api_key:  str,
-        reply_to: int | None,
+        self, user_id: int, chat_id: int, api_key: str, reply_to: int | None,
     ) -> None:
-        """Validate key with NexNum, save on success, show result.
-
-        If reply_to is a message_id, edit that message.
-        Otherwise send a new one.
-        """
-        # Show "validating" in the prompt message
         validating_text = f"⏳  <b>{sc('Validating Api Key…')}</b>"
-        kb_cancel       = InlineKeyboardMarkup()
-        kb_cancel.add(InlineKeyboardButton(f"❌ {sc('Cancel')}", callback_data="myntra_setkey_cancel"))
 
         if reply_to:
             try:
@@ -213,54 +188,39 @@ class StartHandler:
             sent     = await self.bot.send_message(chat_id, validating_text, parse_mode="HTML")
             reply_to = sent.message_id
 
-        # Call NexNum
         bal = await nexnum_client.get_balance(api_key)
 
         if not bal["ok"]:
-            # Invalid key
             kb = InlineKeyboardMarkup()
-            kb.add(InlineKeyboardButton(f"🔑  {sc('Try Again')}", callback_data="myntra_setkey_prompt"))
+            kb.add(InlineKeyboardButton(f"🔑  {sc('Try Again')}", callback_data="nex:setkey_prompt:global"))
             try:
                 await self.bot.edit_message_text(
-                    chat_id=chat_id,
-                    message_id=reply_to,
+                    chat_id=chat_id, message_id=reply_to,
                     text=(
                         f"❌  <b>{sc('Invalid Api Key')}</b>\n\n"
                         f"<blockquote>{sc('NexNum Rejected This Key.')}\n"
                         f"<code>{bal.get('error', 'Unknown error')}</code></blockquote>"
                     ),
-                    reply_markup=kb,
-                    parse_mode="HTML",
+                    reply_markup=kb, parse_mode="HTML",
                 )
             except Exception:
                 pass
             return
 
-        # Save to store
         await user_store.set_api_key(user_id, api_key)
 
-        # Success screen
-        kb = InlineKeyboardMarkup(row_width=2)
-        kb.add(InlineKeyboardButton(
-            f"📦 {sc('Start Myntra Checker')}", callback_data="myntra_open"
-        ))
-        kb.row(
-            InlineKeyboardButton(f"📊 {sc('My Stats')}",  callback_data="myntra_stats_card"),
-            InlineKeyboardButton(f"🗑 {sc('Del Key')}",   callback_data="myntra_delkey_prompt"),
-        )
-
+        # Success — show home screen with all platform buttons
+        kb = _home_markup(True)
         try:
             await self.bot.edit_message_text(
-                chat_id=chat_id,
-                message_id=reply_to,
+                chat_id=chat_id, message_id=reply_to,
                 text=(
                     f"<blockquote><b>✅ {sc('Api Key Saved!')}</b></blockquote>\n\n"
                     f"💎  <b>{sc('Balance')}:</b>  <code>{format_balance(bal['balance'])}</code>\n\n"
                     f"<blockquote>🔒 {sc('Your Key Is Stored Securely.')}\n"
                     f"{sc('Tap Below To Start Checking.')}</blockquote>"
                 ),
-                reply_markup=kb,
-                parse_mode="HTML",
+                reply_markup=kb, parse_mode="HTML",
             )
         except Exception:
             pass
@@ -268,7 +228,6 @@ class StartHandler:
     # ── Cancel key prompt (button callback) ───────────────────────────────────
 
     async def cancel_key_prompt(self, user_id: int, chat_id: int, msg_id: int) -> None:
-        """Called from CallbackHandler on 'myntra_setkey_cancel'."""
         _waiting_key.pop(user_id, None)
         api_key = await user_store.get_api_key(user_id)
 
@@ -280,8 +239,7 @@ class StartHandler:
 
         try:
             await self.bot.edit_message_text(
-                chat_id=chat_id,
-                message_id=msg_id,
+                chat_id=chat_id, message_id=msg_id,
                 text=build_welcome_msg(bool(api_key), balance),
                 reply_markup=_home_markup(bool(api_key)),
                 parse_mode="HTML",
@@ -321,21 +279,29 @@ class StartHandler:
     # ── /help ─────────────────────────────────────────────────────────────────
 
     async def handle_help(self, message: Message) -> None:
+        from utils.platforms import get_platforms
+        platforms = get_platforms()
+        platform_lines = "\n".join(
+            f"  {p.icon}  <b>/{p.command}</b>  —  {p.description}"
+            for p in platforms.values()
+        )
         await self.bot.send_message(
             message.chat.id,
             (
                 f"<b>🤖 {sc('NexChecker Help')}</b>\n\n"
+                f"<b>{sc('Platforms')}:</b>\n"
+                f"<blockquote>{platform_lines}</blockquote>\n\n"
                 f"<b>{sc('How It Works')}:</b>\n"
                 f"<blockquote>"
                 f"1. {sc('Tap')} <b>🔑 {sc('Set Key')}</b> {sc('From The Main Menu')}\n"
                 f"2. {sc('Send Your NexNum Key — It Is Deleted Automatically')}\n"
-                f"3. {sc('Tap')} <b>📦 {sc('Myntra Checker')}</b> {sc('And Pick A Filter')}\n"
-                f"4. {sc('Bot Buys A')} <code>nl</code> {sc('Number + Hits Myntra Api')}\n"
+                f"3. {sc('Pick A Platform And Choose A Filter')}\n"
+                f"4. {sc('Bot Buys A Virtual Number + Hits The Platform Api')}\n"
                 f"5. {sc('Auto-Loops Until Your Filter Matches')}\n"
                 f"6. {sc('Result Card Shows With Action Buttons')}"
                 f"</blockquote>\n\n"
                 f"<b>{sc('Filters')}:</b>\n"
-                f"✅  {sc('Registered')}  —  {sc('Find A Registered Myntra Account')}\n"
+                f"✅  {sc('Registered')}  —  {sc('Find A Registered Account')}\n"
                 f"🛑  {sc('Not Registered')}  —  {sc('Find A Fresh Number')}\n"
                 f"📊  {sc('Any')}  —  {sc('Show First Result Regardless')}\n\n"
                 f"<b>{sc('Result Card Buttons')}:</b>\n"
@@ -347,16 +313,26 @@ class StartHandler:
         )
 
 
-# ── Home markup (module-level helper) ─────────────────────────────────────────
+# ── Home markup (dynamic — one button per registered platform) ────────────────
 
 def _home_markup(has_key: bool) -> InlineKeyboardMarkup:
+    """Build main menu. Dynamically shows one button per platform."""
     kb = InlineKeyboardMarkup(row_width=1)
     if has_key:
-        kb.add(InlineKeyboardButton(f"📦  {sc('Myntra Checker')}", callback_data="myntra_open"))
+        try:
+            from utils.platforms import get_platforms
+            for p in get_platforms().values():
+                kb.add(InlineKeyboardButton(
+                    f"{p.icon}  {sc(p.label + ' Checker')}",
+                    callback_data=f"nex:open:{p.key}",
+                ))
+        except Exception:
+            # Fallback if platform registry not yet built
+            kb.add(InlineKeyboardButton(f"📦  {sc('Myntra Checker')}", callback_data="nex:open:myntra"))
         kb.row(
-            InlineKeyboardButton(f"📊  {sc('My Stats')}",  callback_data="myntra_stats_card"),
-            InlineKeyboardButton(f"🗑  {sc('Del Key')}",   callback_data="myntra_delkey_prompt"),
+            InlineKeyboardButton(f"📊  {sc('My Stats')}",  callback_data="nex:stats_card:myntra"),
+            InlineKeyboardButton(f"🗑  {sc('Del Key')}",   callback_data="nex:delkey_prompt:myntra"),
         )
     else:
-        kb.add(InlineKeyboardButton(f"🔑  {sc('Set Api Key')}", callback_data="myntra_setkey_prompt"))
+        kb.add(InlineKeyboardButton(f"🔑  {sc('Set Api Key')}", callback_data="nex:setkey_prompt:global"))
     return kb
