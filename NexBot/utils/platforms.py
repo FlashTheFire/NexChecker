@@ -36,7 +36,9 @@ def _build_platforms() -> dict[str, PlatformDef]:
     from core.myntra_api import myntra_checker
     from core.bigbasket_api import bigbasket_checker
     from core.flipkart_api import flipkart_checker
-    from utils.config import BB_SERVICE_CODE, FK_SERVICE_CODE
+    from utils.config import (
+        BIGBASKET_SERVICE_CODE, FLIPKART_SERVICE_CODE, MYNTRA_SERVICE_CODE
+    )
 
     return {
         "myntra": PlatformDef(
@@ -44,7 +46,7 @@ def _build_platforms() -> dict[str, PlatformDef]:
             label        = "Myntra",
             icon         = "📦",
             flag         = "🇮🇳",
-            service_code = "nl",
+            service_code = MYNTRA_SERVICE_CODE,
             country_code = "22",
             command      = "myntra",
             description  = "Myntra registration checker",
@@ -56,7 +58,7 @@ def _build_platforms() -> dict[str, PlatformDef]:
             label        = "BigBasket",
             icon         = "🛒",
             flag         = "🇮🇳",
-            service_code = BB_SERVICE_CODE,
+            service_code = BIGBASKET_SERVICE_CODE,
             country_code = "22",
             command      = "bigbasket",
             description  = "BigBasket registration checker",
@@ -68,7 +70,7 @@ def _build_platforms() -> dict[str, PlatformDef]:
             label        = "Flipkart",
             icon         = "🛍",
             flag         = "🇮🇳",
-            service_code = FK_SERVICE_CODE,
+            service_code = FLIPKART_SERVICE_CODE,
             country_code = "22",
             command      = "flipkart",
             description  = "Flipkart registration checker",
