@@ -21,6 +21,9 @@ COUNTRY_CODE:    str  = "22"    # India
 # BigBasket service code — override via BB_SERVICE_CODE env var if needed
 BB_SERVICE_CODE: str  = os.getenv("BB_SERVICE_CODE", "bb")
 
+# Flipkart service code — override via FK_SERVICE_CODE env var if needed (default "fk")
+FK_SERVICE_CODE: str  = os.getenv("FK_SERVICE_CODE", "fk")
+
 # ── Myntra API & Proxy ────────────────────────────────────────────────────────
 MYNTRA_PROXY:    str = os.getenv("MYNTRA_PROXY", "")  # e.g. "http://user:pass@host:port"
 
