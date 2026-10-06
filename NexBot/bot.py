@@ -111,17 +111,45 @@ async def set_commands() -> None:
     await bot.set_my_commands(commands)
 
 
+_startup_tasks: list[asyncio.Task] = []
+_shutdown_done:  bool               = False
+
+
 async def on_shutdown() -> None:
-    """Graceful shutdown — cancel tasks, close sessions, save state."""
+    """Graceful shutdown — cancel tasks, close sessions, save state cleanly."""
+    global _shutdown_done
+    if _shutdown_done:
+        return
+    _shutdown_done = True
+
     logger.info("⏹  Shutting down NexBot…")
 
-    # 1. Stop Telegram polling
+    # 1. Stop Telegram polling & session
+    try:
+        bot.stop_polling()
+    except Exception:
+        pass
     try:
         await bot.close_session()
     except Exception:
         pass
 
-    # 2. Cancel all active checker session tasks (across ALL platforms)
+    # 2. Stop cancel worker
+    try:
+        from handlers.checker import stop_cancel_worker
+        await stop_cancel_worker()
+    except Exception:
+        pass
+
+    # 3. Cancel any pending startup background tasks
+    for t in _startup_tasks:
+        if t and not t.done():
+            t.cancel()
+    if _startup_tasks:
+        await asyncio.gather(*_startup_tasks, return_exceptions=True)
+    _startup_tasks.clear()
+
+    # 4. Cancel all active checker session tasks (across ALL platforms)
     total_tasks = 0
     for key, checker in checkers.items():
         for uid, task in list(checker.session_tasks.items()):
@@ -135,7 +163,7 @@ async def on_shutdown() -> None:
     if total_tasks:
         logger.info("Cancelled %d active session task(s)", total_tasks)
 
-    # 3. Cancel all SMS pollers
+    # 5. Cancel all SMS pollers
     try:
         from core.sms_poller import _sms_pollers
         for uid, task in list(_sms_pollers.items()):
@@ -147,15 +175,18 @@ async def on_shutdown() -> None:
     except Exception:
         pass
 
-    # 4. Close aiohttp session
-    await nexnum_client.close()
+    # 6. Close aiohttp session
+    try:
+        await nexnum_client.close()
+    except Exception:
+        pass
 
-    # 5. Shutdown all platform checkers (save Playwright state, close Chrome, etc.)
+    # 7. Shutdown all platform checkers (save Playwright state, close Chrome, etc.)
     for key, platform in PLATFORMS.items():
         try:
             await platform.checker.shutdown()
         except Exception as exc:
-            logger.warning("Shutdown error for %s: %s", key, exc)
+            logger.debug("Shutdown notice for %s: %s", key, exc)
 
     logger.info("✅ NexBot stopped cleanly.")
 
@@ -173,14 +204,12 @@ async def main() -> None:
     # Start cancel worker (shared across all platforms — only one needed)
     await next(iter(checkers.values())).startup()
 
-    # Start all platform checkers that need warmup (e.g. Myntra Chrome context)
-    # Non-warmup platforms (BigBasket) just do a state file check
+    # Start all platform checkers in background
     for key, platform in PLATFORMS.items():
+        t = asyncio.create_task(platform.checker.startup(), name=f"{key}_startup")
+        _startup_tasks.append(t)
         if platform.needs_warmup:
-            asyncio.create_task(platform.checker.startup(), name=f"{key}_startup")
             logger.info("Playwright startup running in background... (%s)", key)
-        else:
-            asyncio.create_task(platform.checker.startup(), name=f"{key}_startup")
 
     # Restore SMS pollers for any active orders from the previous session
     from core.sms_poller import restore_pollers
@@ -191,14 +220,14 @@ async def main() -> None:
     logger.info("Polling started…")
     try:
         await bot.polling(none_stop=True, interval=0, timeout=20, skip_pending=True)
-    except (KeyboardInterrupt, SystemExit):
+    except (KeyboardInterrupt, SystemExit, asyncio.CancelledError):
         pass
     finally:
-        await on_shutdown()
+        await asyncio.shield(on_shutdown())
 
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, SystemExit):
         pass   # suppress "^C" traceback — on_shutdown already ran inside main()
