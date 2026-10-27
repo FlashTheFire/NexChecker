@@ -187,7 +187,7 @@ async def list_platforms():
     """List all supported platforms with metadata."""
     return {
         "platforms": [
-            {"key": "zomato", "label": "Zomato", "icon": "🍽", "status": "active", "service_code": "zo"},
+            {"key": "zomato", "label": "Zomato", "icon": "🍽", "status": "active", "service_code": "dy"},
             {"key": "flipkart", "label": "Flipkart", "icon": "🛍", "status": "active", "service_code": "xt"},
             {"key": "bigbasket", "label": "BigBasket", "icon": "🛒", "status": "active", "service_code": "bb"},
             {"key": "myntra", "label": "Myntra", "icon": "📦", "status": "active", "service_code": "nl"},
@@ -242,15 +242,13 @@ async def check_batch_phones(req: BatchCheckRequest):
 
 
 # ------------------------------------------------------------
-# WebApp Static Files
+# Root Info Endpoint
 # ------------------------------------------------------------
-webapp_dir = PROJECT_ROOT / "webapp"
-if webapp_dir.is_dir():
-    app.mount("/assets", StaticFiles(directory=str(webapp_dir)), name="assets")
-
-    @app.get("/")
-    async def serve_index():
-        index_file = webapp_dir / "index.html"
-        if index_file.is_file():
-            return FileResponse(str(index_file))
-        return {"message": "NexChecker Universal API & Webapp Active"}
+@app.get("/")
+async def root():
+    return {
+        "service": "NexChecker Universal API",
+        "version": "2.0.0",
+        "status": "online",
+        "docs": "/docs",
+    }
