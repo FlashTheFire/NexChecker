@@ -7,9 +7,12 @@ import unittest
 from pathlib import Path
 
 import sys
-NEXBOT_DIR = Path(__file__).resolve().parent.parent / "NexBot"
-if str(NEXBOT_DIR) not in sys.path:
-    sys.path.insert(0, str(NEXBOT_DIR))
+NEXCHECKER_ROOT = Path(__file__).resolve().parent.parent
+NEXBOT_DIR = NEXCHECKER_ROOT / "NexBot"
+CHECKERS_DIR = NEXCHECKER_ROOT / "checkers"
+for p in (str(NEXCHECKER_ROOT), str(NEXBOT_DIR), str(CHECKERS_DIR)):
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 from core import user_store
 

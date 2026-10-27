@@ -57,7 +57,7 @@ class TestZomatoCheckHelpers(unittest.TestCase):
         self.assertEqual(res["status"], "ERROR")
         self.assertIn("Invalid", res.get("error", ""))
 
-    @patch("requests.post")
+    @patch("checkers.zomato_check.requests.post")
     def test_check_zomato_registered(self, mock_post):
         mock_resp = MagicMock()
         mock_resp.status_code = 200
@@ -74,7 +74,7 @@ class TestZomatoCheckHelpers(unittest.TestCase):
         self.assertTrue(res["registered"])
         self.assertEqual(res["recommendations"], 2)
 
-    @patch("requests.post")
+    @patch("checkers.zomato_check.requests.post")
     def test_check_zomato_not_registered(self, mock_post):
         mock_resp = MagicMock()
         mock_resp.status_code = 200

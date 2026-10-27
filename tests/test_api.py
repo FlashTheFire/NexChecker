@@ -7,8 +7,11 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 ROOT = Path(__file__).resolve().parent.parent
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+CHECKERS_ROOT = ROOT / "checkers"
+NEXBOT_ROOT = ROOT / "NexBot"
+for p in (str(ROOT), str(CHECKERS_ROOT), str(NEXBOT_ROOT)):
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 from api.main import app
 

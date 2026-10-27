@@ -7,7 +7,8 @@ import sys
 
 NEXCHECKER_ROOT = Path(__file__).resolve().parent.parent
 NEXBOT_DIR = NEXCHECKER_ROOT / "NexBot"
-for p in (str(NEXCHECKER_ROOT), str(NEXBOT_DIR)):
+CHECKERS_DIR = NEXCHECKER_ROOT / "checkers"
+for p in (str(NEXCHECKER_ROOT), str(NEXBOT_DIR), str(CHECKERS_DIR)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
