@@ -18,7 +18,10 @@ import sys
 import time
 from typing import Any
 
-from foja_client import FojaClient, clean_phone
+try:
+    from checkers.foja_client import FojaClient, clean_phone
+except ImportError:
+    from foja_client import FojaClient, clean_phone
 
 if sys.platform == "win32":
     try:
