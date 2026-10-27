@@ -21,6 +21,33 @@
     } catch (e) { /* non-blocking */ }
   }
 
+  // ── Cryptographic Security & Auth Headers ────────────────────────────────────
+  function getGuestId() {
+    let gid = localStorage.getItem('nex_guest_id');
+    if (!gid) {
+      gid = 'g_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+      localStorage.setItem('nex_guest_id', gid);
+    }
+    return gid;
+  }
+
+  function getAuthHeaders() {
+    const headers = {
+      'Content-Type': 'application/json',
+      'X-Guest-ID': getGuestId(),
+    };
+    if (window.Telegram?.WebApp?.initData) {
+      headers['X-Telegram-Init-Data'] = window.Telegram.WebApp.initData;
+    }
+    return headers;
+  }
+
+  async function apiFetch(url, options = {}) {
+    const defaultHeaders = getAuthHeaders();
+    const mergedHeaders = { ...defaultHeaders, ...(options.headers || {}) };
+    return fetch(url, { ...options, headers: mergedHeaders });
+  }
+
   // ── CDN & Fluent Emoji Utilities ─────────────────────────────────────────────
   const FLUENT_CDN = 'https://cdn.jsdelivr.net/gh/bignutty/fluent-emoji@main/animated-static';
 
@@ -749,9 +776,8 @@
 
   // ── API Call ──────────────────────────────────────────────────────────────────
   async function callCheckAPI(phone, platform) {
-    const resp = await fetch('/api/checker/phone', {
+    const resp = await apiFetch('/api/checker/phone', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone, platform }),
     });
     if (!resp.ok) {
@@ -860,23 +886,54 @@
     saveHistory({ phone, platform: state.activeBrand, brandName: brand.name, registered: isRegistered, fresh: isFresh, time: Date.now() });
   }
 
-  // ── History ───────────────────────────────────────────────────────────────────
+  // ── High-Class Server-Side History ──────────────────────────────────────────
+  let historyFetching = false;
+
+  async function fetchServerHistory() {
+    if (historyFetching) return;
+    historyFetching = true;
+    try {
+      const resp = await apiFetch('/api/history?limit=50');
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data && Array.isArray(data.history)) {
+          state.history = data.history;
+          localStorage.setItem('nex_checker_history', JSON.stringify(data.history.slice(0, 25)));
+        }
+      }
+    } catch (err) {
+      console.warn('Could not load server history:', err);
+    } finally {
+      historyFetching = false;
+      renderHistoryUI();
+    }
+  }
+
   function saveHistory(entry) {
     state.history.unshift(entry);
     if (state.history.length > 50) state.history = state.history.slice(0, 50);
     localStorage.setItem('nex_checker_history', JSON.stringify(state.history));
+    renderHistoryUI();
+    // Synchronize authoritative server history shortly after API completes
+    setTimeout(fetchServerHistory, 400);
   }
 
   function renderHistory() {
+    renderHistoryUI();
+    fetchServerHistory();
+  }
+
+  function renderHistoryUI() {
     const list = el.historyList;
+    if (!list) return;
     list.innerHTML = '';
 
-    if (!state.history.length) {
+    if (!state.history || !state.history.length) {
       list.innerHTML = `
         <div class="history-empty">
           <div class="empty-emoji">📭</div>
           <div class="empty-title">No checks yet</div>
-          <div class="empty-sub">Run a check on the Home tab</div>
+          <div class="empty-sub">Run a check on the Home tab to log history</div>
         </div>`;
       return;
     }
@@ -885,20 +942,27 @@
       const item = document.createElement('div');
       item.className = 'history-item';
       item.dataset.idx = idx;
+      if (entry.id) item.dataset.id = entry.id;
 
-      const brandCfg = BRANDS[entry.platform] || {};
-      const dotColor = brandCfg.primary || '#888';
-      const timeStr  = new Date(entry.time).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
-      const dateStr  = new Date(entry.time).toLocaleDateString('en-IN', { day:'numeric', month:'short' });
+      const pKey = (entry.platform || 'zomato').toLowerCase();
+      const brandCfg = BRANDS[pKey] || {};
+      const dotColor = brandCfg.primary || '#E23744';
+
+      const entryTime = entry.timestamp ? (entry.timestamp * 1000) : (entry.time || Date.now());
+      const timeStr  = new Date(entryTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+      const dateStr  = new Date(entryTime).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+
+      const rawPhone = String(entry.phone || '');
+      const formatted = rawPhone.length === 10 ? rawPhone.replace(/(\d{5})(\d{5})/, '$1 $2') : rawPhone;
 
       const isFresh = entry.fresh === true || entry.registered === false;
 
       item.innerHTML = `
         <div class="hist-brand-dot" style="background:${dotColor};"></div>
-        <div class="hist-phone">${formatted}</div>
+        <div class="hist-phone">+91 ${formatted}</div>
         <div class="hist-meta">
           <span class="hist-status ${isFresh ? 'fresh' : 'registered'}">${isFresh ? '✓ Fresh' : '● Registered'}</span>
-          <span class="hist-platform">${entry.brandName || entry.platform}</span>
+          <span class="hist-platform">${entry.brand_name || entry.brandName || brandCfg.name || pKey}</span>
           <span class="hist-time">${dateStr}, ${timeStr}</span>
         </div>`;
 
@@ -910,12 +974,17 @@
           haptic('impact');
           setTimeout(() => {
             item.classList.remove('shaking');
-            if (confirm('Delete this history entry?')) {
+            if (confirm(`Delete check history for +91 ${formatted}?`)) {
               item.classList.add('deleting');
-              setTimeout(() => {
-                state.history.splice(Number(item.dataset.idx), 1);
+              setTimeout(async () => {
+                if (entry.id) {
+                  try {
+                    await apiFetch(`/api/history/${entry.id}`, { method: 'DELETE' });
+                  } catch (e) {}
+                }
+                state.history = state.history.filter((_, i) => i !== idx);
                 localStorage.setItem('nex_checker_history', JSON.stringify(state.history));
-                renderHistory();
+                renderHistoryUI();
               }, 300);
             }
           }, 400);
@@ -928,12 +997,18 @@
     });
   }
 
-  el.btnHistoryClear.addEventListener('click', () => {
-    if (confirm('Clear all history?')) {
+  el.btnHistoryClear.addEventListener('click', async () => {
+    if (!state.history.length) return;
+    if (confirm('Clear all check history from server?')) {
+      haptic('selection');
+      try {
+        await apiFetch('/api/history/clear', { method: 'POST' });
+      } catch (err) {
+        console.warn('Server history clear failed:', err);
+      }
       state.history = [];
       localStorage.removeItem('nex_checker_history');
-      renderHistory();
-      haptic('selection');
+      renderHistoryUI();
     }
   });
 
