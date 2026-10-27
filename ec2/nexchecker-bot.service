@@ -1,0 +1,22 @@
+[Unit]
+Description=NexChecker Telegram Bot Service
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/NexChecker
+ExecStart=/home/ubuntu/NexChecker/venv/bin/python NexBot/bot.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+EnvironmentFile=/home/ubuntu/NexChecker/.env
+
+# Security sandbox
+ProtectSystem=full
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
