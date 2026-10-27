@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#E23744">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="Zomato Registration & Freshness Checker - Ultra-fast, authoritative 0-OTP phone verification for Zomato, Meesho, Flipkart, BigBasket, and Myntra.">
+  <title>Zomato Checker — 0-OTP Phone Verification</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans & Outfit (Okra/Metropolis Aesthetic) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- ── Sticky Top Header ─────────────────────────────────────────────── -->
+    <header class="app-header">
+      <div class="header-inner">
+        <div class="brand-row">
+          <div class="logo-wrap">
+            <span class="zomato-wordmark">zomato</span>
+            <span class="checker-pill">CHECKER</span>
+          </div>
+          <div class="header-actions">
+            <div class="engine-status" id="engineStatus" title="API Status">
+              <span class="status-pulse"></span>
+              <span class="status-text">LIVE</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="location-row" id="locationSelector">
+          <div class="loc-icon-wrap">
+            <svg class="loc-svg" viewBox="0 0 24 24" fill="#E23744" width="18" height="18">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+          </div>
+          <div class="loc-meta">
+            <div class="loc-subtitle">0-OTP Registration Engine</div>
+            <div class="loc-title">
+              <span id="locAddressText">Delivery to: Setu Nagar, Patna</span>
+              <svg class="chevron-svg" viewBox="0 0 24 24" width="14" height="14" fill="#1C1C1C">
+                <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mode Navigation Tabs -->
+        <nav class="mode-tabs">
+          <button class="mode-tab active" data-tab="single" id="tabSingle">
+            <span class="tab-icon">🎯</span>
+            <span class="tab-label">Single Check</span>
+          </button>
+          <button class="mode-tab" data-tab="batch" id="tabBatch">
+            <span class="tab-icon">⚡</span>
+            <span class="tab-label">Batch Scanner</span>
+          </button>
+          <button class="mode-tab" data-tab="history" id="tabHistory">
+            <span class="tab-icon">📜</span>
+            <span class="tab-label">Recent History</span>
+          </button>
+          <button class="mode-tab" data-tab="engines" id="tabEngines">
+            <span class="tab-icon">⚙️</span>
+            <span class="tab-label">Services</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- ── Main Content Area ─────────────────────────────────────────────── -->
+    <main class="app-main">
+      <!-- ── Platform Carousel (Sushi Chips) ─────────────────────────────── -->
+      <section class="platform-carousel-section">
+        <div class="section-microtitle">SELECT PLATFORM ENGINE</div>
+        <div class="platform-chips" id="platformChips">
+          <button class="platform-chip active" data-platform="zomato">
+            <span class="p-icon">🍔</span>
+            <span class="p-name">Zomato</span>
+            <span class="p-badge">dy</span>
+          </button>
+          <button class="platform-chip" data-platform="meesho">
+            <span class="p-icon">⚡</span>
+            <span class="p-name">Meesho</span>
+            <span class="p-badge">hp</span>
+          </button>
+          <button class="platform-chip" data-platform="flipkart">
+            <span class="p-icon">🛍️</span>
+            <span class="p-name">Flipkart</span>
+            <span class="p-badge">xt</span>
+          </button>
+          <button class="platform-chip" data-platform="bigbasket">
+            <span class="p-icon">🥦</span>
+            <span class="p-name">BigBasket</span>
+            <span class="p-badge">bb</span>
+          </button>
+          <button class="platform-chip" data-platform="myntra">
+            <span class="p-icon">📦</span>
+            <span class="p-name">Myntra</span>
+            <span class="p-badge">nl</span>
+          </button>
+          <button class="platform-chip" data-platform="all">
+            <span class="p-icon">🌐</span>
+            <span class="p-name">All Platforms</span>
+            <span class="p-badge">PRO</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ── TAB 1: Single Verification ──────────────────────────────────── -->
+      <section class="tab-content active" id="contentSingle">
+        <!-- Zomato Restaurant Card Style Hero Banner -->
+        <div class="hero-restaurant-card">
+          <div class="hero-banner-visual">
+            <div class="banner-overlay-top">
+              <span class="rating-pill">★ 4.9 • 1.2M+ Scans</span>
+              <span class="eta-pill">⚡ &lt;450ms</span>
+            </div>
+            <div class="banner-center-text">
+              <div class="banner-title">Instant Silent Check</div>
+              <div class="banner-subtitle">Zero OTP or SMS dispatched to target number</div>
+            </div>
+            <div class="banner-discount-tag">
+              <span class="tag-bold">100% AUTHORITATIVE</span>
+              <span class="tag-sub">Direct platform protocol sync</span>
+            </div>
+          </div>
+
+          <!-- Input Controls Form -->
+          <div class="card-form-body">
+            <div class="input-label-row">
+              <label for="mobileInput" class="form-label">ENTER INDIAN MOBILE NUMBER</label>
+              <div class="quick-helpers">
+                <button type="button" class="text-btn" id="btnPaste">📋 Paste</button>
+                <button type="button" class="text-btn" id="btnClear">✕ Clear</button>
+              </div>
+            </div>
+
+            <div class="phone-input-wrapper">
+              <div class="country-prefix">
+                <span class="flag-icon">🇮🇳</span>
+                <span class="prefix-code">+91</span>
+              </div>
+              <input
+                type="tel"
+                id="mobileInput"
+                class="mobile-input"
+                placeholder="98765 43210"
+                maxlength="14"
+                autocomplete="tel"
+                inputmode="numeric"
+              >
+            </div>
+
+            <!-- Demo Quick Test Numbers -->
+            <div class="quick-demo-row">
+              <span class="demo-label">Quick Test:</span>
+              <button type="button" class="demo-chip demo-registered" id="btnDemoRegistered">
+                🎯 Registered Demo (7631328516)
+              </button>
+              <button type="button" class="demo-chip demo-fresh" id="btnDemoFresh">
+                ✨ Fresh Demo (7005999888)
+              </button>
+            </div>
+
+            <!-- Error message banner -->
+            <div class="error-banner" id="errorBanner" style="display:none;"></div>
+
+            <!-- Primary Action Button -->
+            <button class="zomato-cta-btn" id="btnCheck">
+              <span class="cta-spinner" id="ctaSpinner" style="display:none;"></span>
+              <span class="cta-label" id="ctaLabel">Check Registration • Free</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Scanning Pulse Animation (Visible during active request) -->
+        <div class="scanning-container" id="scanningContainer" style="display:none;">
+          <div class="scanning-radar">
+            <div class="radar-ring ring-1"></div>
+            <div class="radar-ring ring-2"></div>
+            <div class="radar-ring ring-3"></div>
+            <div class="radar-core">🔍</div>
+          </div>
+          <div class="scan-status-text" id="scanStepText">Connecting to Zomato platform engine...</div>
+          <div class="scan-progressbar">
+            <div class="scan-progress-fill"></div>
+          </div>
+        </div>
+
+        <!-- Verification Result Card (Populated after check) -->
+        <div class="result-card" id="resultCard" style="display:none;">
+          <div class="result-header" id="resultHeader">
+            <div class="diet-indicator" id="resultDietIndicator">
+              <!-- Veg (square+dot) or NonVeg (square+triangle) -->
+            </div>
+            <div class="result-header-text">
+              <div class="result-verdict-title" id="resultVerdictTitle">VERDICT READY</div>
+              <div class="result-verdict-subtitle" id="resultVerdictSubtitle">Processed in real-time</div>
+            </div>
+            <div class="result-status-badge" id="resultStatusBadge">REGISTERED</div>
+          </div>
+
+          <!-- Result Details Body -->
+          <div class="result-body">
+            <div class="result-phone-highlight" id="resultPhoneHighlight">+91 00000 00000</div>
+            
+            <div class="result-metrics-grid">
+              <div class="metric-item">
+                <span class="m-label">Platform</span>
+                <span class="m-val" id="resPlatformVal">Zomato</span>
+              </div>
+              <div class="metric-item">
+                <span class="m-label">Status</span>
+                <span class="m-val" id="resStatusVal">Active Account</span>
+              </div>
+              <div class="metric-item">
+                <span class="m-label">OTP Sent</span>
+                <span class="m-val" id="resOtpVal">0 (100% Silent)</span>
+              </div>
+              <div class="metric-item">
+                <span class="m-label">Latency</span>
+                <span class="m-val" id="resLatencyVal">180ms</span>
+              </div>
+            </div>
+
+            <!-- Strategic Advice / Coupon Recommendation -->
+            <div class="result-advice-box" id="resultAdviceBox">
+              <div class="advice-icon" id="adviceIcon">💡</div>
+              <div class="advice-content" id="adviceContent">
+                Active customer detected on this number. Not eligible for first-order coupons.
+              </div>
+            </div>
+
+            <!-- Multi-Platform Result Grid (When 'all' platform is scanned) -->
+            <div class="multi-platform-grid" id="multiPlatformGrid" style="display:none;">
+              <div class="multi-grid-title">All Platforms Overview</div>
+              <div class="multi-grid-items" id="multiGridItems"></div>
+            </div>
+
+            <!-- Result Actions -->
+            <div class="result-actions-row">
+              <button class="res-action-btn primary" id="btnCopyResult">
+                📋 Copy Result
+              </button>
+              <button class="res-action-btn secondary" id="btnShareTelegram">
+                ✈️ Share in Bot
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── TAB 2: Batch Verification ───────────────────────────────────── -->
+      <section class="tab-content" id="contentBatch" style="display:none;">
+        <div class="batch-card">
+          <div class="batch-header">
+            <div class="batch-title">Bulk Number Verification</div>
+            <div class="batch-desc">Paste up to 50 phone numbers (one per line, comma or space separated)</div>
+          </div>
+
+          <div class="batch-input-wrap">
+            <textarea
+              id="batchInput"
+              class="batch-textarea"
+              placeholder="7631328516&#10;7005999888&#10;9876543210&#10;..."
+              rows="6"
+            ></textarea>
+            <div class="batch-toolbar">
+              <button type="button" class="text-btn" id="btnPasteBatch">📋 Paste List</button>
+              <button type="button" class="text-btn" id="btnClearBatch">✕ Clear</button>
+              <span class="batch-counter" id="batchCounter">0 numbers</span>
+            </div>
+          </div>
+
+          <button class="zomato-cta-btn" id="btnStartBatch">
+            <span class="cta-label">Start Batch Verification</span>
+          </button>
+
+          <!-- Batch Progress -->
+          <div class="batch-progress-box" id="batchProgressBox" style="display:none;">
+            <div class="batch-progress-labels">
+              <span id="batchProgressText">Processing batch...</span>
+              <span id="batchProgressPercent">0%</span>
+            </div>
+            <div class="batch-progress-bar">
+              <div class="batch-progress-fill" id="batchProgressFill" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <!-- Batch Metrics & Filter -->
+          <div class="batch-summary-panel" id="batchSummaryPanel" style="display:none;">
+            <div class="summary-stats-row">
+              <div class="stat-pill total">
+                <span class="s-val" id="batchTotalCount">0</span>
+                <span class="s-lbl">Total</span>
+              </div>
+              <div class="stat-pill fresh">
+                <span class="s-val" id="batchFreshCount">0</span>
+                <span class="s-lbl">Fresh</span>
+              </div>
+              <div class="stat-pill reg">
+                <span class="s-val" id="batchRegCount">0</span>
+                <span class="s-lbl">Registered</span>
+              </div>
+              <div class="stat-pill err">
+                <span class="s-val" id="batchErrCount">0</span>
+                <span class="s-lbl">Errors</span>
+              </div>
+            </div>
+
+            <!-- Filter Controls -->
+            <div class="batch-filter-bar">
+              <button class="filter-chip active" data-filter="all">All (<span id="fAllCount">0</span>)</button>
+              <button class="filter-chip" data-filter="fresh">Fresh Only (<span id="fFreshCount">0</span>)</button>
+              <button class="filter-chip" data-filter="registered">Registered (<span id="fRegCount">0</span>)</button>
+            </div>
+
+            <!-- Batch Results Table -->
+            <div class="batch-results-list" id="batchResultsList"></div>
+
+            <div class="batch-export-row">
+              <button class="res-action-btn primary" id="btnCopyFreshList">📋 Copy Fresh Numbers</button>
+              <button class="res-action-btn secondary" id="btnExportCsv">📥 Export CSV</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── TAB 3: History ──────────────────────────────────────────────── -->
+      <section class="tab-content" id="contentHistory" style="display:none;">
+        <div class="history-card">
+          <div class="history-header">
+            <div class="history-title">Recent Number Verifications</div>
+            <button class="text-btn danger" id="btnClearHistory">Clear All</button>
+          </div>
+          <div class="history-list" id="historyList">
+            <div class="history-empty">
+              <div class="empty-icon">📜</div>
+              <div class="empty-title">No Scans Recorded Yet</div>
+              <div class="empty-desc">Numbers you check will appear here for fast re-auditing.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── TAB 4: Engine Status ────────────────────────────────────────── -->
+      <section class="tab-content" id="contentEngines" style="display:none;">
+        <div class="engines-card">
+          <div class="engines-header">
+            <div class="engines-title">Registered Checker Microservices</div>
+            <div class="engines-desc">Real-time status of backend platform connection pools</div>
+          </div>
+          <div class="engines-list" id="enginesList">
+            <div class="engine-item">
+              <div class="e-meta">
+                <span class="e-icon">🍔</span>
+                <div class="e-info">
+                  <div class="e-name">Zomato Engine (Service dy)</div>
+                  <div class="e-type">Contact Sync & Microservice Pool</div>
+                </div>
+              </div>
+              <span class="e-status active">ACTIVE</span>
+            </div>
+            <div class="engine-item">
+              <div class="e-meta">
+                <span class="e-icon">⚡</span>
+                <div class="e-info">
+                  <div class="e-name">Meesho Engine (Service hp)</div>
+                  <div class="e-type">Universal Meesho Client API</div>
+                </div>
+              </div>
+              <span class="e-status active">ACTIVE</span>
+            </div>
+            <div class="engine-item">
+              <div class="e-meta">
+                <span class="e-icon">🛍️</span>
+                <div class="e-info">
+                  <div class="e-name">Flipkart Engine (Service xt)</div>
+                  <div class="e-type">Rome API Direct Endpoints</div>
+                </div>
+              </div>
+              <span class="e-status active">ACTIVE</span>
+            </div>
+            <div class="engine-item">
+              <div class="e-meta">
+                <span class="e-icon">🥦</span>
+                <div class="e-info">
+                  <div class="e-name">BigBasket Engine (Service bb)</div>
+                  <div class="e-type">Catalog & Auth Protocol</div>
+                </div>
+              </div>
+              <span class="e-status active">ACTIVE</span>
+            </div>
+            <div class="engine-item">
+              <div class="e-meta">
+                <span class="e-icon">📦</span>
+                <div class="e-info">
+                  <div class="e-name">Myntra Engine (Service nl)</div>
+                  <div class="e-type">Auto-Healed Session Driver</div>
+                </div>
+              </div>
+              <span class="e-status active">ACTIVE</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ── Zomato App Style Bottom Navigation Bar ────────────────────────── -->
+    <nav class="bottom-nav">
+      <button class="b-nav-item active" data-tab="single" id="bNavSingle">
+        <span class="b-nav-icon">🍕</span>
+        <span class="b-nav-label">Delivery</span>
+      </button>
+      <button class="b-nav-item" data-tab="batch" id="bNavBatch">
+        <span class="b-nav-icon">⚡</span>
+        <span class="b-nav-label">Batch</span>
+      </button>
+      <button class="b-nav-item" data-tab="history" id="bNavHistory">
+        <span class="b-nav-icon">📜</span>
+        <span class="b-nav-label">History</span>
+      </button>
+      <button class="b-nav-item" data-tab="engines" id="bNavEngines">
+        <span class="b-nav-icon">⚙️</span>
+        <span class="b-nav-label">Services</span>
+      </button>
+    </nav>
+
+    <!-- ── Toast Notification Container ──────────────────────────────────── -->
+    <div class="toast-container" id="toastContainer"></div>
+  </div>
+
+  <!-- Application Logic -->
+  <script src="/static/app.js"></script>
+</body>
+</html>

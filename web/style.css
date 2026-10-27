@@ -1,0 +1,1296 @@
+/* ==============================================================================
+   Zomato Sushi Design System — CSS Tokens & Component Styling
+   Matches Zomato App UI/UX specifications from zomato.md
+   ============================================================================== */
+
+:root {
+  /* ── Color Palette (Sushi Tokens) ────────────────────────────────────────── */
+  --zomato-red: #E23744;
+  --zomato-red-pressed: #CB202D;
+  --zomato-red-soft: #F9E5E7;
+  --zomato-red-glow: rgba(226, 55, 68, 0.25);
+
+  --zomato-green: #3AB757;
+  --zomato-green-dark: #1A8D37;
+  --zomato-green-soft: #E8F7EC;
+
+  --zomato-gold: #EEA61B;
+  --zomato-gold-soft: #FFF8E7;
+
+  --bg-page: #F8F8F8;
+  --bg-card: #FFFFFF;
+  --bg-input: #F4F4F5;
+  --bg-subtle: #F0F0F0;
+
+  --border-subtle: #ECECEC;
+  --border-active: #E23744;
+
+  --text-primary: #1C1C1C;
+  --text-body: #3E4152;
+  --text-muted: #9C9C9C;
+  --text-white: #FFFFFF;
+
+  /* ── Typography (Okra / Metropolis Scale) ────────────────────────────────── */
+  --font-main: 'Plus Jakarta Sans', 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+
+  /* ── Spacing Scale (8-Point Rhythm) ──────────────────────────────────────── */
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-1-5: 6px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* ── Radii & Elevation ───────────────────────────────────────────────────── */
+  --radius-card: 16px;
+  --radius-pill: 9999px;
+  --radius-badge: 6px;
+  --radius-chip: 8px;
+  --radius-btn: 12px;
+
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.08);
+  --shadow-btn: 0 4px 14px rgba(226, 55, 68, 0.35);
+  --shadow-modal: 0 12px 36px rgba(0, 0, 0, 0.14);
+}
+
+/* ── Reset & Base Styles ───────────────────────────────────────────────────── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+#app {
+  max-width: 520px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background-color: var(--bg-page);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.06);
+}
+
+/* ── Sticky Top Header ─────────────────────────────────────────────────────── */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: var(--bg-card);
+  border-bottom: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+}
+
+.header-inner {
+  padding: var(--space-3) var(--space-4) 0;
+}
+
+.brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.zomato-wordmark {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.5px;
+  color: var(--zomato-red);
+}
+
+.checker-pill {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--zomato-red);
+  background-color: var(--zomato-red-soft);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.engine-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--zomato-green-soft);
+  color: var(--zomato-green-dark);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(58, 183, 87, 0.2);
+}
+
+.status-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--zomato-green);
+  box-shadow: 0 0 0 0 rgba(58, 183, 87, 0.7);
+  animation: pulse 1.8s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(58, 183, 87, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 7px rgba(58, 183, 87, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(58, 183, 87, 0); }
+}
+
+.location-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  cursor: pointer;
+}
+
+.loc-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loc-meta {
+  flex: 1;
+}
+
+.loc-subtitle {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.loc-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* ── Mode Navigation Tabs ──────────────────────────────────────────────────── */
+.mode-tabs {
+  display: flex;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: var(--space-1);
+}
+
+.mode-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: var(--space-3) var(--space-1);
+  background: none;
+  border: none;
+  border-bottom: 2.5px solid transparent;
+  color: var(--text-muted);
+  font-family: var(--font-main);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mode-tab.active {
+  color: var(--zomato-red);
+  border-bottom-color: var(--zomato-red);
+  font-weight: 700;
+}
+
+/* ── Main Layout ───────────────────────────────────────────────────────────── */
+.app-main {
+  flex: 1;
+  padding: var(--space-4);
+  padding-bottom: 84px; /* Space for bottom nav */
+}
+
+/* ── Platform Chips Carousel ───────────────────────────────────────────────── */
+.platform-carousel-section {
+  margin-bottom: var(--space-4);
+}
+
+.section-microtitle {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.platform-chips {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: var(--space-1);
+  scrollbar-width: none;
+}
+
+.platform-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.platform-chip {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  color: var(--text-body);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-card);
+}
+
+.platform-chip.active {
+  background-color: var(--zomato-red-soft);
+  border-color: var(--zomato-red);
+  color: var(--zomato-red);
+  font-weight: 700;
+}
+
+.p-badge {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: var(--radius-badge);
+  background-color: var(--bg-subtle);
+  color: var(--text-muted);
+}
+
+.platform-chip.active .p-badge {
+  background-color: var(--zomato-red);
+  color: #fff;
+}
+
+/* ── Hero Restaurant Card Layout ───────────────────────────────────────────── */
+.hero-restaurant-card {
+  background-color: var(--bg-card);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border-subtle);
+  margin-bottom: var(--space-4);
+  transition: box-shadow 0.2s ease;
+}
+
+.hero-restaurant-card:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.hero-banner-visual {
+  position: relative;
+  background: linear-gradient(135deg, #1C1C1C 0%, #2A1F2D 50%, #E23744 140%);
+  color: #fff;
+  padding: var(--space-5) var(--space-4) var(--space-4);
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.banner-overlay-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rating-pill {
+  background-color: var(--zomato-green-dark);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: var(--radius-badge);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.eta-pill {
+  background-color: rgba(255, 255, 255, 0.95);
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-badge);
+}
+
+.banner-center-text {
+  margin: var(--space-2) 0;
+}
+
+.banner-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.banner-subtitle {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.82);
+  margin-top: 2px;
+}
+
+.banner-discount-tag {
+  background-color: #2C365E;
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: var(--radius-badge);
+  align-self: flex-start;
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.tag-bold {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.tag-sub {
+  font-size: 10px;
+  opacity: 0.85;
+}
+
+/* ── Card Form Body ────────────────────────────────────────────────────────── */
+.card-form-body {
+  padding: var(--space-4);
+}
+
+.input-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.form-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.quick-helpers {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.text-btn {
+  background: none;
+  border: none;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--zomato-red);
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.text-btn.danger {
+  color: #DC2626;
+}
+
+.phone-input-wrapper {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-input);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: var(--radius-btn);
+  overflow: hidden;
+  transition: all 0.2s ease;
+  margin-bottom: var(--space-3);
+}
+
+.phone-input-wrapper:focus-within {
+  border-color: var(--zomato-red);
+  background-color: #fff;
+  box-shadow: 0 0 0 3px var(--zomato-red-glow);
+}
+
+.country-prefix {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 14px;
+  background-color: var(--bg-subtle);
+  border-right: 1px solid var(--border-subtle);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.mobile-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 12px 14px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.mobile-input::placeholder {
+  color: #BDBDBD;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* Quick Demo Chips */
+.quick-demo-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: var(--space-4);
+}
+
+.demo-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.demo-chip {
+  background: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.demo-chip.demo-registered {
+  color: var(--zomato-red);
+  border-color: rgba(226, 55, 68, 0.3);
+  background-color: var(--zomato-red-soft);
+}
+
+.demo-chip.demo-fresh {
+  color: var(--zomato-green-dark);
+  border-color: rgba(58, 183, 87, 0.3);
+  background-color: var(--zomato-green-soft);
+}
+
+.error-banner {
+  background-color: #FEF2F2;
+  border: 1px solid #FCA5A5;
+  color: #991B1B;
+  padding: 10px 14px;
+  border-radius: var(--radius-badge);
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+}
+
+/* Primary CTA Button (Sushi Red) */
+.zomato-cta-btn {
+  width: 100%;
+  padding: 14px;
+  background-color: var(--zomato-red);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-btn);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: var(--shadow-btn);
+  transition: all 0.15s ease;
+}
+
+.zomato-cta-btn:hover {
+  background-color: var(--zomato-red-pressed);
+  transform: translateY(-1px);
+}
+
+.zomato-cta-btn:active {
+  transform: scale(0.98);
+}
+
+.cta-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Scanning Radar Animation ──────────────────────────────────────────────── */
+.scanning-container {
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  margin-bottom: var(--space-4);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border-subtle);
+}
+
+.scanning-radar {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  margin: 0 auto var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radar-ring {
+  position: absolute;
+  border: 2px solid var(--zomato-red);
+  border-radius: 50%;
+  animation: radarWave 2s ease-out infinite;
+  opacity: 0;
+}
+
+.radar-ring.ring-1 { width: 40px; height: 40px; animation-delay: 0s; }
+.radar-ring.ring-2 { width: 65px; height: 65px; animation-delay: 0.6s; }
+.radar-ring.ring-3 { width: 90px; height: 90px; animation-delay: 1.2s; }
+
+.radar-core {
+  font-size: 26px;
+  z-index: 2;
+}
+
+@keyframes radarWave {
+  0% { transform: scale(0.6); opacity: 0.8; }
+  100% { transform: scale(1.3); opacity: 0; }
+}
+
+.scan-status-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.scan-progressbar {
+  height: 4px;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.scan-progress-fill {
+  width: 60%;
+  height: 100%;
+  background: var(--zomato-red);
+  animation: indeterminateBar 1.2s infinite ease-in-out;
+}
+
+@keyframes indeterminateBar {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+/* ── Verification Result Card (Authoritative Verdict) ──────────────────────── */
+.result-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  box-shadow: var(--shadow-hover);
+  border: 2px solid var(--border-subtle);
+  margin-bottom: var(--space-4);
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.result-card.verdict-registered {
+  border-color: var(--zomato-red);
+}
+
+.result-card.verdict-fresh {
+  border-color: var(--zomato-green-dark);
+}
+
+.result-header {
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.verdict-registered .result-header {
+  background-color: var(--zomato-red-soft);
+}
+
+.verdict-fresh .result-header {
+  background-color: var(--zomato-green-soft);
+}
+
+/* Veg / Non-Veg Indicator Symbols */
+.diet-indicator {
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-width: 2px;
+  border-style: solid;
+}
+
+/* Veg: Green square with solid green circle */
+.diet-indicator.veg {
+  border-color: var(--zomato-green-dark);
+}
+.diet-indicator.veg::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  background-color: var(--zomato-green-dark);
+  border-radius: 50%;
+}
+
+/* Non-Veg: Red square with solid inverted triangle */
+.diet-indicator.non-veg {
+  border-color: var(--zomato-red);
+}
+.diet-indicator.non-veg::after {
+  content: "";
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 10px solid var(--zomato-red);
+}
+
+.result-header-text {
+  flex: 1;
+}
+
+.result-verdict-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.verdict-registered .result-verdict-title { color: var(--zomato-red); }
+.verdict-fresh .result-verdict-title { color: var(--zomato-green-dark); }
+
+.result-verdict-subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.result-status-badge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: var(--radius-badge);
+  letter-spacing: 0.5px;
+}
+
+.verdict-registered .result-status-badge {
+  background-color: var(--zomato-red);
+  color: #fff;
+}
+
+.verdict-fresh .result-status-badge {
+  background-color: var(--zomato-green-dark);
+  color: #fff;
+}
+
+.result-body {
+  padding: var(--space-4);
+}
+
+.result-phone-highlight {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: var(--space-3);
+  letter-spacing: 0.5px;
+}
+
+.result-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.metric-item {
+  background: var(--bg-subtle);
+  padding: 8px 12px;
+  border-radius: var(--radius-chip);
+}
+
+.m-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.m-val {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.result-advice-box {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-chip);
+  margin-bottom: var(--space-4);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.verdict-registered .result-advice-box {
+  background-color: #FFF5F5;
+  border: 1px solid #FED7D7;
+  color: #9B2C2C;
+}
+
+.verdict-fresh .result-advice-box {
+  background-color: #F0FFF4;
+  border: 1px solid #C6F6D5;
+  color: #22543D;
+}
+
+.advice-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* Multi-Platform Sub-Grid */
+.multi-platform-grid {
+  margin-bottom: var(--space-4);
+}
+
+.multi-grid-title {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--space-2);
+}
+
+.multi-grid-items {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+}
+
+.multi-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: var(--radius-chip);
+  background: var(--bg-subtle);
+}
+
+.multi-item.is-reg {
+  border-left: 3px solid var(--zomato-red);
+}
+
+.multi-item.is-fresh {
+  border-left: 3px solid var(--zomato-green-dark);
+}
+
+.multi-name {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.multi-pill {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.multi-pill.reg { background: var(--zomato-red-soft); color: var(--zomato-red); }
+.multi-pill.fresh { background: var(--zomato-green-soft); color: var(--zomato-green-dark); }
+
+/* Result Actions Row */
+.result-actions-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.res-action-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: var(--radius-chip);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+}
+
+.res-action-btn.primary {
+  background-color: var(--zomato-red);
+  color: #fff;
+}
+
+.res-action-btn.secondary {
+  background-color: var(--bg-subtle);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+}
+
+.res-action-btn:active {
+  transform: scale(0.98);
+}
+
+/* ── TAB 2: Batch Verification Styling ─────────────────────────────────────── */
+.batch-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border-subtle);
+}
+
+.batch-header {
+  margin-bottom: var(--space-3);
+}
+
+.batch-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.batch-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.batch-input-wrap {
+  margin-bottom: var(--space-3);
+}
+
+.batch-textarea {
+  width: 100%;
+  padding: var(--space-3);
+  font-family: monospace;
+  font-size: 13px;
+  border: 1.5px solid var(--border-subtle);
+  border-radius: var(--radius-btn);
+  background-color: var(--bg-input);
+  outline: none;
+  resize: vertical;
+}
+
+.batch-textarea:focus {
+  border-color: var(--zomato-red);
+  background-color: #fff;
+}
+
+.batch-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-1);
+}
+
+.batch-counter {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.batch-progress-box {
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  background: var(--bg-subtle);
+  border-radius: var(--radius-chip);
+}
+
+.batch-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.batch-progress-bar {
+  height: 6px;
+  background: #E5E7EB;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.batch-progress-fill {
+  height: 100%;
+  background: var(--zomato-red);
+  transition: width 0.3s ease;
+}
+
+.batch-summary-panel {
+  margin-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-4);
+}
+
+.summary-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.stat-pill {
+  padding: 8px 6px;
+  text-align: center;
+  border-radius: var(--radius-chip);
+}
+
+.stat-pill.total { background: #F3F4F6; color: var(--text-primary); }
+.stat-pill.fresh { background: var(--zomato-green-soft); color: var(--zomato-green-dark); }
+.stat-pill.reg { background: var(--zomato-red-soft); color: var(--zomato-red); }
+.stat-pill.err { background: #FEF3C7; color: #92400E; }
+
+.s-val {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.s-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.batch-filter-bar {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.filter-chip {
+  padding: 4px 10px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.filter-chip.active {
+  background: var(--text-primary);
+  color: #fff;
+  border-color: var(--text-primary);
+}
+
+.batch-results-list {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-chip);
+  margin-bottom: var(--space-3);
+}
+
+.batch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 12px;
+}
+
+.batch-row:last-child {
+  border-bottom: none;
+}
+
+.batch-phone {
+  font-family: monospace;
+  font-weight: 700;
+}
+
+.batch-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.batch-badge.reg { background: var(--zomato-red-soft); color: var(--zomato-red); }
+.batch-badge.fresh { background: var(--zomato-green-soft); color: var(--zomato-green-dark); }
+.batch-badge.err { background: #FEF3C7; color: #92400E; }
+
+.batch-export-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* ── TAB 3: History Styling ────────────────────────────────────────────────── */
+.history-card, .engines-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border-subtle);
+}
+
+.history-header, .engines-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+
+.history-title, .engines-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.engines-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.history-empty {
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+  color: var(--text-muted);
+}
+
+.empty-icon {
+  font-size: 32px;
+  margin-bottom: var(--space-2);
+}
+
+.empty-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.empty-desc {
+  font-size: 12px;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.h-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.h-phone {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.h-time {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.h-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ── TAB 4: Engines Microservices Styling ──────────────────────────────────── */
+.engines-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.engine-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-chip);
+  background-color: var(--bg-subtle);
+}
+
+.e-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.e-icon {
+  font-size: 22px;
+}
+
+.e-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.e-type {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.e-status.active {
+  font-size: 10px;
+  font-weight: 800;
+  background-color: var(--zomato-green-soft);
+  color: var(--zomato-green-dark);
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+}
+
+/* ── Zomato App Style Bottom Navigation Bar ────────────────────────────────── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 520px;
+  background-color: var(--bg-card);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.05);
+  z-index: 100;
+}
+
+.b-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.b-nav-icon {
+  font-size: 18px;
+}
+
+.b-nav-label {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.b-nav-item.active {
+  color: var(--zomato-red);
+}
+
+.b-nav-item.active .b-nav-label {
+  font-weight: 800;
+}
+
+/* ── Toast Notifications ───────────────────────────────────────────────────── */
+.toast-container {
+  position: fixed;
+  bottom: 74px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+  width: 90%;
+  max-width: 440px;
+}
+
+.toast-msg {
+  background: #1C1C1C;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  animation: toastFade 0.2s ease;
+}
+
+@keyframes toastFade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
