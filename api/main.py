@@ -75,6 +75,30 @@ except Exception:
     except Exception:
         check_meesho = None
 
+try:
+    from checkers.amazon_check import check_amazon
+except Exception:
+    try:
+        from amazon_check import check_amazon
+    except Exception:
+        check_amazon = None
+
+try:
+    from checkers.swiggy_check import check_swiggy
+except Exception:
+    try:
+        from swiggy_check import check_swiggy
+    except Exception:
+        check_swiggy = None
+
+try:
+    from checkers.zepto_check import check_zepto
+except Exception:
+    try:
+        from zepto_check import check_zepto
+    except Exception:
+        check_zepto = None
+
 
 # ------------------------------------------------------------
 # Pydantic Schemas
@@ -144,6 +168,9 @@ async def _run_checker(fn, arg: str) -> Dict[str, Any]:
             if asyncio.iscoroutine(res):
                 res = await res
         if isinstance(res, dict):
+            if "registered" not in res and res.get("status") in ("REGISTERED", "NOT_REGISTERED"):
+                res["registered"] = (res.get("status") == "REGISTERED")
+                res["fresh"] = (res.get("status") == "NOT_REGISTERED")
             return res
         return {
             "status": "REGISTERED" if res else "NOT_REGISTERED",
@@ -193,19 +220,27 @@ async def _execute_check(platform: str, phone: str) -> Dict[str, Any]:
         else:
             result = {"status": "ERROR", "error": "Meesho checker engine unavailable"}
 
-    elif pkey in ("swiggy", "zepto", "amazon"):
-        result = {
-            "status": "NOT_REGISTERED",
-            "registered": False,
-            "fresh": True,
-            "mobile": clean,
-            "platform": pkey,
-            "note": f"{pkey.title()} checker engine pending integration",
-        }
+    elif pkey == "amazon":
+        if check_amazon:
+            result = await _run_checker(check_amazon, clean)
+        else:
+            result = {"status": "ERROR", "error": "Amazon checker engine unavailable"}
+
+    elif pkey == "swiggy":
+        if check_swiggy:
+            result = await _run_checker(check_swiggy, clean)
+        else:
+            result = {"status": "ERROR", "error": "Swiggy checker engine unavailable"}
+
+    elif pkey == "zepto":
+        if check_zepto:
+            result = await _run_checker(check_zepto, clean)
+        else:
+            result = {"status": "ERROR", "error": "Zepto checker engine unavailable"}
 
     elif pkey == "all":
         results = {}
-        for p in ("zomato", "flipkart", "bigbasket", "myntra", "meesho", "swiggy", "zepto", "amazon"):
+        for p in ("zomato", "flipkart", "bigbasket", "myntra", "meesho", "amazon", "swiggy", "zepto"):
             results[p] = await _execute_check(p, clean)
         return {"status": "SUCCESS", "mobile": clean, "platforms": results}
 
@@ -245,9 +280,9 @@ async def health_check():
             "bigbasket": check_bigbasket is not None,
             "myntra":    check_myntra is not None,
             "meesho":    check_meesho is not None,
-            "swiggy":    True,
-            "zepto":     True,
-            "amazon":    True,
+            "amazon":    check_amazon is not None,
+            "swiggy":    check_swiggy is not None,
+            "zepto":     check_zepto is not None,
         },
     }
 
@@ -262,9 +297,9 @@ async def list_platforms():
             {"key": "meesho",     "label": "Meesho",     "icon": "✨",  "status": "active",  "category": "marketplace"},
             {"key": "bigbasket",  "label": "BigBasket",  "icon": "🥬",  "status": "active",  "category": "grocery"},
             {"key": "myntra",     "label": "Myntra",     "icon": "👗",  "status": "active",  "category": "fashion"},
-            {"key": "swiggy",     "label": "Swiggy",     "icon": "🛵",  "status": "stub",    "category": "food"},
-            {"key": "zepto",      "label": "Zepto",      "icon": "⚡",  "status": "stub",    "category": "qcommerce"},
-            {"key": "amazon",     "label": "Amazon",     "icon": "📦",  "status": "stub",    "category": "ecommerce"},
+            {"key": "amazon",     "label": "Amazon",     "icon": "📦",  "status": "active",  "category": "ecommerce"},
+            {"key": "swiggy",     "label": "Swiggy",     "icon": "🛵",  "status": "active",  "category": "food"},
+            {"key": "zepto",      "label": "Zepto",      "icon": "⚡",  "status": "active",  "category": "qcommerce"},
         ]
     }
 

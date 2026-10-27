@@ -7,6 +7,13 @@ import sys
 import asyncio
 from playwright.async_api import async_playwright
 
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 def normalize_mobile(mobile: str) -> str:
     digits = "".join(c for c in str(mobile) if c.isdigit())
     if len(digits) >= 10:
@@ -150,13 +157,13 @@ async def check_amazon(mobile: str) -> dict:
             await browser.close()
 
             if is_reg and not is_not:
-                return {"status": "REGISTERED", "mobile": mobile, "url": url}
+                return {"status": "REGISTERED", "registered": True, "fresh": False, "mobile": mobile, "url": url}
             if is_not and not is_reg:
-                return {"status": "NOT_REGISTERED", "mobile": mobile, "url": url}
+                return {"status": "NOT_REGISTERED", "registered": False, "fresh": True, "mobile": mobile, "url": url}
             if is_reg:
-                return {"status": "REGISTERED", "mobile": mobile, "url": url}
+                return {"status": "REGISTERED", "registered": True, "fresh": False, "mobile": mobile, "url": url}
             if is_not:
-                return {"status": "NOT_REGISTERED", "mobile": mobile, "url": url}
+                return {"status": "NOT_REGISTERED", "registered": False, "fresh": True, "mobile": mobile, "url": url}
 
             return {
                 "status": "UNKNOWN",
