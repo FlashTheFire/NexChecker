@@ -76,7 +76,7 @@ try:
 except Exception:
     check_zepto = None
 
-from api.auth import get_request_identity
+from api.auth import get_request_identity, verify_telegram_init_data_detailed
 from api.history_manager import history_manager
 
 _PLATFORM_LABELS: Dict[str, str] = {

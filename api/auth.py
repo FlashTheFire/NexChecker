@@ -47,65 +47,64 @@ class UserIdentity:
         return asdict(self)
 
 
-def verify_telegram_init_data(
+def verify_telegram_init_data_detailed(
     init_data: str,
     bot_token: Optional[str] = None,
     max_age_seconds: int = AUTH_MAX_AGE_SECONDS,
-) -> Optional[Dict[str, Any]]:
-    """Cryptographically verify Telegram WebApp initData HMAC-SHA256 signature.
+) -> tuple[Optional[Dict[str, Any]], str]:
+    """Cryptographically verify Telegram initData HMAC-SHA256 signature with granular status.
 
-    Returns the extracted and verified user dictionary on success, or None on failure:
-      1. Missing or forged hash -> None
-      2. Expired auth_date (> max_age_seconds) -> None (prevents replay attacks)
-      3. Tampered payload -> None
+    Returns (user_dict, status_str):
+      - 'OK': Successfully verified and fresh
+      - 'MISSING': init_data parameter missing or blank
+      - 'MISSING_HASH': Signature hash missing
+      - 'MISSING_DATE' / 'INVALID_DATE': Missing or bad timestamp
+      - 'EXPIRED': Signature timestamp exceeds max_age_seconds (replay attack)
+      - 'TAMPERED': Hash does not match secret key computed HMAC
+      - 'MALFORMED': Payload malformed
     """
     token = (bot_token or BOT_TOKEN).strip()
-    if not init_data or not token:
-        return None
+    if not init_data:
+        return None, "MISSING"
+    if not token:
+        logger.warning("Auth error: BOT_TOKEN is empty on server")
+        return None, "SERVER_TOKEN_MISSING"
 
     try:
         parsed = dict(urllib.parse.parse_qsl(init_data, keep_blank_values=True))
         received_hash = parsed.pop("hash", None)
         if not received_hash:
             logger.warning("Auth rejected: missing 'hash' in Telegram initData")
-            return None
+            return None, "MISSING_HASH"
 
-        # 1. Timing and Expiry Verification (Anti-Replay / Freshness)
         auth_date_str = parsed.get("auth_date")
         if not auth_date_str:
             logger.warning("Auth rejected: missing 'auth_date' in Telegram initData")
-            return None
+            return None, "MISSING_DATE"
 
         try:
             auth_date = int(auth_date_str)
         except (ValueError, TypeError):
             logger.warning("Auth rejected: invalid 'auth_date' format: %s", auth_date_str)
-            return None
+            return None, "INVALID_DATE"
 
         now = int(time.time())
         age = now - auth_date
-        # Disallow future timestamps by more than 120s (clock skew allowance) and older than max_age
         if age < -120 or age > max_age_seconds:
             logger.warning(
                 "Auth rejected: initData expired (auth_date=%s, now=%s, age=%ss, max=%ss)",
                 auth_date, now, age, max_age_seconds
             )
-            return None
+            return None, "EXPIRED"
 
-        # 2. Build data_check_string (sorted alphabetically by key, format: key=<value>\n...)
         data_check_string = "\n".join(f"{k}={v}" for k, v in sorted(parsed.items()))
-
-        # 3. Cryptographic HMAC-SHA256 signature calculation per Telegram Spec:
-        # secret_key = HMAC_SHA256(key=b"WebAppData", data=bot_token.encode())
-        # computed_hash = HMAC_SHA256(key=secret_key, data=data_check_string.encode()).hexdigest()
         secret_key = hmac.new(b"WebAppData", token.encode("utf-8"), hashlib.sha256).digest()
         computed_hash = hmac.new(secret_key, data_check_string.encode("utf-8"), hashlib.sha256).hexdigest()
 
         if not hmac.compare_digest(computed_hash, received_hash):
             logger.warning("Auth rejected: cryptographic signature mismatch (tampering detected)")
-            return None
+            return None, "TAMPERED"
 
-        # 4. Parse user JSON payload
         user_raw = parsed.get("user")
         user_dict: Dict[str, Any] = {}
         if user_raw:
@@ -113,16 +112,26 @@ def verify_telegram_init_data(
                 user_dict = json.loads(user_raw)
             except Exception as e:
                 logger.error("Failed to parse user JSON from initData: %s", e)
+                return None, "MALFORMED"
 
         user_dict["auth_date"] = auth_date
         user_dict["query_id"] = parsed.get("query_id")
         user_dict["chat_type"] = parsed.get("chat_type")
         user_dict["verified_at"] = now
-
-        return user_dict
+        return user_dict, "OK"
     except Exception as exc:
         logger.error("Unexpected exception during Telegram initData verification: %s", exc)
-        return None
+        return None, "MALFORMED"
+
+
+def verify_telegram_init_data(
+    init_data: str,
+    bot_token: Optional[str] = None,
+    max_age_seconds: int = AUTH_MAX_AGE_SECONDS,
+) -> Optional[Dict[str, Any]]:
+    """Cryptographically verify Telegram WebApp initData HMAC-SHA256 signature."""
+    user, status = verify_telegram_init_data_detailed(init_data, bot_token, max_age_seconds)
+    return user if status == "OK" else None
 
 
 def get_request_identity(request: Request) -> UserIdentity:
