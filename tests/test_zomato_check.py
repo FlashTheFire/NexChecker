@@ -8,16 +8,25 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 NEXBOT_ROOT = ROOT / "NexBot"
-for p in (str(ROOT), str(NEXBOT_ROOT)):
+CHECKERS_ROOT = ROOT / "checkers"
+for p in (str(ROOT), str(NEXBOT_ROOT), str(CHECKERS_ROOT)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
-from zomato_check import (
-    normalize_mobile,
-    encode_phone_to_name,
-    decode_name_to_phone,
-    check_zomato,
-)
+try:
+    from checkers.zomato_check import (
+        normalize_mobile,
+        encode_phone_to_name,
+        decode_name_to_phone,
+        check_zomato,
+    )
+except ImportError:
+    from zomato_check import (
+        normalize_mobile,
+        encode_phone_to_name,
+        decode_name_to_phone,
+        check_zomato,
+    )
 # pyrefly: ignore[missing-import]
 from utils.platforms import get_platforms, get_platform
 
