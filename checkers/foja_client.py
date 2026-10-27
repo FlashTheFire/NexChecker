@@ -55,10 +55,15 @@ class CheckResult:
 
     @classmethod
     def from_dict(cls, data: dict) -> CheckResult:
+        is_registered = bool(data.get("registered", False))
+        if "error" in data or data.get("ok") is False:
+            is_fresh = bool(data.get("fresh", False))
+        else:
+            is_fresh = bool(data.get("fresh", not is_registered))
         return cls(
             number=str(data.get("number", "")),
-            registered=bool(data.get("registered", False)),
-            fresh=bool(data.get("fresh", not data.get("registered", False))),
+            registered=is_registered,
+            fresh=is_fresh,
             raw=data,
         )
 
@@ -390,31 +395,33 @@ class FojaClient:
         Check if a single Indian mobile number is registered on Meesho.
         No SMS/OTP sent. Authoritative verdict.
         """
-        mobile = clean_phone(phone)
+        mobile = f"+91{clean_phone(phone)}"
         data = await self._async_request("POST", "/api/check", body={"number": mobile})
         results = data.get("results") or []
         if results:
             return CheckResult.from_dict(results[0])
-        return CheckResult(number=f"+91{mobile}", registered=False, fresh=True, raw=data)
+        is_ok = bool(data.get("ok", False))
+        return CheckResult(number=mobile, registered=False, fresh=is_ok, raw=data)
 
     def check_number(self, phone: str) -> CheckResult:
         """Synchronous version of check_number_async."""
-        mobile = clean_phone(phone)
+        mobile = f"+91{clean_phone(phone)}"
         data = self._sync_request("POST", "/api/check", body={"number": mobile})
         results = data.get("results") or []
         if results:
             return CheckResult.from_dict(results[0])
-        return CheckResult(number=f"+91{mobile}", registered=False, fresh=True, raw=data)
+        is_ok = bool(data.get("ok", False))
+        return CheckResult(number=mobile, registered=False, fresh=is_ok, raw=data)
 
     async def check_numbers_async(self, phones: List[str]) -> BatchCheckResponse:
         """Bulk check a list of Indian mobile numbers."""
-        cleaned = [clean_phone(p) for p in phones]
+        cleaned = [f"+91{clean_phone(p)}" for p in phones]
         data = await self._async_request("POST", "/api/check", body={"numbers": cleaned})
         return BatchCheckResponse.from_dict(data)
 
     def check_numbers(self, phones: List[str]) -> BatchCheckResponse:
         """Synchronous version of check_numbers_async."""
-        cleaned = [clean_phone(p) for p in phones]
+        cleaned = [f"+91{clean_phone(p)}" for p in phones]
         data = self._sync_request("POST", "/api/check", body={"numbers": cleaned})
         return BatchCheckResponse.from_dict(data)
 
