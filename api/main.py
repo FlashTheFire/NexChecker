@@ -11,6 +11,7 @@ FastAPI backend exposing multi-platform verification endpoints:
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import sys
 import time
@@ -38,66 +39,42 @@ for p in (str(PROJECT_ROOT), str(NEXBOT_ROOT), str(CHECKERS_ROOT)):
 try:
     from checkers.zomato_check import check_zomato
 except Exception:
-    try:
-        from zomato_check import check_zomato
-    except Exception:
-        check_zomato = None
+    check_zomato = None
 
 try:
     from checkers.flipkart_check import check_flipkart
 except Exception:
-    try:
-        from flipkart_check import check_flipkart
-    except Exception:
-        check_flipkart = None
+    check_flipkart = None
 
 try:
     from checkers.bigbasket_check import check_bigbasket
 except Exception:
-    try:
-        from bigbasket_check import check_bigbasket
-    except Exception:
-        check_bigbasket = None
+    check_bigbasket = None
 
 try:
     from checkers.myntra_check import check_myntra
 except Exception:
-    try:
-        from myntra_check import check_myntra
-    except Exception:
-        check_myntra = None
+    check_myntra = None
 
 try:
     from checkers.meesho_check import check_meesho
 except Exception:
-    try:
-        from meesho_check import check_meesho
-    except Exception:
-        check_meesho = None
+    check_meesho = None
 
 try:
     from checkers.amazon_check import check_amazon
 except Exception:
-    try:
-        from amazon_check import check_amazon
-    except Exception:
-        check_amazon = None
+    check_amazon = None
 
 try:
     from checkers.swiggy_check import check_swiggy
 except Exception:
-    try:
-        from swiggy_check import check_swiggy
-    except Exception:
-        check_swiggy = None
+    check_swiggy = None
 
 try:
     from checkers.zepto_check import check_zepto
 except Exception:
-    try:
-        from zepto_check import check_zepto
-    except Exception:
-        check_zepto = None
+    check_zepto = None
 
 
 # ------------------------------------------------------------
@@ -452,9 +429,9 @@ async def telegram_webhook(request: Request):
     try:
         from telebot.types import Update
         try:
-            from bot import bot as tele_bot
-        except ImportError:
             from NexBot.bot import bot as tele_bot
+        except ImportError:
+            tele_bot = None
 
         data = await request.json()
         update = Update.de_json(data)
