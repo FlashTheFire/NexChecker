@@ -18,6 +18,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from datetime import timezone
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -526,6 +527,7 @@ class CheckerHandler:
                     "country":        self.platform.country_code,
                     "cost":           buy.get("cost", 0),
                     "status":         "CHECKING",
+                    "check_result":   "",
                     "myn_result":     "",
                     "last_otp":       "",
                     "last_full_sms":  "",
@@ -535,8 +537,8 @@ class CheckerHandler:
                     "message_id":     msg_id,
                     "chat_id":        chat_id,
                     "attempt":        attempt,
-                    "purchased_at":   datetime.now().isoformat(),
-                })
+                    "purchased_at":   datetime.now(timezone.utc).isoformat(),
+                }, order_id=order_id)
 
                 # STEP 2: Check the platform
                 await safe_edit(
@@ -559,9 +561,11 @@ class CheckerHandler:
                 if is_match:
                     cost = buy.get("cost", 0)
                     await user_store.update_order(user_id, {
-                        "status":     status,
-                        "myn_result": status,
-                    })
+                        "status":       status,
+                        "check_result": status,
+                        "myn_result":   status,
+                        "platform":     self.pkey,
+                    }, order_id=order_id)
                     await user_store.increment_stat(user_id, status)
 
                     await safe_edit(
@@ -607,7 +611,7 @@ class CheckerHandler:
 
     async def _on_task_done(self, task: asyncio.Task, user_id: int, chat_id: int, msg_id: int) -> None:
         if task.cancelled():
-            order = await user_store.get_last_order(user_id)
+            order = await user_store.get_last_order(user_id, self.pkey)
             if order.get("status") not in ("REGISTERED", "NOT_REGISTERED", "REFUNDED"):
                 await safe_edit(
                     self.bot, chat_id, msg_id,
@@ -639,7 +643,7 @@ class CheckerHandler:
 
         if cancel_pending:
             api_key = await user_store.get_api_key(user_id)
-            order   = await user_store.get_last_order(user_id)
+            order   = await user_store.get_last_order(user_id, self.pkey)
             oid     = order.get("order_id")
             if api_key and oid and order.get("status") == "CHECKING":
                 schedule_deferred_cancel(api_key, oid)
