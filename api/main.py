@@ -278,9 +278,9 @@ if WEB_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(WEB_DIR)), name="static")
 
 
-@app.get("/")
-@app.get("/checker")
-@app.get("/zomato")
+@app.api_route("/", methods=["GET", "HEAD"])
+@app.api_route("/checker", methods=["GET", "HEAD"])
+@app.api_route("/zomato", methods=["GET", "HEAD"])
 async def serve_web_ui():
     """Serves the Zomato app-style verification interface."""
     index_file = WEB_DIR / "index.html"
