@@ -49,6 +49,12 @@ class TestNexCheckerAPI(unittest.TestCase):
         self.assertIn("text/html", resp.headers.get("content-type", ""))
         self.assertIn("zomato", resp.text.lower())
 
+    def test_bot_webhook_endpoint(self):
+        # Empty or mock update payload
+        resp = client.post("/bot/webhook", json={"update_id": 999999})
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.json().get("ok"))
+
 
 if __name__ == "__main__":
     unittest.main()
