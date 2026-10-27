@@ -68,15 +68,19 @@ except Exception:
         check_myntra = None
 
 try:
-    from checkers.foja_client import FojaClient, clean_phone
-    _foja = FojaClient()
+    from core.meesho_api import MeeshoClient, clean_phone
+    _meesho = MeeshoClient()
 except Exception:
     try:
-        from foja_client import FojaClient, clean_phone
-        _foja = FojaClient()
+        from NexBot.core.meesho_api import MeeshoClient, clean_phone
+        _meesho = MeeshoClient()
     except Exception:
-        _foja = None
-        clean_phone = None
+        try:
+            from meesho_api import MeeshoClient, clean_phone
+            _meesho = MeeshoClient()
+        except Exception:
+            _meesho = None
+            clean_phone = None
 
 
 # ------------------------------------------------------------
@@ -157,8 +161,8 @@ async def _execute_check(platform: str, phone: str) -> Dict[str, Any]:
         return {"status": "ERROR", "error": "Myntra checker engine unavailable"}
 
     elif pkey == "meesho":
-        if _foja:
-            res = await asyncio.to_thread(_foja.check_number, clean)
+        if _meesho:
+            res = await asyncio.to_thread(_meesho.check_number, clean)
             is_reg = bool(res.get("registered") or res.get("status") == "registered")
             return {
                 "status": "REGISTERED" if is_reg else "NOT_REGISTERED",
@@ -194,7 +198,7 @@ async def health_check():
             "flipkart": check_flipkart is not None,
             "bigbasket": check_bigbasket is not None,
             "myntra": check_myntra is not None,
-            "meesho": _foja is not None,
+            "meesho": _meesho is not None,
         },
     }
 
