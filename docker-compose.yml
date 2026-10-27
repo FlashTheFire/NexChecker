@@ -44,6 +44,10 @@ services:
     container_name: nexchecker_bot
     restart: unless-stopped
     env_file: .env
+    environment:
+      WEBHOOK_URL: ${WEBHOOK_URL:-}
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-}
+      API_BASE_URL: http://api:8000
     volumes:
       - .:/app
     networks:
