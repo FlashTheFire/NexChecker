@@ -1,10 +1,17 @@
 # NexChecker 🔍
 
-**NexChecker** is a Telegram bot that checks if a mobile number is registered on Myntra and auto-receives OTPs via NexNum virtual numbers.
+**NexChecker** is a multi-platform registration checker and automated virtual number acquisition bot. It verifies whether mobile numbers are registered across major Indian consumer platforms and auto-receives OTPs via NexNum.
+
+## Supported Platforms
+- 🍽 **Zomato** (`/zomato` / `zomato_check.py`): Silent contact-sync recommendation verification (zero OTP to target)
+- 🛍 **Flipkart** (`/flipkart` / `flipkart_check.py`): Direct HTTP status verification
+- 🛒 **BigBasket** (`/bigbasket` / `bigbasket_check.py`): Reverse engineered member status checking
+- 📦 **Myntra** (`/myntra` / `myntra_check.py`): Browser-accelerated challenge auto-healing
+- ⚡ **Meesho / Swiggy / Zepto / Amazon**: Direct standalone CLI inspection modules
 
 ## Features
-- 🔍 Myntra account registration check
-- 📱 Auto-buy virtual number + OTP polling
+- 🔍 Multi-platform silent account registration checks
+- 📱 Auto-buy virtual number + OTP polling via NexNum
 - 📋 Native copy buttons (OTP + Full SMS)
 - 🔄 Session restore on bot restart
 - ☁️ Runs on AWS with systemd auto-restart
