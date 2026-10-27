@@ -58,8 +58,6 @@
     const app = document.getElementById('app');
     const gateTitle = document.getElementById('gateTitle');
     const gateDesc = document.getElementById('gateDesc');
-    const gateStatusBadge = document.getElementById('gateStatusBadge');
-    const gateDetailStatus = document.getElementById('gateDetailStatus');
 
     const initData = window.Telegram?.WebApp?.initData || '';
 
@@ -67,13 +65,6 @@
     if (!initData) {
       if (gate) gate.style.display = 'flex';
       if (app) app.style.display = 'none';
-      if (gateTitle) gateTitle.textContent = 'Access Restricted';
-      if (gateDesc) gateDesc.textContent = 'NexChecker is an exclusive high-performance verification engine accessible exclusively via the official Telegram bot.';
-      if (gateStatusBadge) gateStatusBadge.textContent = 'TELEGRAM AUTH REQUIRED';
-      if (gateDetailStatus) {
-        gateDetailStatus.textContent = 'Missing Telegram Signature';
-        gateDetailStatus.className = 'gate-detail-val gate-val-danger';
-      }
       return false;
     }
 
@@ -98,19 +89,16 @@
         // Signature expired or failed HMAC check
         if (gate) gate.style.display = 'flex';
         if (app) app.style.display = 'none';
-        if (gateTitle) gateTitle.textContent = data.status === 'EXPIRED' ? 'Session Expired' : 'Security Check Failed';
-        if (gateDesc) gateDesc.textContent = data.message || 'Cryptographic validation rejected this session. Please launch again from @NexChecker_Robot.';
-        if (gateStatusBadge) gateStatusBadge.textContent = data.status || 'UNAUTHORIZED';
-        if (gateDetailStatus) {
-          gateDetailStatus.textContent = data.status || 'Signature Rejected';
-          gateDetailStatus.className = 'gate-detail-val gate-val-danger';
+        if (gateDesc) {
+          gateDesc.textContent = data.status === 'EXPIRED'
+            ? 'Telegram session expired. Tap below to reopen inside @NexChecker_Robot.'
+            : (data.message || 'Please open via @NexChecker_Robot to start.');
         }
         return false;
       }
     } catch (err) {
       if (gate) gate.style.display = 'flex';
       if (app) app.style.display = 'none';
-      if (gateDetailStatus) gateDetailStatus.textContent = 'Server Handshake Error';
       return false;
     }
   }

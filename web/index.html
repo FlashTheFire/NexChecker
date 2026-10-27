@@ -25,7 +25,7 @@
   <link rel="icon" type="image/png" href="/static/src/logos/zomato.png">
 
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="/static/style.css?v=2.3">
+  <link rel="stylesheet" href="/static/style.css?v=2.4">
 </head>
 
 <body>
@@ -38,55 +38,38 @@
   <!-- Copy Toast -->
   <div id="copyToast" class="copy-toast">📋 Copied to clipboard!</div>
 
-  <!-- ── Telegram Security Gate Overlay (Active by default for zero-leak security) ────────────────────── -->
+  <!-- ── Telegram Access Gate (Shown for direct browser visitors) ────────────────────── -->
   <div class="security-gate-overlay" id="securityGate">
     <div class="security-gate-card">
-      <div class="gate-shield-ring">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="54" height="54" class="gate-shield-svg">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          <path d="M12 8v4M12 16h.01" stroke-width="2.2" stroke-linecap="round"/>
-        </svg>
+      <!-- 8 Services Combined Logo Showcase -->
+      <div class="gate-services-grid">
+        <div class="gate-service-icon" style="background:#E23744;"><img src="/static/src/logos/zomato.png" alt="Zomato"></div>
+        <div class="gate-service-icon" style="background:#2874F0;"><img src="/static/src/logos/flipkart.png" alt="Flipkart"></div>
+        <div class="gate-service-icon" style="background:linear-gradient(135deg,#580A46,#9b3af7);"><img src="/static/src/logos/meesho.png" alt="Meesho"></div>
+        <div class="gate-service-icon" style="background:#84c225; padding:3px;"><img src="/static/src/logos/bigbasket.png" alt="BigBasket"></div>
+        <div class="gate-service-icon" style="background:#FFFFFF; padding:2px;"><img src="/static/src/logos/myntra.png" alt="Myntra"></div>
+        <div class="gate-service-icon" style="background:#1C1C1C;"><img src="/static/src/logos/swiggy.png" alt="Swiggy"></div>
+        <div class="gate-service-icon" style="background:#1A1A1A;"><img src="/static/src/logos/zepto.png" alt="Zepto"></div>
+        <div class="gate-service-icon" style="background:#131A22;"><img src="/static/src/logos/amazon.png" alt="Amazon"></div>
       </div>
 
-      <div class="gate-status-pill">
+      <div class="gate-brand-pill">
         <span class="gate-pulse-dot"></span>
-        <span id="gateStatusBadge">TELEGRAM AUTH REQUIRED</span>
+        <span>8 SERVICES • 0-OTP CHECKER</span>
       </div>
 
-      <h1 class="gate-title" id="gateTitle">Access Restricted</h1>
-      <p class="gate-desc" id="gateDesc">
-        NexChecker is protected by strict cryptographic session signatures. Direct browser access without official Telegram bot authorization is disabled.
+      <h1 class="gate-title">NexChecker</h1>
+      <p class="gate-desc">
+        Instant zero-OTP account lookup across Zomato, Flipkart, Meesho, BigBasket, Myntra, Swiggy, Zepto & Amazon. Open our bot inside Telegram to start checking.
       </p>
-
-      <div class="gate-details-box">
-        <div class="gate-detail-row">
-          <span class="gate-detail-label">Status</span>
-          <span class="gate-detail-val gate-val-danger" id="gateDetailStatus">No Telegram Signature</span>
-        </div>
-        <div class="gate-detail-row">
-          <span class="gate-detail-label">Official Bot</span>
-          <span class="gate-detail-val">@NexChecker_Robot</span>
-        </div>
-        <div class="gate-detail-row">
-          <span class="gate-detail-label">Security Protocol</span>
-          <span class="gate-detail-val">HMAC-SHA256 WebAppData</span>
-        </div>
-      </div>
 
       <div class="gate-actions">
         <a href="https://t.me/NexChecker_Robot" class="btn-gate-telegram" id="btnLaunchBot" target="_blank" rel="noopener">
           <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.52 2.77-1.15 3.35-1.35 3.73-1.35.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
           </svg>
-          <span>Open in Telegram Bot</span>
+          <span>Open on Telegram</span>
         </a>
-        <button type="button" class="btn-gate-retry" id="btnGateRetry" onclick="window.location.reload()">
-          <span>Verify Handshake Again</span>
-        </button>
-      </div>
-
-      <div class="gate-footer">
-        🔒 NexChecker Cryptographic Security v3.0 • Hardware Guard
       </div>
     </div>
   </div>
@@ -574,7 +557,7 @@
   </div><!-- #app -->
 
   <!-- App Script -->
-  <script src="/static/app.js?v=3.0.3"></script>
+  <script src="/static/app.js?v=3.0.4"></script>
 </body>
 
 </html>
