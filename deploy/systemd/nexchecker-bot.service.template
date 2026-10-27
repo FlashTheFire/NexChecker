@@ -1,0 +1,22 @@
+[Unit]
+Description=NexChecker Universal Telegram Bot Service
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{SERVICE_USER}}
+WorkingDirectory={{APP_DIR}}
+ExecStart={{PYTHON_BIN}} NexBot/bot.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+EnvironmentFile={{APP_DIR}}/.env
+
+# Security Sandbox
+ProtectSystem=full
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
