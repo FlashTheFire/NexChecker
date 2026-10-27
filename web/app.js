@@ -302,6 +302,7 @@
     confettiCanvas:    document.getElementById('confettiCanvas'),
     copyToast:         document.getElementById('copyToast'),
     engineStatus:      document.getElementById('engineStatus'),
+    bannerStatsPills:  document.getElementById('bannerStatsPills'),
   };
 
   // ── Brand Switch ─────────────────────────────────────────────────────────────
@@ -957,13 +958,32 @@
     showCopyToast('📥 CSV downloaded!');
   });
 
-  // ── API Health Check ──────────────────────────────────────────────────────────
+  // ── API Health Check + Real Stats ────────────────────────────────────────────
   async function checkHealth() {
     try {
       const r = await fetch('/api/health');
       if (!r.ok) throw new Error();
-      const { status } = document.querySelector('.status-pulse');
-      // still alive — pulse stays green
+      const data = await r.json();
+      // Update live indicator
+      const pulse = document.querySelector('.status-pulse');
+      const text  = document.querySelector('.status-text');
+      if (pulse) pulse.style.background = '';
+      if (text)  { text.textContent = 'LIVE'; text.style.color = ''; }
+      // Render real stats if available
+      if (el.bannerStatsPills && data) {
+        const parts = [];
+        if (data.total_checks != null) {
+          const count = Number(data.total_checks);
+          const label = count >= 1000000
+            ? (count/1000000).toFixed(1) + 'M+'
+            : count >= 1000 ? Math.floor(count/1000) + 'K+' : String(count);
+          parts.push(`<div class="banner-pill"><span>✓</span><span>${label} Checks</span></div>`);
+        }
+        if (data.avg_latency_ms != null) {
+          parts.push(`<div class="banner-pill"><span>⚡</span><span>${Math.round(data.avg_latency_ms)}ms avg</span></div>`);
+        }
+        if (parts.length) el.bannerStatsPills.innerHTML = parts.join('');
+      }
     } catch {
       const pulse = document.querySelector('.status-pulse');
       const text  = document.querySelector('.status-text');

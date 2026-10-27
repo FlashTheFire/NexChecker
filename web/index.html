@@ -74,118 +74,124 @@
         <div class="section-microtitle">SELECT PLATFORM</div>
         <div class="service-chips-scroll" id="serviceChipsScroll">
 
-          <!-- Zomato -->
+          <!-- Zomato — wordmark Z path -->
           <button class="service-chip active" data-platform="zomato" onclick="switchBrand('zomato', this)">
-            <div class="chip-logo" style="background:#E23744;">
+            <div class="chip-logo">
               <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect width="40" height="40" rx="10" fill="#E23744"/>
-                <text x="20" y="28" text-anchor="middle" font-size="22" font-weight="900" font-family="Arial" fill="white">z</text>
+                <!-- Zomato Z letterform -->
+                <path d="M11 13h18v3L15.5 27H29v3H11v-3l13.5-11H11v-3z" fill="white"/>
               </svg>
             </div>
             <span class="chip-name">Zomato</span>
             <span class="chip-active-dot"></span>
           </button>
 
-          <!-- Flipkart -->
+          <!-- Flipkart — F + yellow spark -->
           <button class="service-chip" data-platform="flipkart" onclick="switchBrand('flipkart', this)">
-            <div class="chip-logo" style="background:#2874F0;">
+            <div class="chip-logo">
               <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="40" height="40" rx="10" fill="#2874F0"/>
-                <!-- Flipkart F bag shape -->
-                <text x="20" y="28" text-anchor="middle" font-size="20" font-weight="900" font-family="Arial" fill="#FFD814">F</text>
+                <rect width="40" height="40" rx="6" fill="#2874F0"/>
+                <!-- F strokes -->
+                <path d="M13 10h14v3H16v5h9v3h-9v9h-3V10z" fill="white"/>
+                <!-- Yellow spark/star (Flipkart logo accent) -->
+                <path d="M27 17l1.5-3 1.5 3 3 1.5-3 1.5-1.5 3-1.5-3-3-1.5 3-1.5z" fill="#FFD814"/>
               </svg>
             </div>
             <span class="chip-name">Flipkart</span>
             <span class="chip-active-dot"></span>
           </button>
 
-          <!-- Meesho -->
+          <!-- Meesho — stylised m in Jamuni -->
           <button class="service-chip" data-platform="meesho" onclick="switchBrand('meesho', this)">
-            <div class="chip-logo" style="background:linear-gradient(135deg,#580A46,#9b3af7);">
+            <div class="chip-logo">
               <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="40" height="40" rx="10" fill="url(#meeshoGrad)"/>
                 <defs>
-                  <linearGradient id="meeshoGrad" x1="0" y1="0" x2="40" y2="40">
+                  <linearGradient id="msGrad" x1="0" y1="0" x2="40" y2="40">
                     <stop offset="0%" stop-color="#580A46"/>
                     <stop offset="100%" stop-color="#9b3af7"/>
                   </linearGradient>
                 </defs>
-                <text x="20" y="28" text-anchor="middle" font-size="20" font-weight="900" font-family="Arial" fill="#FF9D00">m</text>
+                <rect width="40" height="40" rx="10" fill="url(#msGrad)"/>
+                <!-- m letterform (double-arch) -->
+                <path d="M9 28V16h4v2.2c.8-1.5 2.1-2.5 3.8-2.5 1.8 0 3 .9 3.7 2.3.9-1.5 2.3-2.3 4-2.3 2.8 0 4.5 1.9 4.5 5V28h-4v-6.5c0-1.4-.6-2.2-1.8-2.2-1.2 0-1.9.9-1.9 2.3V28h-4v-6.5c0-1.4-.6-2.2-1.8-2.2-1.2 0-1.9.9-1.9 2.3V28H9z" fill="#FF9D00"/>
               </svg>
             </div>
             <span class="chip-name">Meesho</span>
             <span class="chip-active-dot"></span>
           </button>
 
-          <!-- BigBasket -->
+          <!-- BigBasket — bb in lime on ink -->
           <button class="service-chip" data-platform="bigbasket" onclick="switchBrand('bigbasket', this)">
-            <div class="chip-logo" style="background:#231F20;">
+            <div class="chip-logo">
               <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect width="40" height="40" rx="10" fill="#231F20"/>
-                <text x="20" y="28" text-anchor="middle" font-size="17" font-weight="900" font-family="Arial" fill="#A6CE39">bb</text>
+                <!-- First b -->
+                <path d="M7 10h3v7.2c.7-1 1.8-1.5 3-1.5 2.6 0 4.3 2 4.3 5.1 0 3.2-1.8 5.2-4.4 5.2-1.3 0-2.3-.5-3-1.6V26H7V10zm5.8 8.5c-1.4 0-2.3 1.1-2.3 2.8 0 1.7.9 2.8 2.3 2.8 1.4 0 2.2-1.1 2.2-2.8 0-1.7-.8-2.8-2.2-2.8z" fill="#A6CE39"/>
+                <!-- Second b -->
+                <path d="M19 10h3v7.2c.7-1 1.8-1.5 3-1.5 2.6 0 4.3 2 4.3 5.1 0 3.2-1.8 5.2-4.4 5.2-1.3 0-2.3-.5-3-1.6V26h-2.9V10zm5.8 8.5c-1.4 0-2.3 1.1-2.3 2.8 0 1.7.9 2.8 2.3 2.8 1.4 0 2.2-1.1 2.2-2.8 0-1.7-.8-2.8-2.2-2.8z" fill="#A6CE39"/>
               </svg>
             </div>
             <span class="chip-name">BigBasket</span>
             <span class="chip-active-dot"></span>
           </button>
 
-          <!-- Myntra -->
+          <!-- Myntra — M with gradient -->
           <button class="service-chip" data-platform="myntra" onclick="switchBrand('myntra', this)">
-            <div class="chip-logo" style="background:linear-gradient(135deg,#FF3F6C,#FF912E);">
+            <div class="chip-logo">
               <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="40" height="40" rx="10" fill="url(#myntraGrad)"/>
                 <defs>
-                  <linearGradient id="myntraGrad" x1="0" y1="0" x2="40" y2="40">
+                  <linearGradient id="myGrad" x1="0" y1="0" x2="40" y2="40">
                     <stop offset="0%" stop-color="#FF3F6C"/>
                     <stop offset="100%" stop-color="#FF912E"/>
                   </linearGradient>
                 </defs>
-                <text x="20" y="29" text-anchor="middle" font-size="20" font-weight="900" font-family="Arial" fill="white">M</text>
+                <rect width="40" height="40" rx="4" fill="#282C3F"/>
+                <!-- M letterform -->
+                <path d="M7 30V11l6.5 10.5L20 11l6.5 10.5L33 11v19h-3.5V18.5L24 27h-8l-5.5-8.5V30H7z" fill="url(#myGrad)"/>
               </svg>
             </div>
             <span class="chip-name">Myntra</span>
             <span class="chip-active-dot"></span>
           </button>
 
-          <!-- Swiggy -->
+          <!-- Swiggy — orange S-pin logo -->
           <button class="service-chip" data-platform="swiggy" onclick="switchBrand('swiggy', this)">
-            <div class="chip-logo" style="background:#FC8019;">
+            <div class="chip-logo">
               <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="40" height="40" rx="10" fill="#FC8019"/>
-                <text x="20" y="28" text-anchor="middle" font-size="20" font-weight="900" font-family="Arial" fill="white">S</text>
+                <rect width="40" height="40" rx="10" fill="#1C1C1C"/>
+                <!-- Swiggy S curve path -->
+                <path d="M26.5 14.5C24.8 12.3 22.1 11 19 11c-5 0-8.5 3.3-8.5 7.5 0 4 3 6.3 7 7.2l2 .5c2.2.5 3.5 1.3 3.5 2.8 0 1.6-1.5 2.7-3.8 2.7-2.5 0-4.5-1.2-5.7-3.2l-3 2C12.2 32.5 15.2 34 19 34c5.3 0 9-3.2 9-7.8 0-4-2.8-6.2-7-7.2l-2-.5c-1.8-.4-3-.9-3-2.4 0-1.4 1.2-2.4 3-2.4 1.8 0 3.5.9 4.5 2.3l3-1.5z" fill="#FC8019"/>
               </svg>
             </div>
             <span class="chip-name">Swiggy</span>
             <span class="chip-active-dot"></span>
           </button>
 
-          <!-- Zepto -->
+          <!-- Zepto — purple Z with speed feel -->
           <button class="service-chip" data-platform="zepto" onclick="switchBrand('zepto', this)">
-            <div class="chip-logo" style="background:linear-gradient(135deg,#0d0010,#950EDB);">
+            <div class="chip-logo">
               <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="40" height="40" rx="10" fill="url(#zeptoGrad)"/>
-                <defs>
-                  <linearGradient id="zeptoGrad" x1="0" y1="0" x2="40" y2="40">
-                    <stop offset="0%" stop-color="#0d0010"/>
-                    <stop offset="100%" stop-color="#950EDB"/>
-                  </linearGradient>
-                </defs>
-                <text x="20" y="28" text-anchor="middle" font-size="20" font-weight="900" font-family="Arial" fill="white">Z</text>
+                <rect width="40" height="40" rx="10" fill="#1A1A1A"/>
+                <!-- Z letterform (bold, Zepto style) -->
+                <path d="M10 12h20v3.5L16 27.5h14V31H10v-3.5L24.2 15.5H10V12z" fill="#950EDB"/>
+                <!-- Speed underline accent -->
+                <path d="M14 33h12" stroke="#B44EE8" stroke-width="1.5" stroke-linecap="round"/>
               </svg>
             </div>
             <span class="chip-name">Zepto</span>
             <span class="chip-active-dot"></span>
           </button>
 
-          <!-- Amazon -->
+          <!-- Amazon — squid ink + wordmark + smile -->
           <button class="service-chip" data-platform="amazon" onclick="switchBrand('amazon', this)">
-            <div class="chip-logo" style="background:#232F3E;">
+            <div class="chip-logo">
               <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="40" height="40" rx="10" fill="#232F3E"/>
-                <!-- Amazon smile -->
-                <text x="20" y="22" text-anchor="middle" font-size="11" font-weight="800" font-family="Arial" fill="white">amazon</text>
+                <rect width="40" height="40" rx="8" fill="#131A22"/>
+                <!-- amazon wordmark (simplified geometric) -->
+                <path d="M8 17h2.5v-2h2v2H15v2h-2.5v4.5c0 .5.2.7.7.7H15V26h-2.5c-1.5 0-2.5-.8-2.5-2.3V19H8v-2zm7 0h2.2l2.3 6.5 2.3-6.5H24l-3.5 9H18L15 17zm9 0h6.8v2h-4.5v1.5H27v2h-2.7v1.5H28V26h-7v-9h1z" fill="white"/>
                 <!-- Smile arc -->
-                <path d="M12 26 Q20 32 28 26" stroke="#FF9900" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                <path d="M11 28.5 Q20 34 29 28.5" stroke="#FF9900" stroke-width="2.2" stroke-linecap="round" fill="none"/>
               </svg>
             </div>
             <span class="chip-name">Amazon</span>
@@ -195,25 +201,8 @@
         </div>
       </div>
 
-      <!-- Mode Tabs -->
-      <nav class="mode-tabs" id="modeTabs">
-        <button class="mode-tab active" data-tab="single" id="tabSingle">
-          <span class="tab-icon">🎯</span>
-          <span class="tab-label">Single</span>
-        </button>
-        <button class="mode-tab" data-tab="batch" id="tabBatch">
-          <span class="tab-icon">⚡</span>
-          <span class="tab-label">Batch</span>
-        </button>
-        <button class="mode-tab" data-tab="history" id="tabHistory">
-          <span class="tab-icon">📜</span>
-          <span class="tab-label">History</span>
-        </button>
-        <button class="mode-tab" data-tab="engines" id="tabEngines">
-          <span class="tab-icon">⚙️</span>
-          <span class="tab-label">Engines</span>
-        </button>
-      </nav>
+      <!-- Mode Tabs — HIDDEN: navigation is via bottom nav only -->
+      <nav class="mode-tabs" id="modeTabs" style="display:none;" aria-hidden="true"></nav>
     </header>
 
     <!-- ── Main Content ─────────────────────────────────────────────────────── -->
@@ -227,16 +216,8 @@
 
           <!-- Brand Banner (full-color visual) -->
           <div class="brand-banner" id="brandBanner">
-            <div class="banner-overlay-pills">
-              <div class="banner-pill">
-                <span>★</span>
-                <span>4.9 • 1.2M+ Checks</span>
-              </div>
-              <div class="banner-pill">
-                <span>⚡</span>
-                <span>&lt;450ms</span>
-              </div>
-            </div>
+            <!-- Stats pill — populated by real API data on load -->
+            <div class="banner-overlay-pills" id="bannerStatsPills"></div>
 
             <!-- Animated brand emoji in corner -->
             <div class="banner-emoji" id="bannerEmoji">
@@ -531,27 +512,31 @@
 
     </main>
 
-    <!-- ── Bottom Navigation Bar ────────────────────────────────────────────── -->
+    <!-- ── Bottom Navigation Bar — 3 tabs only ──────────────────────────────── -->
     <nav class="bottom-nav" id="bottomNav">
       <button class="b-nav-item active" data-tab="single" id="bnSingle">
-        <span class="nav-icon">🏠</span>
+        <span class="nav-icon-svg">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+          </svg>
+        </span>
         <span class="nav-label">Home</span>
       </button>
-      <button class="b-nav-item" data-tab="single" id="bnCheck">
-        <span class="nav-icon">🔍</span>
-        <span class="nav-label">Check</span>
-      </button>
       <button class="b-nav-item" data-tab="batch" id="bnBatch">
-        <span class="nav-icon">⚡</span>
+        <span class="nav-icon-svg">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+            <path d="M13 2.05V4.05C17.39 4.59 20.5 8.58 19.96 12.97C19.5 16.61 16.64 19.5 13 19.93V21.93C18.5 21.38 22.5 16.5 21.95 11C21.5 6.25 17.73 2.5 13 2.05M11 2.06C9.05 2.25 7.19 3 5.67 4.26L7.1 5.74C8.22 4.84 9.57 4.26 11 4.06V2.06M4.26 5.67C3 7.19 2.25 9.04 2.05 11H4.05C4.24 9.58 4.8 8.23 5.69 7.1L4.26 5.67M2.06 13C2.26 14.96 3.03 16.81 4.27 18.33L5.69 16.9C4.81 15.77 4.24 14.42 4.06 13H2.06M7.1 18.37L5.67 19.74C7.18 21 9.04 21.79 11 22V20C9.58 19.82 8.23 19.25 7.1 18.37M12 7C9.24 7 7 9.24 7 12S9.24 17 12 17 17 14.76 17 12 14.76 7 12 7M12 9C13.66 9 15 10.34 15 12S13.66 15 12 15 9 13.66 9 12 10.34 9 12 9Z"/>
+          </svg>
+        </span>
         <span class="nav-label">Batch</span>
       </button>
       <button class="b-nav-item" data-tab="history" id="bnHistory">
-        <span class="nav-icon">📜</span>
+        <span class="nav-icon-svg">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+            <path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6a7 7 0 0 1 7-7 7 7 0 0 1 7 7 7 7 0 0 1-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 9-9 9 9 0 0 0-9-9m-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+          </svg>
+        </span>
         <span class="nav-label">History</span>
-      </button>
-      <button class="b-nav-item" data-tab="engines" id="bnEngines">
-        <span class="nav-icon">⚙️</span>
-        <span class="nav-label">Engines</span>
       </button>
     </nav>
 

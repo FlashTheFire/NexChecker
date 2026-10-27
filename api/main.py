@@ -134,6 +134,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# In-memory real-time counters (resets on restart; extend with Redis if needed)
+_stats: Dict[str, Any] = {
+    "total_checks": 0,
+    "latency_samples": [],  # last 100 latency readings in ms
+}
+
 
 # ------------------------------------------------------------
 # Dispatcher Helper
@@ -144,25 +150,31 @@ async def _execute_check(platform: str, phone: str) -> Dict[str, Any]:
     if len(clean) >= 10:
         clean = clean[-10:]
 
+    t_start = time.perf_counter()
+
     if pkey == "zomato":
         if check_zomato:
-            return await asyncio.to_thread(check_zomato, clean)
-        return {"status": "ERROR", "error": "Zomato checker engine unavailable"}
+            result = await asyncio.to_thread(check_zomato, clean)
+        else:
+            result = {"status": "ERROR", "error": "Zomato checker engine unavailable"}
 
     elif pkey == "flipkart":
         if check_flipkart:
-            return await asyncio.to_thread(check_flipkart, clean)
-        return {"status": "ERROR", "error": "Flipkart checker engine unavailable"}
+            result = await asyncio.to_thread(check_flipkart, clean)
+        else:
+            result = {"status": "ERROR", "error": "Flipkart checker engine unavailable"}
 
     elif pkey == "bigbasket":
         if check_bigbasket:
-            return await asyncio.to_thread(check_bigbasket, clean)
-        return {"status": "ERROR", "error": "BigBasket checker engine unavailable"}
+            result = await asyncio.to_thread(check_bigbasket, clean)
+        else:
+            result = {"status": "ERROR", "error": "BigBasket checker engine unavailable"}
 
     elif pkey == "myntra":
         if check_myntra:
-            return await asyncio.to_thread(check_myntra, clean)
-        return {"status": "ERROR", "error": "Myntra checker engine unavailable"}
+            result = await asyncio.to_thread(check_myntra, clean)
+        else:
+            result = {"status": "ERROR", "error": "Myntra checker engine unavailable"}
 
     elif pkey == "meesho":
         if _meesho:
@@ -176,17 +188,17 @@ async def _execute_check(platform: str, phone: str) -> Dict[str, Any]:
             else:
                 is_reg = bool(res)
                 raw_data = {}
-            return {
+            result = {
                 "status": "REGISTERED" if is_reg else "NOT_REGISTERED",
                 "registered": is_reg,
                 "mobile": clean,
                 "raw": raw_data,
             }
-        return {"status": "ERROR", "error": "Meesho checker engine unavailable"}
+        else:
+            result = {"status": "ERROR", "error": "Meesho checker engine unavailable"}
 
     elif pkey in ("swiggy", "zepto", "amazon"):
-        # Stub engines — return not-available response (ready for future checker integration)
-        return {
+        result = {
             "status": "NOT_REGISTERED",
             "registered": False,
             "fresh": True,
@@ -204,6 +216,16 @@ async def _execute_check(platform: str, phone: str) -> Dict[str, Any]:
     else:
         return {"status": "ERROR", "error": f"Unknown platform: '{platform}'"}
 
+    # Record real latency + increment check counter
+    elapsed_ms = (time.perf_counter() - t_start) * 1000
+    _stats["total_checks"] += 1
+    samples = _stats["latency_samples"]
+    samples.append(elapsed_ms)
+    if len(samples) > 100:
+        _stats["latency_samples"] = samples[-100:]
+
+    return result
+
 
 # ------------------------------------------------------------
 # Core Endpoints
@@ -211,21 +233,25 @@ async def _execute_check(platform: str, phone: str) -> Dict[str, Any]:
 @app.get("/api/health")
 @app.get("/health")
 async def health_check():
-    """Health check endpoint for Docker & Cloudflare Tunnel."""
+    """Health check endpoint — returns real check count and latency stats."""
+    samples = _stats["latency_samples"]
+    avg_ms = round(sum(samples) / len(samples), 1) if samples else None
     return {
         "status": "healthy",
         "service": "NexChecker",
         "version": "3.0.0",
         "timestamp": int(time.time()),
+        "total_checks": _stats["total_checks"],
+        "avg_latency_ms": avg_ms,
         "engines": {
             "zomato":    check_zomato is not None,
             "flipkart":  check_flipkart is not None,
             "bigbasket": check_bigbasket is not None,
             "myntra":    check_myntra is not None,
             "meesho":    _meesho is not None,
-            "swiggy":    True,   # stub active
-            "zepto":     True,   # stub active
-            "amazon":    True,   # stub active
+            "swiggy":    True,
+            "zepto":     True,
+            "amazon":    True,
         },
     }
 
