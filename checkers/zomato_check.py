@@ -223,7 +223,6 @@ def _build_api_headers(account: Dict[str, Any], token: str) -> Dict[str, str]:
         "User-Agent": f"Zomato/{dev.get('appVersion', '19.9.4')} (Linux; U; Android {dev.get('osVersion', '14')}; {dev.get('model', 'SM-M546B')} Build/{dev.get('buildId', 'TP1A.220624.014')})",
         "Content-Type": "application/json",
         "Accept": "application/json, text/plain, */*",
-        "Accept-Encoding": "gzip, deflate, br",
         "Accept-Language": "en-IN,en;q=0.9,hi-IN;q=0.8,hi;q=0.7",
         "X-Zomato-API-Key": ZOMATO_API_KEY,
         "X-Zomato-Client-Id": ZOMATO_AUTH_CLIENT_ID,
@@ -310,7 +309,10 @@ def _check_account_sync(m10: str, account: Dict[str, Any]) -> dict:
 
         if r.status_code != 200:
             return {"status": "AUTH_ERROR", "code": r.status_code}
-        data = r.json()
+        try:
+            data = r.json()
+        except Exception:
+            return {"status": "AUTH_ERROR", "code": 502, "detail": "Non-JSON response"}
     except Exception as exc:
         return {"status": "ERROR", "mobile": m10, "error": str(exc)}
 
