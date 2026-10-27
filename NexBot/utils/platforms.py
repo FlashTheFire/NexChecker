@@ -36,8 +36,10 @@ def _build_platforms() -> dict[str, PlatformDef]:
     from core.myntra_api import myntra_checker
     from core.bigbasket_api import bigbasket_checker
     from core.flipkart_api import flipkart_checker
+    from core.zomato_api import zomato_checker
     from utils.config import (
-        BIGBASKET_SERVICE_CODE, FLIPKART_SERVICE_CODE, MYNTRA_SERVICE_CODE
+        BIGBASKET_SERVICE_CODE, FLIPKART_SERVICE_CODE, MYNTRA_SERVICE_CODE,
+        ZOMATO_SERVICE_CODE,
     )
 
     return {
@@ -75,6 +77,18 @@ def _build_platforms() -> dict[str, PlatformDef]:
             command      = "flipkart",
             description  = "Flipkart registration checker",
             checker      = flipkart_checker,
+            needs_warmup = False,
+        ),
+        "zomato": PlatformDef(
+            key          = "zomato",
+            label        = "Zomato",
+            icon         = "🍽",
+            flag         = "🇮🇳",
+            service_code = ZOMATO_SERVICE_CODE,
+            country_code = "22",
+            command      = "zomato",
+            description  = "Zomato registration checker",
+            checker      = zomato_checker,
             needs_warmup = False,
         ),
     }
