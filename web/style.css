@@ -61,124 +61,148 @@
 
 /* ══ BRAND THEMES ══════════════════════════════════════════════════════════════ */
 
-/* Zomato */
+/* ── Zomato (Sushi Design System) ──────────────────────────── */
 [data-brand="zomato"] {
-  --brand-primary:      #E23744;
-  --brand-primary-dark: #CB202D;
-  --brand-primary-soft: rgba(226,55,68,0.15);
-  --brand-primary-glow: rgba(226,55,68,0.40);
-  --brand-accent:       #EEA61B;
-  --brand-header-bg:    #E23744;
-  --brand-header-text:  #FFFFFF;
-  --brand-chip-bg:      rgba(226,55,68,0.20);
-  --brand-radius-btn:   12px;
-  --brand-shadow-btn:   0 4px 20px rgba(226,55,68,0.45);
-  --brand-font:         'Plus Jakarta Sans', system-ui, sans-serif;
+  --brand-primary:       #E23744;
+  --brand-primary-dark:  #CB202D;
+  --brand-primary-soft:  rgba(226,55,68,0.14);
+  --brand-primary-glow:  rgba(226,55,68,0.42);
+  --brand-accent:        #EEA61B;     /* Zomato Gold / ratings */
+  --brand-success:       #3AB757;
+  --brand-header-bg:     #E23744;
+  --brand-header-text:   #FFFFFF;
+  --brand-chip-bg:       rgba(226,55,68,0.18);
+  --brand-radius-btn:    12px;        /* Sushi: 8–16px cards, tighter chips */
+  --brand-shadow-btn:    0 4px 18px rgba(226,55,68,0.45);
+  --brand-font:          'Plus Jakarta Sans', system-ui, sans-serif;
+  --brand-card-radius:   16px;
+  --brand-badge-radius:  6px;
 }
 
-/* Flipkart */
+/* ── Flipkart (Design System 3.2 / MURV / Inter) ──────────── */
 [data-brand="flipkart"] {
-  --brand-primary:      #2874F0;
-  --brand-primary-dark: #1a60d0;
-  --brand-primary-soft: rgba(40,116,240,0.15);
-  --brand-primary-glow: rgba(40,116,240,0.40);
-  --brand-accent:       #FFD814;
-  --brand-header-bg:    #2874F0;
-  --brand-header-text:  #FFFFFF;
-  --brand-chip-bg:      rgba(40,116,240,0.20);
-  --brand-radius-btn:   4px;
-  --brand-shadow-btn:   0 4px 20px rgba(40,116,240,0.45);
-  --brand-font:         'Inter', system-ui, sans-serif;
+  --brand-primary:       #2874F0;
+  --brand-primary-dark:  #1F74BA;
+  --brand-primary-soft:  rgba(40,116,240,0.14);
+  --brand-primary-glow:  rgba(40,116,240,0.42);
+  --brand-accent:        #FFD814;     /* FK yellow — cart CTA */
+  --brand-success:       #388E3C;
+  --brand-header-bg:     #2874F0;
+  --brand-header-text:   #FFFFFF;
+  --brand-chip-bg:       rgba(40,116,240,0.18);
+  --brand-radius-btn:    4px;         /* FK: sharp 4px buttons/cards */
+  --brand-shadow-btn:    0 3px 12px rgba(40,116,240,0.40);
+  --brand-font:          'Inter', system-ui, sans-serif;
+  --brand-card-radius:   8px;
+  --brand-badge-radius:  4px;
 }
 
-/* Meesho */
+/* ── Meesho (Jamuni + Aam palette / Landor 2023) ──────────── */
 [data-brand="meesho"] {
-  --brand-primary:      #9b3af7;
-  --brand-primary-dark: #7b1fdf;
-  --brand-primary-soft: rgba(155,58,247,0.15);
-  --brand-primary-glow: rgba(155,58,247,0.40);
-  --brand-accent:       #FF9D00;
-  --brand-header-bg:    #580A46;
-  --brand-header-text:  #FFFFFF;
-  --brand-chip-bg:      rgba(155,58,247,0.20);
-  --brand-radius-btn:   8px;
-  --brand-shadow-btn:   0 4px 20px rgba(155,58,247,0.45);
-  --brand-font:         'Plus Jakarta Sans', system-ui, sans-serif;
+  --brand-primary:       #9b3af7;     /* Jamuni active */
+  --brand-primary-dark:  #580A46;     /* Deep Jamuni */
+  --brand-primary-soft:  rgba(155,58,247,0.14);
+  --brand-primary-glow:  rgba(155,58,247,0.42);
+  --brand-accent:        #FF9D00;     /* Aam orange */
+  --brand-success:       #16A34A;
+  --brand-header-bg:     #580A46;
+  --brand-header-text:   #FFFFFF;
+  --brand-chip-bg:       rgba(155,58,247,0.18);
+  --brand-radius-btn:    6px;         /* Meesho: 6px btn, 10px card */
+  --brand-shadow-btn:    0 4px 18px rgba(155,58,247,0.45);
+  --brand-font:          'Plus Jakarta Sans', system-ui, sans-serif;
+  --brand-card-radius:   10px;
+  --brand-badge-radius:  6px;
 }
 
-/* BigBasket */
+/* ── BigBasket (Freshness — lime green + red) ─────────────── */
 [data-brand="bigbasket"] {
-  --brand-primary:      #A6CE39;
-  --brand-primary-dark: #8ab52e;
-  --brand-primary-soft: rgba(166,206,57,0.15);
-  --brand-primary-glow: rgba(166,206,57,0.40);
-  --brand-accent:       #ED1C24;
-  --brand-header-bg:    #231F20;
-  --brand-header-text:  #A6CE39;
-  --brand-chip-bg:      rgba(166,206,57,0.20);
-  --brand-radius-btn:   6px;
-  --brand-shadow-btn:   0 4px 20px rgba(166,206,57,0.35);
-  --brand-font:         'Inter', system-ui, sans-serif;
+  --brand-primary:       #A6CE39;     /* bb-green */
+  --brand-primary-dark:  #8FB82E;
+  --brand-primary-soft:  rgba(166,206,57,0.14);
+  --brand-primary-glow:  rgba(166,206,57,0.38);
+  --brand-accent:        #ED1C24;     /* bb-red — logo 'b', sale */
+  --brand-success:       #A6CE39;
+  --brand-header-bg:     #231F20;     /* bb-ink — dark trustworthy */
+  --brand-header-text:   #A6CE39;
+  --brand-chip-bg:       rgba(166,206,57,0.18);
+  --brand-radius-btn:    6px;         /* BB: 4–8px buttons, 8–12px cards */
+  --brand-shadow-btn:    0 3px 14px rgba(166,206,57,0.35);
+  --brand-font:          'Inter', system-ui, sans-serif;
+  --brand-card-radius:   10px;
+  --brand-badge-radius:  6px;
 }
 
-/* Myntra */
+/* ── Myntra (Appliqué — editorial sharp, fashion-pink) ────── */
 [data-brand="myntra"] {
-  --brand-primary:      #FF3F6C;
-  --brand-primary-dark: #e0355c;
-  --brand-primary-soft: rgba(255,63,108,0.15);
-  --brand-primary-glow: rgba(255,63,108,0.40);
-  --brand-accent:       #FF3F6C;
-  --brand-header-bg:    #1a1020;
-  --brand-header-text:  #FFFFFF;
-  --brand-chip-bg:      rgba(255,63,108,0.20);
-  --brand-radius-btn:   4px;
-  --brand-shadow-btn:   0 4px 20px rgba(255,63,108,0.45);
-  --brand-font:         'Plus Jakarta Sans', system-ui, sans-serif;
+  --brand-primary:       #FF3F6C;     /* myntra-pink */
+  --brand-primary-dark:  #E0355C;
+  --brand-primary-soft:  rgba(255,63,108,0.14);
+  --brand-primary-glow:  rgba(255,63,108,0.42);
+  --brand-accent:        #FF912E;     /* logo gradient end orange */
+  --brand-success:       #14804A;
+  --brand-header-bg:     #282C3F;     /* myntra-ink — editorial dark */
+  --brand-header-text:   #FFFFFF;
+  --brand-chip-bg:       rgba(255,63,108,0.18);
+  --brand-radius-btn:    4px;         /* Appliqué: near-sharp 4px */
+  --brand-shadow-btn:    0 3px 14px rgba(255,63,108,0.42);
+  --brand-font:          'Plus Jakarta Sans', system-ui, sans-serif;
+  --brand-card-radius:   4px;         /* Very sharp — magazine feel */
+  --brand-badge-radius:  2px;
 }
 
-/* Swiggy */
+/* ── Swiggy (DLS — warm orange, appetite energy) ─────────── */
 [data-brand="swiggy"] {
-  --brand-primary:      #FC8019;
-  --brand-primary-dark: #e06a0f;
-  --brand-primary-soft: rgba(252,128,25,0.15);
-  --brand-primary-glow: rgba(252,128,25,0.40);
-  --brand-accent:       #48C479;
-  --brand-header-bg:    #1c1009;
-  --brand-header-text:  #FFFFFF;
-  --brand-chip-bg:      rgba(252,128,25,0.20);
-  --brand-radius-btn:   8px;
-  --brand-shadow-btn:   0 4px 20px rgba(252,128,25,0.45);
-  --brand-font:         'Plus Jakarta Sans', system-ui, sans-serif;
+  --brand-primary:       #FC8019;     /* swiggy-orange */
+  --brand-primary-dark:  #E06E0F;
+  --brand-primary-soft:  rgba(252,128,25,0.14);
+  --brand-primary-glow:  rgba(252,128,25,0.42);
+  --brand-accent:        #48C479;     /* rating-high green */
+  --brand-success:       #48C479;
+  --brand-header-bg:     #02060C;     /* swiggy-ink near black */
+  --brand-header-text:   #FFFFFF;
+  --brand-chip-bg:       rgba(252,128,25,0.18);
+  --brand-radius-btn:    8px;         /* DLS: 8–12px friendly modern */
+  --brand-shadow-btn:    0 4px 18px rgba(252,128,25,0.45);
+  --brand-font:          'Plus Jakarta Sans', system-ui, sans-serif;
+  --brand-card-radius:   12px;
+  --brand-badge-radius:  6px;
 }
 
-/* Zepto */
+/* ── Zepto (Electric purple — speed, urgency) ─────────────── */
 [data-brand="zepto"] {
-  --brand-primary:      #950EDB;
-  --brand-primary-dark: #7a0bb3;
-  --brand-primary-soft: rgba(149,14,219,0.15);
-  --brand-primary-glow: rgba(149,14,219,0.40);
-  --brand-accent:       #B44EE8;
-  --brand-header-bg:    #0d0010;
-  --brand-header-text:  #FFFFFF;
-  --brand-chip-bg:      rgba(149,14,219,0.20);
-  --brand-radius-btn:   8px;
-  --brand-shadow-btn:   0 4px 20px rgba(149,14,219,0.50);
-  --brand-font:         'Inter', system-ui, sans-serif;
+  --brand-primary:       #950EDB;     /* zepto-purple */
+  --brand-primary-dark:  #7A0BB3;
+  --brand-primary-soft:  rgba(149,14,219,0.14);
+  --brand-primary-glow:  rgba(149,14,219,0.50);
+  --brand-accent:        #B44EE8;     /* purple-light */
+  --brand-success:       #16A34A;
+  --brand-header-bg:     #1A1A1A;     /* zepto-ink */
+  --brand-header-text:   #FFFFFF;
+  --brand-chip-bg:       rgba(149,14,219,0.18);
+  --brand-radius-btn:    8px;         /* Zepto: 6–12px */
+  --brand-shadow-btn:    0 4px 20px rgba(149,14,219,0.52);
+  --brand-font:          'Inter', system-ui, sans-serif;
+  --brand-card-radius:   12px;
+  --brand-badge-radius:  6px;
 }
 
-/* Amazon */
+/* ── Amazon (Smile Orange / Squid Ink — conversion first) ─── */
 [data-brand="amazon"] {
-  --brand-primary:      #FF9900;
-  --brand-primary-dark: #e08000;
-  --brand-primary-soft: rgba(255,153,0,0.15);
-  --brand-primary-glow: rgba(255,153,0,0.40);
-  --brand-accent:       #FFD814;
-  --brand-header-bg:    #131A22;
-  --brand-header-text:  #FFFFFF;
-  --brand-chip-bg:      rgba(255,153,0,0.20);
-  --brand-radius-btn:   8px;
-  --brand-shadow-btn:   0 4px 20px rgba(255,153,0,0.40);
-  --brand-font:         'Inter', system-ui, sans-serif;
+  --brand-primary:       #FF9900;     /* smile-orange */
+  --brand-primary-dark:  #E08000;
+  --brand-primary-soft:  rgba(255,153,0,0.14);
+  --brand-primary-glow:  rgba(255,153,0,0.40);
+  --brand-accent:        #FFD814;     /* cart-yellow */
+  --brand-success:       #067D62;
+  --brand-header-bg:     #131A22;     /* squid-ink dark */
+  --brand-header-text:   #FFFFFF;
+  --brand-chip-bg:       rgba(255,153,0,0.18);
+  --brand-radius-btn:    8px;         /* Amazon: 4–8px modest */
+  --brand-shadow-btn:    0 3px 14px rgba(255,153,0,0.40);
+  --brand-font:          'Inter', system-ui, sans-serif;
+  --brand-card-radius:   8px;
+  --brand-badge-radius:  4px;
 }
 
 /* ── Reset & Base ─────────────────────────────────────────────────────────────── */
@@ -494,7 +518,7 @@ body {
 /* ══ HERO BRAND CARD ═══════════════════════════════════════════════════════ */
 .hero-brand-card {
   background: var(--bg-card);
-  border-radius: var(--radius-card);
+  border-radius: var(--brand-card-radius, var(--radius-card));
   overflow: hidden;
   box-shadow: var(--shadow-card);
   margin-bottom: var(--sp-4);
@@ -518,15 +542,15 @@ body {
   background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.4) 100%);
 }
 
-/* Brand-specific banner patterns */
-[data-brand="zomato"]    .brand-banner { background: linear-gradient(135deg, #E23744 0%, #CB202D 60%, #a01020 100%); }
-[data-brand="flipkart"]  .brand-banner { background: linear-gradient(135deg, #2874F0 0%, #1a60d0 60%, #103090 100%); }
-[data-brand="meesho"]    .brand-banner { background: linear-gradient(135deg, #580A46 0%, #9b3af7 60%, #580A46 100%); }
-[data-brand="bigbasket"] .brand-banner { background: linear-gradient(135deg, #231F20 0%, #A6CE39 80%, #8ab52e 100%); }
-[data-brand="myntra"]    .brand-banner { background: linear-gradient(135deg, #FF3F6C 0%, #f41cb2 50%, #FF912E 100%); }
-[data-brand="swiggy"]    .brand-banner { background: linear-gradient(135deg, #FC8019 0%, #e06a0f 60%, #b05000 100%); }
-[data-brand="zepto"]     .brand-banner { background: linear-gradient(135deg, #0d0010 0%, #950EDB 60%, #7a0bb3 100%); }
-[data-brand="amazon"]    .brand-banner { background: linear-gradient(135deg, #232F3E 0%, #131A22 50%, #FF9900 100%); }
+/* Brand-specific banner patterns — exact skill file gradients */
+[data-brand="zomato"]    .brand-banner { background: linear-gradient(135deg, #E23744 0%, #CB202D 70%, #9a121f 100%); }
+[data-brand="flipkart"]  .brand-banner { background: linear-gradient(135deg, #2874F0 0%, #1F74BA 60%, #0C73EB 100%); }
+[data-brand="meesho"]    .brand-banner { background: linear-gradient(135deg, #580A46 0%, #9b3af7 70%, #580A46 100%); }
+[data-brand="bigbasket"] .brand-banner { background: linear-gradient(135deg, #231F20 0%, #231F20 40%, #8FB82E 80%, #A6CE39 100%); }
+[data-brand="myntra"]    .brand-banner { background: linear-gradient(135deg, #F41CB2 0%, #FF3F6C 40%, #FF912E 100%); }
+[data-brand="swiggy"]    .brand-banner { background: linear-gradient(135deg, #02060C 0%, #FC8019 70%, #E06E0F 100%); }
+[data-brand="zepto"]     .brand-banner { background: linear-gradient(135deg, #1A1A1A 0%, #7A0BB3 50%, #950EDB 100%); }
+[data-brand="amazon"]    .brand-banner { background: linear-gradient(135deg, #131A22 0%, #232F3E 50%, #FF9900 100%); }
 
 .banner-overlay-pills {
   position: absolute;
@@ -955,7 +979,7 @@ body {
   gap: 5px;
   background: rgba(255,255,255,0.2);
   backdrop-filter: blur(4px);
-  border-radius: var(--radius-pill);
+  border-radius: var(--brand-badge-radius, var(--radius-pill));
   padding: 4px 12px;
   font-size: 11px;
   font-weight: 700;
