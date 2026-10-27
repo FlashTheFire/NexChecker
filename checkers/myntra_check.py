@@ -102,9 +102,8 @@ async def open_context(playwright, headless: bool = False, proxy: str = ""):
 
     proxy_cfg = {"server": proxy} if proxy else None
 
-    context = await playwright.chromium.launch_persistent_context(
+    launch_kwargs = dict(
         user_data_dir=str(PROFILE_DIR),
-        channel="chrome",
         headless=is_linux if is_linux else False,
         viewport={"width": 1366, "height": 768},
         locale="en-IN",
@@ -112,6 +111,15 @@ async def open_context(playwright, headless: bool = False, proxy: str = ""):
         args=launch_args,
         proxy=proxy_cfg,
     )
+    try:
+        context = await playwright.chromium.launch_persistent_context(
+            channel="chrome",
+            **launch_kwargs,
+        )
+    except Exception:
+        context = await playwright.chromium.launch_persistent_context(
+            **launch_kwargs,
+        )
     page = context.pages[0] if context.pages else await context.new_page()
     return context, page
 

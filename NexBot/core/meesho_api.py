@@ -279,7 +279,7 @@ class MeeshoClient:
         token: str = DEFAULT_TOKEN,
         base_url: str = DEFAULT_BASE_URL,
         user_agent: str = DEFAULT_UA,
-        timeout: float = 25.0,
+        timeout: float = 8.0,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.token = token
@@ -305,7 +305,9 @@ class MeeshoClient:
             self._async_client = httpx.AsyncClient(
                 base_url=self.base_url,
                 headers=self._headers(),
-                timeout=self.timeout,
+                timeout=httpx.Timeout(connect=3.5, read=7.5, write=4.0, pool=3.0),
+                limits=httpx.Limits(max_keepalive_connections=5, max_connections=10, keepalive_expiry=5.0),
+                http2=False,
             )
         return self
 
@@ -319,7 +321,9 @@ class MeeshoClient:
             self._sync_client = httpx.Client(
                 base_url=self.base_url,
                 headers=self._headers(),
-                timeout=self.timeout,
+                timeout=httpx.Timeout(connect=3.5, read=7.5, write=4.0, pool=3.0),
+                limits=httpx.Limits(max_keepalive_connections=5, max_connections=10, keepalive_expiry=5.0),
+                http2=False,
             )
         return self
 
@@ -331,20 +335,24 @@ class MeeshoClient:
     # ─── Internal Request Helpers ─────────────────────────────────────────────
 
     def _get_sync_client(self) -> httpx.Client:
-        if self._sync_client is None:
+        if self._sync_client is None or self._sync_client.is_closed:
             self._sync_client = httpx.Client(
                 base_url=self.base_url,
                 headers=self._headers(),
-                timeout=self.timeout,
+                timeout=httpx.Timeout(connect=3.5, read=7.5, write=4.0, pool=3.0),
+                limits=httpx.Limits(max_keepalive_connections=5, max_connections=10, keepalive_expiry=5.0),
+                http2=False,
             )
         return self._sync_client
 
     def _get_async_client(self) -> httpx.AsyncClient:
-        if self._async_client is None:
+        if self._async_client is None or self._async_client.is_closed:
             self._async_client = httpx.AsyncClient(
                 base_url=self.base_url,
                 headers=self._headers(),
-                timeout=self.timeout,
+                timeout=httpx.Timeout(connect=3.5, read=7.5, write=4.0, pool=3.0),
+                limits=httpx.Limits(max_keepalive_connections=5, max_connections=10, keepalive_expiry=5.0),
+                http2=False,
             )
         return self._async_client
 

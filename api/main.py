@@ -141,9 +141,27 @@ _stats: Dict[str, Any] = {
 }
 
 
-# ------------------------------------------------------------
-# Dispatcher Helper
-# ------------------------------------------------------------
+async def _run_checker(fn, arg: str) -> Dict[str, Any]:
+    """Safely execute sync or async checker functions without unawaited coroutines."""
+    try:
+        if asyncio.iscoroutinefunction(fn):
+            res = await fn(arg)
+        else:
+            res = await asyncio.to_thread(fn, arg)
+            if asyncio.iscoroutine(res):
+                res = await res
+        if isinstance(res, dict):
+            return res
+        return {
+            "status": "REGISTERED" if res else "NOT_REGISTERED",
+            "registered": bool(res),
+            "fresh": not bool(res),
+            "mobile": arg,
+        }
+    except Exception as exc:
+        return {"status": "ERROR", "error": f"{type(exc).__name__}: {exc}", "mobile": arg}
+
+
 async def _execute_check(platform: str, phone: str) -> Dict[str, Any]:
     pkey = platform.lower().strip()
     clean = "".join(c for c in str(phone) if c.isdigit())
@@ -154,46 +172,63 @@ async def _execute_check(platform: str, phone: str) -> Dict[str, Any]:
 
     if pkey == "zomato":
         if check_zomato:
-            result = await asyncio.to_thread(check_zomato, clean)
+            result = await _run_checker(check_zomato, clean)
         else:
             result = {"status": "ERROR", "error": "Zomato checker engine unavailable"}
 
     elif pkey == "flipkart":
         if check_flipkart:
-            result = await asyncio.to_thread(check_flipkart, clean)
+            result = await _run_checker(check_flipkart, clean)
         else:
             result = {"status": "ERROR", "error": "Flipkart checker engine unavailable"}
 
     elif pkey == "bigbasket":
         if check_bigbasket:
-            result = await asyncio.to_thread(check_bigbasket, clean)
+            result = await _run_checker(check_bigbasket, clean)
         else:
             result = {"status": "ERROR", "error": "BigBasket checker engine unavailable"}
 
     elif pkey == "myntra":
         if check_myntra:
-            result = await asyncio.to_thread(check_myntra, clean)
+            result = await _run_checker(check_myntra, clean)
         else:
             result = {"status": "ERROR", "error": "Myntra checker engine unavailable"}
 
     elif pkey == "meesho":
         if _meesho:
-            res = await asyncio.to_thread(_meesho.check_number, clean)
-            if hasattr(res, "registered"):
-                is_reg = bool(res.registered)
-                raw_data = getattr(res, "raw", {})
-            elif isinstance(res, dict):
-                is_reg = bool(res.get("registered") or res.get("status") == "registered")
-                raw_data = res
-            else:
-                is_reg = bool(res)
-                raw_data = {}
-            result = {
-                "status": "REGISTERED" if is_reg else "NOT_REGISTERED",
-                "registered": is_reg,
-                "mobile": clean,
-                "raw": raw_data,
-            }
+            try:
+                if hasattr(_meesho, "check_number_async"):
+                    res = await asyncio.wait_for(_meesho.check_number_async(clean), timeout=8.0)
+                else:
+                    res = await asyncio.wait_for(asyncio.to_thread(_meesho.check_number, clean), timeout=8.0)
+                if hasattr(res, "registered"):
+                    is_reg = bool(res.registered)
+                    raw_data = getattr(res, "raw", {})
+                elif isinstance(res, dict):
+                    is_reg = bool(res.get("registered") or res.get("status") == "registered")
+                    raw_data = res
+                else:
+                    is_reg = bool(res)
+                    raw_data = {}
+                result = {
+                    "status": "REGISTERED" if is_reg else "NOT_REGISTERED",
+                    "registered": is_reg,
+                    "fresh": not is_reg,
+                    "mobile": clean,
+                    "raw": raw_data,
+                }
+            except asyncio.TimeoutError:
+                result = {
+                    "status": "ERROR",
+                    "error": "Meesho gateway response timeout (>8s)",
+                    "mobile": clean,
+                }
+            except Exception as exc:
+                result = {
+                    "status": "ERROR",
+                    "error": f"Meesho error: {exc}",
+                    "mobile": clean,
+                }
         else:
             result = {"status": "ERROR", "error": "Meesho checker engine unavailable"}
 
