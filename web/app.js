@@ -763,40 +763,50 @@
     }
     el.resultBrandName.textContent = brand.name.toUpperCase();
     el.resPlatformVal.textContent  = brand.name;
-    el.resStatusVal.textContent    = isRegistered ? 'Registered' : 'Not Registered';
-    el.resFreshVal.textContent     = isFresh ? 'Fresh / New' : 'Existing';
+    el.resStatusVal.textContent    = isFresh ? 'Fresh (Available)' : 'Already Registered';
+    el.resStatusVal.className      = 'meta-value ' + (isFresh ? 'fresh' : 'taken');
+    el.resFreshVal.textContent     = isFresh ? 'Fresh / Unused' : 'Existing Account';
+    el.resFreshVal.className       = 'meta-value ' + (isFresh ? 'fresh' : 'taken');
     el.resTimeVal.textContent      = elapsed + 'ms';
     el.resultPhoneNum.textContent  = _resultPhoneRaw;
 
-    el.verdictTitle.textContent    = isRegistered ? 'Registered ✓' : 'Not Registered';
-    el.verdictTitle.className      = 'verdict-title ' + (isRegistered ? 'registered' : 'not-registered');
-    el.verdictSubtitle.textContent = isRegistered
-      ? brand.resultDescriptions.registered
-      : brand.resultDescriptions.fresh;
-
-    // Result status badge
-    el.resultStatusIcon.textContent = isRegistered ? '●' : '○';
-    el.resultStatusText.textContent = isRegistered ? 'REGISTERED' : 'NOT FOUND';
-
-    // Verdict emoji (Fluent animated)
-    const resultEmoji = isRegistered ? brand.registeredEmoji : brand.freshEmoji;
-    const resultUrl   = fluentUrl(resultEmoji);
-    if (resultUrl) {
-      el.verdictEmojiImg.src = resultUrl;
-      el.verdictEmojiImg.style.display = 'block';
-      el.verdictEmojiFallback.style.display = 'none';
+    // Reversed narrative: Fresh number is WIN (positive green), Registered is TAKEN (neutral/taken)
+    if (isFresh) {
+      el.verdictTitle.textContent    = 'Fresh Number ✓';
+      el.verdictTitle.className      = 'verdict-title fresh';
+      el.verdictSubtitle.textContent = brand.resultDescriptions?.fresh || 'Number is fresh and available for new account registration.';
+      if (el.resultStatusBadge) {
+        el.resultStatusBadge.className = 'result-status-badge fresh';
+      }
+      el.resultStatusIcon.textContent = '●';
+      el.resultStatusText.textContent = 'FRESH / AVAILABLE';
     } else {
-      el.verdictEmojiImg.style.display = 'none';
-      el.verdictEmojiFallback.textContent = resultEmoji;
-      el.verdictEmojiFallback.style.display = 'flex';
+      el.verdictTitle.textContent    = 'Already Registered';
+      el.verdictTitle.className      = 'verdict-title taken';
+      el.verdictSubtitle.textContent = brand.resultDescriptions?.registered || ('Account already exists on ' + brand.name);
+      if (el.resultStatusBadge) {
+        el.resultStatusBadge.className = 'result-status-badge taken';
+      }
+      el.resultStatusIcon.textContent = '○';
+      el.resultStatusText.textContent = 'ALREADY REGISTERED';
+    }
+
+    // Service brand logo inside verdict icon container instead of emoji
+    if (el.verdictEmojiImg) {
+      el.verdictEmojiImg.src = brand.logo;
+      el.verdictEmojiImg.alt = brand.name;
+      el.verdictEmojiImg.style.display = 'block';
+    }
+    if (el.verdictEmojiFallback) {
+      el.verdictEmojiFallback.style.display = 'none';
     }
 
     // Hide scanning, show result card directly
     el.scanningContainer.style.display = 'none';
     el.flipCardOuter.style.display = 'block';
 
-    // Trigger reveal effects
-    if (isRegistered) {
+    // Trigger reveal effects: celebration for FRESH (available), subtle for registered
+    if (isFresh) {
       launchConfetti();
       haptic('success');
       playSound('success');
@@ -805,7 +815,7 @@
     }
 
     // Save to history
-    saveHistory({ phone, platform: state.activeBrand, brandName: brand.name, registered: isRegistered, time: Date.now() });
+    saveHistory({ phone, platform: state.activeBrand, brandName: brand.name, registered: isRegistered, fresh: isFresh, time: Date.now() });
   }
 
   // ── History ───────────────────────────────────────────────────────────────────
@@ -839,13 +849,13 @@
       const timeStr  = new Date(entry.time).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
       const dateStr  = new Date(entry.time).toLocaleDateString('en-IN', { day:'numeric', month:'short' });
 
-      const formatted = '+91 ' + entry.phone.slice(0,5) + ' ' + entry.phone.slice(5);
+      const isFresh = entry.fresh === true || entry.registered === false;
 
       item.innerHTML = `
         <div class="hist-brand-dot" style="background:${dotColor};"></div>
         <div class="hist-phone">${formatted}</div>
         <div class="hist-meta">
-          <span class="hist-status ${entry.registered ? 'registered' : 'not-registered'}">${entry.registered ? '✓ Registered' : '✕ Not Found'}</span>
+          <span class="hist-status ${isFresh ? 'fresh' : 'registered'}">${isFresh ? '✓ Fresh' : '● Registered'}</span>
           <span class="hist-platform">${entry.brandName || entry.platform}</span>
           <span class="hist-time">${dateStr}, ${timeStr}</span>
         </div>`;
@@ -962,15 +972,16 @@
       try {
         const result = await callCheckAPI(phone, state.activeBrand);
         const isReg = result.registered === true;
-        row.querySelector('.batch-status-dot').className = `batch-status-dot ${isReg ? 'registered' : 'not-registered'}`;
-        row.querySelector('.batch-status-label').className = `batch-status-label ${isReg ? 'registered' : 'not-registered'}`;
-        row.querySelector('.batch-status-label').textContent = isReg ? '✓ Registered' : '✕ Not Found';
-        state.batchResults.push({ phone, platform: state.activeBrand, brandName: brand.name, registered: isReg });
-        if (isReg) haptic('success');
+        const isFresh = result.fresh === true || result.registered === false;
+        row.querySelector('.batch-status-dot').className = `batch-status-dot ${isFresh ? 'fresh' : 'registered'}`;
+        row.querySelector('.batch-status-label').className = `batch-status-label ${isFresh ? 'fresh' : 'registered'}`;
+        row.querySelector('.batch-status-label').textContent = isFresh ? '✓ Fresh' : '● Registered';
+        state.batchResults.push({ phone, platform: state.activeBrand, brandName: brand.name, registered: isReg, fresh: isFresh });
+        if (isFresh) haptic('success');
       } catch {
-        row.querySelector('.batch-status-dot').className = 'batch-status-dot not-registered';
+        row.querySelector('.batch-status-dot').className = 'batch-status-dot taken';
         row.querySelector('.batch-status-label').textContent = '⚠ Error';
-        state.batchResults.push({ phone, platform: state.activeBrand, brandName: brand.name, registered: null });
+        state.batchResults.push({ phone, platform: state.activeBrand, brandName: brand.name, registered: null, fresh: null });
       }
 
       // Small delay between requests
