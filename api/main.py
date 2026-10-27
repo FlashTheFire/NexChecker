@@ -271,6 +271,36 @@ async def check_batch_phones(req: BatchCheckRequest):
 
 
 # ------------------------------------------------------------
+# Telegram Bot Webhook Endpoint
+# ------------------------------------------------------------
+WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "")
+
+
+@app.post("/bot/webhook")
+@app.post("/api/bot/webhook")
+async def telegram_webhook(request: Request):
+    """Receive Telegram webhook updates and dispatch to AsyncTeleBot."""
+    secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+    if WEBHOOK_SECRET and secret != WEBHOOK_SECRET:
+        raise HTTPException(status_code=403, detail="Invalid webhook secret token")
+
+    try:
+        from telebot.types import Update
+        try:
+            from bot import bot as tele_bot
+        except ImportError:
+            from NexBot.bot import bot as tele_bot
+
+        data = await request.json()
+        update = Update.de_json(data)
+        if update:
+            await tele_bot.process_new_updates([update])
+        return {"ok": True}
+    except Exception as exc:
+        return JSONResponse(status_code=500, content={"ok": False, "error": str(exc)})
+
+
+# ------------------------------------------------------------
 # Web Frontend Serving (Zomato UI/UX)
 # ------------------------------------------------------------
 WEB_DIR = PROJECT_ROOT / "web"

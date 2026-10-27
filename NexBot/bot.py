@@ -192,6 +192,25 @@ async def on_shutdown() -> None:
     logger.info("✅ NexBot stopped cleanly.")
 
 
+import os
+
+WEBHOOK_URL = os.getenv("WEBHOOK_URL", "").rstrip("/")
+WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "")
+
+
+async def run_webhook(webhook_url: str) -> None:
+    """Run the bot in webhook mode (production)."""
+    endpoint = f"{webhook_url}/bot/webhook"
+    logger.info("Setting Telegram webhook: %s", endpoint)
+    await bot.remove_webhook()
+    await bot.set_webhook(
+        url=endpoint,
+        secret_token=WEBHOOK_SECRET or None,
+        drop_pending_updates=True,
+    )
+    logger.info("✅ Telegram webhook active. Updates processed via FastAPI /bot/webhook.")
+
+
 async def main() -> None:
     if not BOT_TOKEN:
         logger.critical("BOT_TOKEN not set in .env — exiting.")
@@ -218,13 +237,23 @@ async def main() -> None:
     if restored:
         logger.info("Restored %d active SMS poller(s) from previous session", restored)
 
-    logger.info("Polling started…")
-    try:
-        await bot.polling(none_stop=True, interval=0, timeout=20, skip_pending=True)
-    except (KeyboardInterrupt, SystemExit, asyncio.CancelledError):
-        pass
-    finally:
-        await asyncio.shield(on_shutdown())
+    if WEBHOOK_URL:
+        await run_webhook(WEBHOOK_URL)
+        logger.info("Bot running in WEBHOOK mode — waiting for events…")
+        try:
+            await asyncio.Event().wait()
+        except (KeyboardInterrupt, SystemExit, asyncio.CancelledError):
+            pass
+        finally:
+            await asyncio.shield(on_shutdown())
+    else:
+        logger.info("Polling started…")
+        try:
+            await bot.polling(none_stop=True, interval=0, timeout=20, skip_pending=True)
+        except (KeyboardInterrupt, SystemExit, asyncio.CancelledError):
+            pass
+        finally:
+            await asyncio.shield(on_shutdown())
 
 
 if __name__ == "__main__":
