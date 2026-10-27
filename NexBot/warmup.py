@@ -25,8 +25,11 @@ import os
 from pathlib import Path
 
 _NEXCHECKER_DIR = Path(__file__).resolve().parent.parent
-STATE_FILE      = Path(os.getenv("MYNTRA_STATE_FILE", str(_NEXCHECKER_DIR / "myntra_state.json")))
-BOT_PROFILE_DIR = Path(os.getenv("MYNTRA_BOT_PROFILE", str(_NEXCHECKER_DIR / "myntra_bot_profile")))
+_candidate_myntra_state = _NEXCHECKER_DIR / "sessions" / "myntra_state.json"
+if not _candidate_myntra_state.exists():
+    _candidate_myntra_state = _NEXCHECKER_DIR / "myntra_state.json"
+STATE_FILE      = Path(os.getenv("MYNTRA_STATE_FILE", str(_candidate_myntra_state)))
+BOT_PROFILE_DIR = Path(os.getenv("MYNTRA_BOT_PROFILE", str(_NEXCHECKER_DIR / "sessions" / "myntra_bot_profile")))
 
 
 async def warmup(headless: bool = False) -> None:

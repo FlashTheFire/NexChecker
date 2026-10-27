@@ -22,7 +22,10 @@ logger = logging.getLogger(__name__)
 
 # Resolve bb_state.json relative to the NexChecker root (one level above NexBot)
 _NEXCHECKER_DIR = Path(__file__).resolve().parent.parent.parent
-_BB_STATE_FILE  = Path(os.getenv("BB_STATE_FILE", str(_NEXCHECKER_DIR / "bb_state.json")))
+_candidate_bb_state = _NEXCHECKER_DIR / "sessions" / "bb_state.json"
+if not _candidate_bb_state.exists():
+    _candidate_bb_state = _NEXCHECKER_DIR / "bb_state.json"
+_BB_STATE_FILE  = Path(os.getenv("BB_STATE_FILE", str(_candidate_bb_state)))
 
 
 class BigBasketChecker:

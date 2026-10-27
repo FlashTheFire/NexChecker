@@ -26,13 +26,19 @@ _CHECKERS_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = _CHECKERS_DIR.parent
 BASE = PROJECT_ROOT
 
-_candidate_profile = PROJECT_ROOT / "zepto_chrome_profile"
-if not _candidate_profile.exists() and (_CHECKERS_DIR / "zepto_chrome_profile").exists():
+_SESSIONS_DIR = PROJECT_ROOT / "sessions"
+
+_candidate_profile = _SESSIONS_DIR / "zepto_chrome_profile"
+if not _candidate_profile.exists() and (PROJECT_ROOT / "zepto_chrome_profile").exists():
+    _candidate_profile = PROJECT_ROOT / "zepto_chrome_profile"
+elif not _candidate_profile.exists() and (_CHECKERS_DIR / "zepto_chrome_profile").exists():
     _candidate_profile = _CHECKERS_DIR / "zepto_chrome_profile"
 PROFILE_DIR = Path(os.getenv("ZEPTO_PROFILE_DIR", str(_candidate_profile)))
 
-_candidate_state = PROJECT_ROOT / "zepto_state.json"
-if not _candidate_state.exists() and (_CHECKERS_DIR / "zepto_state.json").exists():
+_candidate_state = _SESSIONS_DIR / "zepto_state.json"
+if not _candidate_state.exists() and (PROJECT_ROOT / "zepto_state.json").exists():
+    _candidate_state = PROJECT_ROOT / "zepto_state.json"
+elif not _candidate_state.exists() and (_CHECKERS_DIR / "zepto_state.json").exists():
     _candidate_state = _CHECKERS_DIR / "zepto_state.json"
 STATE_FILE = Path(os.getenv("ZEPTO_STATE_FILE", str(_candidate_state)))
 

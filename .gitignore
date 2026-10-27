@@ -3,7 +3,8 @@
 *.pem
 *.pem.pem
 
-# Browser profiles (large binary files + auth cookies, platform-specific)
+# Browser profiles & persistent session states
+sessions/
 *_chrome_profile*/
 *_bot_profile*/
 myntra_bot_profile/

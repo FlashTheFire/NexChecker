@@ -21,8 +21,12 @@ from pathlib import Path
 
 _CHECKERS_DIR = Path(__file__).resolve().parent
 _PROJECT_ROOT = _CHECKERS_DIR.parent
-_candidate_bb_state = _PROJECT_ROOT / "bb_state.json"
-if not _candidate_bb_state.exists() and (_CHECKERS_DIR / "bb_state.json").exists():
+_SESSIONS_DIR = _PROJECT_ROOT / "sessions"
+
+_candidate_bb_state = _SESSIONS_DIR / "bb_state.json"
+if not _candidate_bb_state.exists() and (_PROJECT_ROOT / "bb_state.json").exists():
+    _candidate_bb_state = _PROJECT_ROOT / "bb_state.json"
+elif not _candidate_bb_state.exists() and (_CHECKERS_DIR / "bb_state.json").exists():
     _candidate_bb_state = _CHECKERS_DIR / "bb_state.json"
 STATE_FILE = os.getenv("BB_STATE_FILE", str(_candidate_bb_state))
 

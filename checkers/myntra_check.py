@@ -26,18 +26,26 @@ _CHECKERS_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = _CHECKERS_DIR.parent
 BASE = PROJECT_ROOT
 
-_candidate_state = PROJECT_ROOT / "myntra_state.json"
-if not _candidate_state.exists() and (_CHECKERS_DIR / "myntra_state.json").exists():
+_SESSIONS_DIR = PROJECT_ROOT / "sessions"
+
+_candidate_state = _SESSIONS_DIR / "myntra_state.json"
+if not _candidate_state.exists() and (PROJECT_ROOT / "myntra_state.json").exists():
+    _candidate_state = PROJECT_ROOT / "myntra_state.json"
+elif not _candidate_state.exists() and (_CHECKERS_DIR / "myntra_state.json").exists():
     _candidate_state = _CHECKERS_DIR / "myntra_state.json"
 STATE_FILE = Path(os.getenv("MYNTRA_STATE_FILE", str(_candidate_state)))
 
-_candidate_profile = PROJECT_ROOT / "myntra_chrome_profile"
-if not _candidate_profile.exists() and (_CHECKERS_DIR / "myntra_chrome_profile").exists():
+_candidate_profile = _SESSIONS_DIR / "myntra_chrome_profile"
+if not _candidate_profile.exists() and (PROJECT_ROOT / "myntra_chrome_profile").exists():
+    _candidate_profile = PROJECT_ROOT / "myntra_chrome_profile"
+elif not _candidate_profile.exists() and (_CHECKERS_DIR / "myntra_chrome_profile").exists():
     _candidate_profile = _CHECKERS_DIR / "myntra_chrome_profile"
 PROFILE_DIR = Path(os.getenv("MYNTRA_PROFILE_DIR", str(_candidate_profile)))
 
-_candidate_meta = PROJECT_ROOT / "myntra_session_meta.json"
-if not _candidate_meta.exists() and (_CHECKERS_DIR / "myntra_session_meta.json").exists():
+_candidate_meta = _SESSIONS_DIR / "myntra_session_meta.json"
+if not _candidate_meta.exists() and (PROJECT_ROOT / "myntra_session_meta.json").exists():
+    _candidate_meta = PROJECT_ROOT / "myntra_session_meta.json"
+elif not _candidate_meta.exists() and (_CHECKERS_DIR / "myntra_session_meta.json").exists():
     _candidate_meta = _CHECKERS_DIR / "myntra_session_meta.json"
 META_FILE = Path(os.getenv("MYNTRA_META_FILE", str(_candidate_meta)))
 
