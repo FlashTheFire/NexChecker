@@ -288,7 +288,9 @@ class MyntraChecker:
 
     async def check_number(self, mobile: str) -> dict:
         if not self._ready or self._page is None:
-            await self.startup()
+            proxy = os.getenv("MYNTRA_PROXY", os.getenv("PROXY", ""))
+            is_linux = sys.platform.startswith("linux")
+            await self.startup(headless=is_linux, proxy=proxy)
         async with self._lock:
             return await check_with_heal(self._page, mobile)
 
