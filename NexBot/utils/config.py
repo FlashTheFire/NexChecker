@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 
 # ── Resolve project root & load .env ─────────────────────────────────────────
 BASE_DIR: Path = Path(__file__).resolve().parent.parent
+PROJECT_ROOT: Path = BASE_DIR.parent
+load_dotenv(PROJECT_ROOT / ".env")
 load_dotenv(BASE_DIR / ".env")
 
 # ── Telegram ──────────────────────────────────────────────────────────────────
