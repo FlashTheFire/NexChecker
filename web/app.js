@@ -45,7 +45,74 @@
   async function apiFetch(url, options = {}) {
     const defaultHeaders = getAuthHeaders();
     const mergedHeaders = { ...defaultHeaders, ...(options.headers || {}) };
-    return fetch(url, { ...options, headers: mergedHeaders });
+    const res = await fetch(url, { ...options, headers: mergedHeaders });
+    if (res.status === 401) {
+      enforceTelegramSecurity();
+    }
+    return res;
+  }
+
+  // ── Cryptographic Security Gate Enforcer ────────────────────────────────────
+  async function enforceTelegramSecurity() {
+    const gate = document.getElementById('securityGate');
+    const app = document.getElementById('app');
+    const gateTitle = document.getElementById('gateTitle');
+    const gateDesc = document.getElementById('gateDesc');
+    const gateStatusBadge = document.getElementById('gateStatusBadge');
+    const gateDetailStatus = document.getElementById('gateDetailStatus');
+
+    const initData = window.Telegram?.WebApp?.initData || '';
+
+    // Direct browser visit without Telegram WebApp context
+    if (!initData) {
+      if (gate) gate.style.display = 'flex';
+      if (app) app.style.display = 'none';
+      if (gateTitle) gateTitle.textContent = 'Access Restricted';
+      if (gateDesc) gateDesc.textContent = 'NexChecker is an exclusive high-performance verification engine accessible exclusively via the official Telegram bot.';
+      if (gateStatusBadge) gateStatusBadge.textContent = 'TELEGRAM AUTH REQUIRED';
+      if (gateDetailStatus) {
+        gateDetailStatus.textContent = 'Missing Telegram Signature';
+        gateDetailStatus.className = 'gate-detail-val gate-val-danger';
+      }
+      return false;
+    }
+
+    // Cryptographic validation with server backend
+    try {
+      const resp = await fetch('/api/auth/verify', {
+        headers: { 'X-Telegram-Init-Data': initData }
+      });
+      const data = await resp.json();
+
+      if (data.authenticated && data.user) {
+        // Unlock application securely
+        if (gate) gate.style.display = 'none';
+        if (app) app.style.display = 'block';
+
+        const user = data.user;
+        const displayName = user.username ? `@${user.username}` : (user.first_name || 'Verified User');
+        const locSub = document.querySelector('.loc-subtitle');
+        if (locSub) locSub.textContent = `0-OTP Verified • ${displayName}`;
+        return true;
+      } else {
+        // Signature expired or failed HMAC check
+        if (gate) gate.style.display = 'flex';
+        if (app) app.style.display = 'none';
+        if (gateTitle) gateTitle.textContent = data.status === 'EXPIRED' ? 'Session Expired' : 'Security Check Failed';
+        if (gateDesc) gateDesc.textContent = data.message || 'Cryptographic validation rejected this session. Please launch again from @NexChecker_Robot.';
+        if (gateStatusBadge) gateStatusBadge.textContent = data.status || 'UNAUTHORIZED';
+        if (gateDetailStatus) {
+          gateDetailStatus.textContent = data.status || 'Signature Rejected';
+          gateDetailStatus.className = 'gate-detail-val gate-val-danger';
+        }
+        return false;
+      }
+    } catch (err) {
+      if (gate) gate.style.display = 'flex';
+      if (app) app.style.display = 'none';
+      if (gateDetailStatus) gateDetailStatus.textContent = 'Server Handshake Error';
+      return false;
+    }
   }
 
   // ── CDN & Fluent Emoji Utilities ─────────────────────────────────────────────
@@ -1190,7 +1257,14 @@
   }
 
   // ── Init ──────────────────────────────────────────────────────────────────────
-  function init() {
+  async function init() {
+    // 1) Enforce strict Telegram cryptographic authentication before doing anything
+    const isAuthed = await enforceTelegramSecurity();
+    if (!isAuthed) {
+      console.warn('[NexChecker Security] Direct browser access locked. Awaiting verified Telegram WebApp session.');
+      return;
+    }
+
     // Apply default brand
     switchBrand('zomato', document.querySelector('.service-chip[data-platform="zomato"]'));
 
