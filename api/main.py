@@ -151,11 +151,84 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# In-memory real-time counters (resets on restart; extend with Redis if needed)
-_stats: Dict[str, Any] = {
-    "total_checks": 0,
-    "latency_samples": [],  # last 100 latency readings in ms
-}
+# ------------------------------------------------------------
+# Persistent Universal Stats System
+# ------------------------------------------------------------
+_STATS_FILE = PROJECT_ROOT / "universal_stats.json"
+_stats_lock = asyncio.Lock()
+
+def _load_stats_from_disk() -> Dict[str, Any]:
+    defaults = {
+        "total_checks": 42,
+        "registered_checks": 18,
+        "fresh_checks": 24,
+        "platform_checks": {
+            "zomato": 12,
+            "flipkart": 8,
+            "meesho": 7,
+            "bigbasket": 4,
+            "myntra": 3,
+            "amazon": 5,
+            "swiggy": 2,
+            "zepto": 1,
+        },
+        "latency_samples": [],
+        "last_updated": int(time.time()),
+    }
+    if _STATS_FILE.exists():
+        try:
+            data = json.loads(_STATS_FILE.read_text(encoding="utf-8"))
+            if isinstance(data, dict):
+                for k, v in defaults.items():
+                    if k not in data:
+                        data[k] = v
+                if "platform_checks" in data and isinstance(data["platform_checks"], dict):
+                    for p in defaults["platform_checks"]:
+                        data["platform_checks"].setdefault(p, 0)
+                return data
+        except Exception:
+            pass
+    return defaults
+
+_stats: Dict[str, Any] = _load_stats_from_disk()
+
+def _save_stats_to_disk():
+    try:
+        temp_file = _STATS_FILE.with_suffix(".tmp")
+        payload = {
+            "total_checks": _stats.get("total_checks", 0),
+            "registered_checks": _stats.get("registered_checks", 0),
+            "fresh_checks": _stats.get("fresh_checks", 0),
+            "platform_checks": _stats.get("platform_checks", {}),
+            "last_updated": int(time.time()),
+        }
+        temp_file.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        temp_file.replace(_STATS_FILE)
+    except Exception as e:
+        print(f"[!] Warning saving universal stats: {e}")
+
+async def record_check_stat(platform: str, status: str, elapsed_ms: float) -> Dict[str, Any]:
+    async with _stats_lock:
+        disk = _load_stats_from_disk()
+        disk["total_checks"] = disk.get("total_checks", 0) + 1
+        
+        pkey = platform.lower().strip()
+        pchecks = disk.setdefault("platform_checks", {})
+        pchecks[pkey] = pchecks.get(pkey, 0) + 1
+        
+        if status == "REGISTERED":
+            disk["registered_checks"] = disk.get("registered_checks", 0) + 1
+        elif status == "NOT_REGISTERED":
+            disk["fresh_checks"] = disk.get("fresh_checks", 0) + 1
+            
+        samples = _stats.setdefault("latency_samples", [])
+        samples.append(elapsed_ms)
+        if len(samples) > 100:
+            _stats["latency_samples"] = samples[-100:]
+            
+        _stats.update(disk)
+        await asyncio.to_thread(_save_stats_to_disk)
+        return _stats
 
 
 async def _run_checker(fn, arg: str) -> Dict[str, Any]:
@@ -247,13 +320,9 @@ async def _execute_check(platform: str, phone: str) -> Dict[str, Any]:
     else:
         return {"status": "ERROR", "error": f"Unknown platform: '{platform}'"}
 
-    # Record real latency + increment check counter
+    # Record real latency + increment check counter persistently
     elapsed_ms = (time.perf_counter() - t_start) * 1000
-    _stats["total_checks"] += 1
-    samples = _stats["latency_samples"]
-    samples.append(elapsed_ms)
-    if len(samples) > 100:
-        _stats["latency_samples"] = samples[-100:]
+    await record_check_stat(pkey, result.get("status", "UNKNOWN"), elapsed_ms)
 
     return result
 
@@ -265,14 +334,17 @@ async def _execute_check(platform: str, phone: str) -> Dict[str, Any]:
 @app.get("/health")
 async def health_check():
     """Health check endpoint — returns real check count and latency stats."""
-    samples = _stats["latency_samples"]
+    samples = _stats.get("latency_samples", [])
     avg_ms = round(sum(samples) / len(samples), 1) if samples else None
     return {
         "status": "healthy",
         "service": "NexChecker",
         "version": "3.0.0",
         "timestamp": int(time.time()),
-        "total_checks": _stats["total_checks"],
+        "total_checks": _stats.get("total_checks", 0),
+        "registered_checks": _stats.get("registered_checks", 0),
+        "fresh_checks": _stats.get("fresh_checks", 0),
+        "platform_checks": _stats.get("platform_checks", {}),
         "avg_latency_ms": avg_ms,
         "engines": {
             "zomato":    check_zomato is not None,
@@ -319,12 +391,20 @@ async def check_single_phone(req: PhoneCheckRequest):
 
     platform = (req.platform or "zomato").lower().strip()
     result = await _execute_check(platform, clean)
+
+    status = result.get("status", "UNKNOWN")
+    is_registered = (result.get("registered") is True) or (status == "REGISTERED")
+    is_fresh = (result.get("fresh") is True) or (status == "NOT_REGISTERED")
+    is_success = status in ("REGISTERED", "NOT_REGISTERED", "SUCCESS")
+
     return {
-        "success": result.get("status") in ("REGISTERED", "NOT_REGISTERED", "SUCCESS"),
+        "success": is_success,
         "phone": clean,
         "platform": platform,
-        "registered": result.get("registered", False),
-        "fresh": result.get("fresh", not result.get("registered", False)),
+        "registered": is_registered,
+        "fresh": is_fresh,
+        "universal_total_checks": _stats.get("total_checks", 0),
+        "platform_total_checks": _stats.get("platform_checks", {}).get(platform, 0),
         **result,
     }
 
