@@ -1013,9 +1013,6 @@
             : count >= 1000 ? Math.floor(count/1000) + 'K+' : String(count);
           parts.push(`<div class="banner-pill"><span>✓</span><span>${label} Checks</span></div>`);
         }
-        if (data.avg_latency_ms != null) {
-          parts.push(`<div class="banner-pill"><span>⚡</span><span>${Math.round(data.avg_latency_ms)}ms avg</span></div>`);
-        }
         if (parts.length) el.bannerStatsPills.innerHTML = parts.join('');
       }
     } catch {
