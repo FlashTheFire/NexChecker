@@ -26,6 +26,7 @@ class TestNexCheckerAPI(unittest.TestCase):
         self.assertEqual(data.get("status"), "healthy")
         self.assertEqual(data.get("service"), "NexChecker")
         self.assertIn("engines", data)
+        self.assertIn("meesho", data["engines"])
 
     def test_platforms_list(self):
         resp = client.get("/api/platforms")
@@ -36,9 +37,10 @@ class TestNexCheckerAPI(unittest.TestCase):
         self.assertIn("zomato", keys)
         self.assertIn("flipkart", keys)
         self.assertIn("bigbasket", keys)
+        self.assertIn("meesho", keys)
 
     def test_invalid_phone_check(self):
-        resp = client.post("/api/checker/phone", json={"target_phone": "123", "platform": "zomato"})
+        resp = client.post("/api/checker/phone", json={"target_phone": "123", "platform": "meesho"})
         self.assertEqual(resp.status_code, 400)
 
 
