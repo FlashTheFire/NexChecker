@@ -65,8 +65,8 @@
       scanEmoji: '🍽',
       registeredEmoji: '✅',
       freshEmoji: '✨',
-      bannerTitle: 'Restaurant Verification',
-      bannerSubtitle: '0-OTP silent check via Sushi API',
+      bannerTitle: 'Zomato Account Checker',
+      bannerSubtitle: 'Food & dining platform lookup',
       demoRegistered: '7631328516',
       demoFresh: '7005999888',
       ctaLabel: 'Check on Zomato',
@@ -259,6 +259,12 @@
     batchResults: [],
     batchRunning: false,
     checkStartTime: 0,
+    stats: {
+      total_checks: 0,
+      registered_checks: 0,
+      fresh_checks: 0,
+      platform_checks: {},
+    },
   };
 
   // ── DOM Cache ────────────────────────────────────────────────────────────────
@@ -392,7 +398,34 @@
     el.flipCardOuter.style.display = 'none';
     el.flipCardInner.classList.remove('flipped');
     el.scanningContainer.style.display = 'none';
+
+    // 11) Render banner stats for active brand
+    renderBannerStats();
   };
+
+  // ── Render Universal & Brand Stats Pills ─────────────────────────────────────
+  function renderBannerStats() {
+    if (!el.bannerStatsPills) return;
+    const stats = state.stats || {};
+    const total = Number(stats.total_checks || 0);
+    const totalLabel = total >= 1000000
+      ? (total / 1000000).toFixed(1) + 'M+'
+      : total >= 1000 ? Math.floor(total / 1000) + 'K+' : String(total);
+
+    const activeKey = state.activeBrand || 'zomato';
+    const brand = BRANDS[activeKey] || { name: activeKey };
+    const pchecks = Number((stats.platform_checks && stats.platform_checks[activeKey]) || 0);
+    const brandLabel = pchecks >= 1000 ? Math.floor(pchecks / 1000) + 'K+' : String(pchecks);
+
+    el.bannerStatsPills.innerHTML = `
+      <div class="banner-pill" title="Total universal checks across all services">
+        <span>⚡</span><span id="bannerUniversalTotal">${totalLabel} Checks</span>
+      </div>
+      <div class="banner-pill brand-stat-pill" title="${brand.name} platform total checks">
+        <span>✓</span><span id="bannerPlatformTotal">${brand.name}: ${brandLabel}</span>
+      </div>
+    `;
+  }
 
   window.switchBrandFromEngine = function (brandKey) {
     const chipEl = document.querySelector(`.service-chip[data-platform="${brandKey}"]`);
@@ -740,16 +773,33 @@
   function renderResult(phone, result, brand) {
     const elapsed = Date.now() - state.checkStartTime;
 
-    // ── ERROR state: checker engine offline / API error ──────────────────────
-    if (result.status === 'ERROR' || (!result.success && result.status !== 'NOT_REGISTERED' && result.status !== 'REGISTERED')) {
+    // ── ERROR / CHALLENGE state: checker engine offline / challenge / API error ──
+    if (result.status === 'ERROR' || result.status === 'CHALLENGE' || (!result.success && result.status !== 'NOT_REGISTERED' && result.status !== 'REGISTERED')) {
       el.scanningContainer.style.display = 'none';
       el.flipCardOuter.style.display = 'none';
       document.getElementById('heroBrandCard').style.display = 'block';
-      const errMsg = result.error || result.detail || 'Checker engine unavailable. Try again later.';
-      showError('⚠ ' + errMsg);
+      let errMsg = result.error || result.detail;
+      if (result.status === 'CHALLENGE') {
+        errMsg = `${brand.name} anti-bot challenge active. Server IP rate-limited or in maintenance mode.`;
+      }
+      showError('⚠ ' + (errMsg || 'Checker engine unavailable. Try again later.'));
       haptic('error');
       return;
     }
+
+    // Update real-time stats immediately
+    if (result.universal_total_checks != null) {
+      state.stats.total_checks = result.universal_total_checks;
+    } else {
+      state.stats.total_checks = (state.stats.total_checks || 0) + 1;
+    }
+    state.stats.platform_checks = state.stats.platform_checks || {};
+    if (result.platform_total_checks != null) {
+      state.stats.platform_checks[state.activeBrand] = result.platform_total_checks;
+    } else {
+      state.stats.platform_checks[state.activeBrand] = (state.stats.platform_checks[state.activeBrand] || 0) + 1;
+    }
+    renderBannerStats();
 
     const isRegistered = result.registered === true;
     const isFresh      = result.fresh === true || result.registered === false;
@@ -1036,16 +1086,14 @@
       if (pulse) pulse.style.background = '';
       if (text)  { text.textContent = 'LIVE'; text.style.color = ''; }
       // Render real stats if available
-      if (el.bannerStatsPills && data) {
-        const parts = [];
-        if (data.total_checks != null) {
-          const count = Number(data.total_checks);
-          const label = count >= 1000000
-            ? (count/1000000).toFixed(1) + 'M+'
-            : count >= 1000 ? Math.floor(count/1000) + 'K+' : String(count);
-          parts.push(`<div class="banner-pill"><span>✓</span><span>${label} Checks</span></div>`);
-        }
-        if (parts.length) el.bannerStatsPills.innerHTML = parts.join('');
+      if (data) {
+        state.stats = {
+          total_checks: data.total_checks || 0,
+          registered_checks: data.registered_checks || 0,
+          fresh_checks: data.fresh_checks || 0,
+          platform_checks: data.platform_checks || {},
+        };
+        renderBannerStats();
       }
     } catch {
       const pulse = document.querySelector('.status-pulse');
