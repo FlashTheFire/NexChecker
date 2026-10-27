@@ -479,6 +479,18 @@
   el.modeTabs.forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
   el.bottomNavItems.forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
 
+  // Direct URL hash navigation support (#history, #batch, #home)
+  function handleUrlHash() {
+    const rawHash = (window.location.hash || '').replace('#', '').toLowerCase();
+    if (!rawHash) return;
+    const tabMap = { history: 'history', batch: 'batch', home: 'single', single: 'single' };
+    if (tabMap[rawHash]) {
+      switchTab(tabMap[rawHash]);
+    }
+  }
+  window.addEventListener('hashchange', handleUrlHash);
+  setTimeout(handleUrlHash, 50);
+
   // ── Phone Input: Auto-format ─────────────────────────────────────────────────
   function cleanIndianPhone(val) {
     let raw = String(val || '').replace(/\D/g, '');
