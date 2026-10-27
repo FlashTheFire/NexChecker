@@ -43,6 +43,12 @@ class TestNexCheckerAPI(unittest.TestCase):
         resp = client.post("/api/checker/phone", json={"target_phone": "123", "platform": "meesho"})
         self.assertEqual(resp.status_code, 400)
 
+    def test_web_ui_serving(self):
+        resp = client.get("/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("text/html", resp.headers.get("content-type", ""))
+        self.assertIn("zomato", resp.text.lower())
+
 
 if __name__ == "__main__":
     unittest.main()
