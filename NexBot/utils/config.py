@@ -26,6 +26,11 @@ BB_SERVICE_CODE:        str = BIGBASKET_SERVICE_CODE
 FLIPKART_SERVICE_CODE:  str = os.getenv("FLIPKART_SERVICE_CODE", os.getenv("FK_SERVICE_CODE", "xt"))
 FK_SERVICE_CODE:        str = FLIPKART_SERVICE_CODE
 
+# Zomato service code — override via ZOMATO_SERVICE_CODE or ZO_SERVICE_CODE env var (default "zo")
+ZOMATO_SERVICE_CODE:    str = os.getenv("ZOMATO_SERVICE_CODE", os.getenv("ZO_SERVICE_CODE", "zo"))
+ZO_SERVICE_CODE:        str = ZOMATO_SERVICE_CODE
+ZOMATO_CHECKER_URL:     str = os.getenv("ZOMATO_CHECKER_URL", "http://127.0.0.1:3000/api/checker/phone")
+
 # ── Myntra API & Proxy ────────────────────────────────────────────────────────
 PROXY:        str = os.getenv("PROXY", os.getenv("MYNTRA_PROXY", ""))
 MYNTRA_PROXY: str = PROXY  # alias for backward compatibility
