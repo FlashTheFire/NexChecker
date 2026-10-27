@@ -263,10 +263,21 @@ async def check_batch_phones(req: BatchCheckRequest):
 
 
 # ------------------------------------------------------------
-# Root Info Endpoint
+# Web Frontend Serving (Zomato UI/UX)
 # ------------------------------------------------------------
+WEB_DIR = PROJECT_ROOT / "web"
+if WEB_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(WEB_DIR)), name="static")
+
+
 @app.get("/")
-async def root():
+@app.get("/checker")
+@app.get("/zomato")
+async def serve_web_ui():
+    """Serves the Zomato app-style verification interface."""
+    index_file = WEB_DIR / "index.html"
+    if index_file.exists():
+        return FileResponse(str(index_file))
     return {
         "service": "NexChecker Universal API",
         "version": "2.0.0",
