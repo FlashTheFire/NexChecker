@@ -163,12 +163,20 @@ async def _execute_check(platform: str, phone: str) -> Dict[str, Any]:
     elif pkey == "meesho":
         if _meesho:
             res = await asyncio.to_thread(_meesho.check_number, clean)
-            is_reg = bool(res.get("registered") or res.get("status") == "registered")
+            if hasattr(res, "registered"):
+                is_reg = bool(res.registered)
+                raw_data = getattr(res, "raw", {})
+            elif isinstance(res, dict):
+                is_reg = bool(res.get("registered") or res.get("status") == "registered")
+                raw_data = res
+            else:
+                is_reg = bool(res)
+                raw_data = {}
             return {
                 "status": "REGISTERED" if is_reg else "NOT_REGISTERED",
                 "registered": is_reg,
                 "mobile": clean,
-                "raw": res,
+                "raw": raw_data,
             }
         return {"status": "ERROR", "error": "Meesho checker engine unavailable"}
 
