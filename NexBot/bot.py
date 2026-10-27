@@ -18,9 +18,9 @@ for p in (str(ROOT), str(NEXCHECKER_ROOT), str(CHECKERS_DIR)):
         sys.path.insert(0, p)
 
 from telebot.async_telebot import AsyncTeleBot
-from telebot.types import BotCommand
+from telebot.types import BotCommand, MenuButtonWebApp, WebAppInfo
 
-from utils.config import BOT_TOKEN
+from utils.config import BOT_TOKEN, WEBAPP_URL
 from core.nexnum_api import nexnum_client
 from handlers.start import StartHandler
 from handlers.checker import CheckerHandler
@@ -65,6 +65,10 @@ async def cmd_stats(msg):
 async def cmd_help(msg):
     await start_hdlr.handle_help(msg)
 
+@bot.message_handler(commands=["webapp", "app"])
+async def cmd_webapp(msg):
+    await start_hdlr.handle_webapp(msg)
+
 # Dynamically register /<platform> commands from the registry
 def _make_platform_handler(checker: CheckerHandler):
     async def _handler(msg):
@@ -101,15 +105,25 @@ async def cb_dispatch(call):
 # ─────────────────────────────────────────────────────────────────────────────
 
 async def set_commands() -> None:
-    """Register all platform commands + shared commands with Telegram."""
+    """Register all platform commands + shared commands with Telegram and set WebApp menu."""
     commands = [
         BotCommand("start",   "Start the bot / main menu"),
+        BotCommand("webapp",  "Launch NexChecker WebApp"),
         BotCommand("mystats", "View your check statistics"),
         BotCommand("help",    "Show help & usage"),
     ]
     for platform in PLATFORMS.values():
         commands.append(BotCommand(platform.command, platform.description))
     await bot.set_my_commands(commands)
+
+    # Set Telegram chat menu button to launch WebApp directly
+    try:
+        await bot.set_chat_menu_button(
+            menu_button=MenuButtonWebApp(type="web_app", text="🚀 WebApp", web_app=WebAppInfo(url=WEBAPP_URL))
+        )
+        logger.info("✅ Telegram chat menu button configured with WebApp URL: %s", WEBAPP_URL)
+    except Exception as exc:
+        logger.warning("Could not set Telegram chat menu button: %s", exc)
 
 
 _startup_tasks: list[asyncio.Task] = []

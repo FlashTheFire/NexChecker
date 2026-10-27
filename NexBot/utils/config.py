@@ -9,8 +9,9 @@ PROJECT_ROOT: Path = BASE_DIR.parent
 load_dotenv(PROJECT_ROOT / ".env")
 load_dotenv(BASE_DIR / ".env")
 
-# ── Telegram ──────────────────────────────────────────────────────────────────
+# ── Telegram & WebApp ─────────────────────────────────────────────────────────
 BOT_TOKEN: str = os.getenv("BOT_TOKEN", "")
+WEBAPP_URL: str = os.getenv("WEBAPP_URL", "https://65.2.121.113.nip.io").rstrip("/")
 
 # ── NexNum API ────────────────────────────────────────────────────────────────
 NEXNUM_BASE_URL: str  = "https://nexnum.in/stubs/handler_api.php"

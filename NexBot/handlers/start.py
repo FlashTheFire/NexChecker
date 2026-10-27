@@ -15,9 +15,10 @@ import re
 
 from telebot.async_telebot import AsyncTeleBot
 from telebot.types import (
-    InlineKeyboardButton, InlineKeyboardMarkup, Message
+    InlineKeyboardButton, InlineKeyboardMarkup, Message, WebAppInfo
 )
 
+from utils.config import WEBAPP_URL
 from core.nexnum_api import nexnum_client
 from core import user_store
 from utils.formatting import (
@@ -313,11 +314,30 @@ class StartHandler:
         )
 
 
+    # ── /webapp /app shortcut ────────────────────────────────────────────────
+    async def handle_webapp(self, message: Message) -> None:
+        """Send an inline button to launch the WebApp directly."""
+        kb = InlineKeyboardMarkup(row_width=1)
+        kb.add(InlineKeyboardButton(f"🚀  {sc('Open NexChecker WebApp')}", web_app=WebAppInfo(url=WEBAPP_URL)))
+        await self.bot.send_message(
+            message.chat.id,
+            (
+                f"<blockquote><b>🌐 {sc('NexChecker WebApp')}</b></blockquote>\n\n"
+                f"{sc('Tap Below To Launch The Multi-Brand Zero-Otp Verification App Inside Telegram.')}"
+            ),
+            reply_markup=kb,
+            parse_mode="HTML",
+        )
+
+
 # ── Home markup (dynamic — one button per registered platform) ────────────────
 
 def _home_markup(has_key: bool) -> InlineKeyboardMarkup:
-    """Build main menu. Dynamically shows one button per platform."""
+    """Build main menu. Dynamically shows WebApp button + one button per platform."""
     kb = InlineKeyboardMarkup(row_width=1)
+    # Prominent WebApp button at top for 1-tap launch
+    kb.add(InlineKeyboardButton(f"🚀  {sc('Open NexChecker WebApp')}", web_app=WebAppInfo(url=WEBAPP_URL)))
+
     if has_key:
         try:
             from utils.platforms import get_platforms

@@ -247,7 +247,8 @@ def build_welcome_msg(has_key: bool, balance: float | None = None) -> str:
     )
     return (
         f"🤖  <b>Nᴇxᴄʜᴇᴄᴋᴇʀ</b>\n"
-        f"{blockquote(sc('Multi-Platform Registration Checker Via Real NexNum Virtual SIMs'))}"
+        f"<blockquote>{sc('Multi-Platform Registration Checker.')}\n"
+        f"{sc('Via Real NexNum Virtual SIMs')}</blockquote>"
         f"\n{bal_line}"
         f"{key_line}"
     )
