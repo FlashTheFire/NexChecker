@@ -383,7 +383,7 @@ body {
   display: flex;
   gap: var(--sp-2);
   overflow-x: auto;
-  padding: 0 var(--sp-4) var(--sp-3);
+  padding: 8px var(--sp-4) var(--sp-3);
   scrollbar-width: none;
   -ms-overflow-style: none;
   scroll-snap-type: x mandatory;
@@ -466,19 +466,10 @@ body {
   color: var(--brand-primary);
 }
 
-/* Active indicator dot */
+/* Active indicator dot - Hidden per user request */
 .chip-active-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--brand-primary);
-  opacity: 0;
-  transition: opacity 200ms ease;
-  position: relative;
-  z-index: 1;
+  display: none !important;
 }
-
-.service-chip.active .chip-active-dot { opacity: 1; }
 
 /* ══ MODE TABS ═════════════════════════════════════════════════════════════ */
 .mode-tabs {
