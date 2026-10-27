@@ -1,0 +1,115 @@
+###############################################################################
+# NexChecker — Full Docker Compose Stack
+# Run via: .\Start-NexChecker.ps1
+# Services: api, bot, nginx, tunnel
+###############################################################################
+
+services:
+
+  # ─── FastAPI Backend ─────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    image: nexchecker_api:local
+    container_name: nexchecker_api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      ENVIRONMENT: production
+      PORT: 8000
+      HOST: 0.0.0.0
+    volumes:
+      - .:/app
+    networks:
+      - nexchecker_internal
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8000/api/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 25s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+  # ─── Telegram Bot ────────────────────────────────────────────────────────────
+  bot:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.bot
+    image: nexchecker_bot:local
+    container_name: nexchecker_bot
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - .:/app
+    networks:
+      - nexchecker_internal
+    depends_on:
+      api:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+  # ─── Nginx Reverse Proxy ─────────────────────────────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: nexchecker_nginx
+    restart: unless-stopped
+    environment:
+      NGINX_DOMAIN: ${LOCAL_DOMAIN:-nexchecker.127.0.0.1.nip.io}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/certs:/etc/nginx/certs:ro
+      - nginx_logs:/var/log/nginx
+    networks:
+      - nexchecker_internal
+      - nexchecker_public
+    depends_on:
+      api:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ─── Cloudflare Tunnel (Universal Public HTTPS / Zero Warnings) ─────────────
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: nexchecker_tunnel
+    restart: unless-stopped
+    command: ${CLOUDFLARE_TUNNEL_CMD:-tunnel --url https://nginx:443 --no-tls-verify}
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN:-}
+    networks:
+      - nexchecker_internal
+    depends_on:
+      - nginx
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+# ─── Networks ────────────────────────────────────────────────────────────────
+networks:
+  nexchecker_internal:
+    driver: bridge
+    internal: false        # Outbound access needed for Telegram and NexNum APIs
+  nexchecker_public:
+    driver: bridge
+
+# ─── Volumes ─────────────────────────────────────────────────────────────────
+volumes:
+  nginx_logs:
+    name: nexchecker_nginx_logs
