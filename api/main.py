@@ -68,19 +68,12 @@ except Exception:
         check_myntra = None
 
 try:
-    from core.meesho_api import MeeshoClient, clean_phone
-    _meesho = MeeshoClient()
+    from checkers.meesho_check import check_meesho
 except Exception:
     try:
-        from NexBot.core.meesho_api import MeeshoClient, clean_phone
-        _meesho = MeeshoClient()
+        from meesho_check import check_meesho
     except Exception:
-        try:
-            from meesho_api import MeeshoClient, clean_phone
-            _meesho = MeeshoClient()
-        except Exception:
-            _meesho = None
-            clean_phone = None
+        check_meesho = None
 
 
 # ------------------------------------------------------------
@@ -195,40 +188,8 @@ async def _execute_check(platform: str, phone: str) -> Dict[str, Any]:
             result = {"status": "ERROR", "error": "Myntra checker engine unavailable"}
 
     elif pkey == "meesho":
-        if _meesho:
-            try:
-                if hasattr(_meesho, "check_number_async"):
-                    res = await asyncio.wait_for(_meesho.check_number_async(clean), timeout=8.0)
-                else:
-                    res = await asyncio.wait_for(asyncio.to_thread(_meesho.check_number, clean), timeout=8.0)
-                if hasattr(res, "registered"):
-                    is_reg = bool(res.registered)
-                    raw_data = getattr(res, "raw", {})
-                elif isinstance(res, dict):
-                    is_reg = bool(res.get("registered") or res.get("status") == "registered")
-                    raw_data = res
-                else:
-                    is_reg = bool(res)
-                    raw_data = {}
-                result = {
-                    "status": "REGISTERED" if is_reg else "NOT_REGISTERED",
-                    "registered": is_reg,
-                    "fresh": not is_reg,
-                    "mobile": clean,
-                    "raw": raw_data,
-                }
-            except asyncio.TimeoutError:
-                result = {
-                    "status": "ERROR",
-                    "error": "Meesho gateway response timeout (>8s)",
-                    "mobile": clean,
-                }
-            except Exception as exc:
-                result = {
-                    "status": "ERROR",
-                    "error": f"Meesho error: {exc}",
-                    "mobile": clean,
-                }
+        if check_meesho:
+            result = await _run_checker(check_meesho, clean)
         else:
             result = {"status": "ERROR", "error": "Meesho checker engine unavailable"}
 
@@ -283,7 +244,7 @@ async def health_check():
             "flipkart":  check_flipkart is not None,
             "bigbasket": check_bigbasket is not None,
             "myntra":    check_myntra is not None,
-            "meesho":    _meesho is not None,
+            "meesho":    check_meesho is not None,
             "swiggy":    True,
             "zepto":     True,
             "amazon":    True,
