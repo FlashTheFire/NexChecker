@@ -18,6 +18,7 @@ from zomato_check import (
     decode_name_to_phone,
     check_zomato,
 )
+# pyrefly: ignore[missing-import]
 from utils.platforms import get_platforms, get_platform
 
 
