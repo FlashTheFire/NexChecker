@@ -1,0 +1,28 @@
+# NexChecker — Core Stack Dependencies
+# Pinned to major versions for container reproducibility
+
+# --- Web Framework & Server ---
+fastapi>=0.115.0,<1.0.0
+uvicorn[standard]>=0.32.0,<1.0.0
+python-multipart>=0.0.12
+
+# --- HTTP Clients & Networking ---
+requests>=2.32.0,<3.0.0
+aiohttp>=3.10.0,<4.0.0
+httpx[socks]>=0.28.0,<1.0.0
+curl_cffi>=0.7.0; sys_platform != "win32" or platform_python_implementation == "CPython"
+
+# --- Automation & Scraping ---
+playwright>=1.49.0
+
+# --- Telegram Bot Engine ---
+pyTelegramBotAPI[async]>=4.22.0
+
+# --- Validation & Configuration ---
+pydantic>=2.10.0,<3.0.0
+pydantic-settings>=2.6.0,<3.0.0
+python-dotenv>=1.0.0,<2.0.0
+
+# --- Structured Logging & Observability ---
+structlog>=24.4.0,<25.0.0
+prometheus-client>=0.21.0,<1.0.0
