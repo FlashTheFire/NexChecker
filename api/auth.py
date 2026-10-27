@@ -20,7 +20,7 @@ import urllib.parse
 from dataclasses import asdict, dataclass
 from typing import Any, Dict, Optional
 
-from fastapi import Request
+from fastapi import HTTPException, Request
 
 logger = logging.getLogger("NexChecker.Auth")
 
@@ -186,5 +186,68 @@ def get_request_identity(request: Request) -> UserIdentity:
         username=f"Guest_{safe_guest[:8]}",
         first_name="Guest",
         auth_date=int(time.time()),
+        ip_address=client_ip,
+    )
+
+
+def enforce_authenticated_identity(request: Request) -> UserIdentity:
+    """Strictly authenticate caller via Telegram HMAC-SHA256 initData signature.
+
+    Raises HTTP 401 Unauthorized or HTTP 403 Forbidden if invalid, missing, or expired.
+    """
+    init_data = (
+        request.headers.get("X-Telegram-Init-Data")
+        or request.query_params.get("init_data")
+        or ""
+    ).strip()
+
+    if not init_data:
+        raise HTTPException(
+            status_code=401,
+            detail={
+                "error": "AUTH_REQUIRED",
+                "status": "MISSING",
+                "message": "Access restricted: valid Telegram WebApp cryptographic signature required. Please launch from @NexChecker_Robot.",
+                "bot_url": "https://t.me/NexChecker_Robot",
+            },
+        )
+
+    user_dict, status = verify_telegram_init_data_detailed(init_data)
+    if status != "OK" or not user_dict or not user_dict.get("id"):
+        reasons = {
+            "EXPIRED": "Session signature has expired (>24h). Please reopen from @NexChecker_Robot.",
+            "TAMPERED": "Cryptographic signature mismatch (tampering detected).",
+            "MISSING_HASH": "Telegram signature hash missing.",
+            "MISSING_DATE": "Telegram auth_date missing.",
+            "INVALID_DATE": "Invalid timestamp format.",
+            "SERVER_TOKEN_MISSING": "Server configuration error: BOT_TOKEN missing.",
+        }
+        status_code = 401 if status in ("EXPIRED", "MISSING", "MISSING_DATE") else 403
+        raise HTTPException(
+            status_code=status_code,
+            detail={
+                "error": "AUTH_FAILED",
+                "status": status,
+                "message": reasons.get(status, "Cryptographic handshake verification failed."),
+                "bot_url": "https://t.me/NexChecker_Robot",
+            },
+        )
+
+    client_ip = (
+        request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+        or request.headers.get("X-Real-IP")
+        or (request.client.host if request.client else "unknown")
+    )
+    tg_id = int(user_dict["id"])
+    return UserIdentity(
+        user_id=f"tg_{tg_id}",
+        auth_type="telegram",
+        is_authenticated=True,
+        telegram_id=tg_id,
+        username=user_dict.get("username"),
+        first_name=user_dict.get("first_name"),
+        last_name=user_dict.get("last_name"),
+        language_code=user_dict.get("language_code"),
+        auth_date=user_dict.get("auth_date"),
         ip_address=client_ip,
     )

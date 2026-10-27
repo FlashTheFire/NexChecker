@@ -76,7 +76,11 @@ try:
 except Exception:
     check_zepto = None
 
-from api.auth import get_request_identity, verify_telegram_init_data_detailed
+from api.auth import (
+    enforce_authenticated_identity,
+    get_request_identity,
+    verify_telegram_init_data_detailed,
+)
 from api.history_manager import history_manager
 
 _PLATFORM_LABELS: Dict[str, str] = {
@@ -371,6 +375,9 @@ async def list_platforms():
 @app.post("/api/check/phone")
 async def check_single_phone(req: PhoneCheckRequest, request: Request):
     """Check a single mobile number on a target platform or all platforms."""
+    # Enforce strict Telegram cryptographic authentication
+    identity = enforce_authenticated_identity(request)
+
     raw_phone = req.get_phone()
     clean = "".join(c for c in raw_phone if c.isdigit())
     if clean.startswith("91") and len(clean) >= 11:
@@ -390,7 +397,6 @@ async def check_single_phone(req: PhoneCheckRequest, request: Request):
 
     # Record to caller's persistent server-side JSON history
     try:
-        identity = get_request_identity(request)
         brand_name = _PLATFORM_LABELS.get(platform, platform.capitalize())
         await history_manager.record_check(
             user=identity,
@@ -422,6 +428,9 @@ async def check_single_phone(req: PhoneCheckRequest, request: Request):
 @app.post("/api/check/batch")
 async def check_batch_phones(req: BatchCheckRequest, request: Request):
     """Check a list of phone numbers concurrently."""
+    # Enforce strict Telegram cryptographic authentication
+    identity = enforce_authenticated_identity(request)
+
     pkey = req.platform or "zomato"
     phones = req.phones[:50]  # Cap at 50 per request
 
@@ -429,7 +438,6 @@ async def check_batch_phones(req: BatchCheckRequest, request: Request):
     results_list = await asyncio.gather(*tasks, return_exceptions=True)
 
     formatted = {}
-    identity = get_request_identity(request)
     brand_name = _PLATFORM_LABELS.get(pkey, pkey.capitalize())
 
     for p, res in zip(phones, results_list):
@@ -467,10 +475,50 @@ async def check_batch_phones(req: BatchCheckRequest, request: Request):
 # ------------------------------------------------------------
 # High-Class Server-Side History & User Tracking Endpoints
 # ------------------------------------------------------------
+@app.get("/api/auth/verify")
+async def verify_auth_endpoint(request: Request):
+    """Cryptographically verify the Telegram WebApp initData handshake."""
+    init_data = (
+        request.headers.get("X-Telegram-Init-Data")
+        or request.query_params.get("init_data")
+        or ""
+    ).strip()
+    if not init_data:
+        return {
+            "authenticated": False,
+            "status": "MISSING",
+            "message": "No Telegram WebApp payload provided. Access restricted to Telegram.",
+            "bot_url": "https://t.me/NexChecker_Robot",
+        }
+
+    user_dict, status = verify_telegram_init_data_detailed(init_data)
+    if status == "OK" and user_dict:
+        return {
+            "authenticated": True,
+            "status": "OK",
+            "user": user_dict,
+        }
+
+    reasons = {
+        "EXPIRED": "Session signature has expired (>24h). Please reopen from @NexChecker_Robot.",
+        "TAMPERED": "Cryptographic signature mismatch (tampering detected).",
+        "MISSING_HASH": "Telegram signature hash missing.",
+        "MISSING_DATE": "Telegram auth_date missing.",
+        "INVALID_DATE": "Invalid timestamp format.",
+        "SERVER_TOKEN_MISSING": "Server configuration error: BOT_TOKEN missing.",
+    }
+    return {
+        "authenticated": False,
+        "status": status,
+        "message": reasons.get(status, "Cryptographic handshake verification failed."),
+        "bot_url": "https://t.me/NexChecker_Robot",
+    }
+
+
 @app.get("/api/auth/me")
 async def get_current_user_profile(request: Request):
     """Retrieve verified authentication metadata for the active caller."""
-    identity = get_request_identity(request)
+    identity = enforce_authenticated_identity(request)
     return {
         "success": True,
         "user": identity.to_dict(),
@@ -480,7 +528,7 @@ async def get_current_user_profile(request: Request):
 @app.get("/api/history")
 async def get_user_history_endpoint(request: Request, limit: int = 50):
     """Fetch persistent server-side check history for the authenticated user/guest."""
-    identity = get_request_identity(request)
+    identity = enforce_authenticated_identity(request)
     records = await history_manager.get_history(identity.user_id, limit=limit)
     return {
         "success": True,
@@ -493,7 +541,7 @@ async def get_user_history_endpoint(request: Request, limit: int = 50):
 @app.post("/api/history/clear")
 async def clear_user_history_endpoint(request: Request):
     """Clear server-side history records for the authenticated user/guest."""
-    identity = get_request_identity(request)
+    identity = enforce_authenticated_identity(request)
     await history_manager.clear_history(identity.user_id)
     return {
         "success": True,
