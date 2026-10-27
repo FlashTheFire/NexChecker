@@ -38,7 +38,8 @@
         <div class="brand-row">
           <div class="logo-wrap">
             <div class="brand-logo-svg" id="headerLogo">
-              <!-- SVG injected by JS based on active brand -->
+                <img id="headerLogoImg" src="https://upload.wikimedia.org/wikipedia/commons/7/75/Zomato_logo.png" alt="Zomato" style="height:26px; width:26px; object-fit:contain; border-radius:6px; margin-right:8px; vertical-align:middle; display:inline-block;" />
+                <span id="headerLogoText" style="font-size:17px; font-weight:800; letter-spacing:0.5px; color:var(--brand-header-text); line-height:1;">ZOMATO</span>
             </div>
             <span class="checker-pill">CHECKER</span>
           </div>
@@ -74,125 +75,73 @@
         <div class="section-microtitle">SELECT PLATFORM</div>
         <div class="service-chips-scroll" id="serviceChipsScroll">
 
-          <!-- Zomato — wordmark Z path -->
+          <!-- Zomato — official logo -->
           <button class="service-chip active" data-platform="zomato" onclick="switchBrand('zomato', this)">
-            <div class="chip-logo">
-              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="40" height="40" rx="10" fill="#E23744"/>
-                <!-- Zomato Z letterform -->
-                <path d="M11 13h18v3L15.5 27H29v3H11v-3l13.5-11H11v-3z" fill="white"/>
-              </svg>
+            <div class="chip-logo" style="background:#E23744;">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/7/75/Zomato_logo.png" alt="Zomato" class="chip-img">
             </div>
             <span class="chip-name">Zomato</span>
             <span class="chip-active-dot"></span>
           </button>
 
-          <!-- Flipkart — F + yellow spark -->
+          <!-- Flipkart — official logo -->
           <button class="service-chip" data-platform="flipkart" onclick="switchBrand('flipkart', this)">
-            <div class="chip-logo">
-              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="40" height="40" rx="6" fill="#2874F0"/>
-                <!-- F strokes -->
-                <path d="M13 10h14v3H16v5h9v3h-9v9h-3V10z" fill="white"/>
-                <!-- Yellow spark/star (Flipkart logo accent) -->
-                <path d="M27 17l1.5-3 1.5 3 3 1.5-3 1.5-1.5 3-1.5-3-3-1.5 3-1.5z" fill="#FFD814"/>
-              </svg>
+            <div class="chip-logo" style="background:#2874F0;">
+              <img src="https://www.google.com/s2/favicons?domain=flipkart.com&sz=128" alt="Flipkart" class="chip-img">
             </div>
             <span class="chip-name">Flipkart</span>
             <span class="chip-active-dot"></span>
           </button>
 
-          <!-- Meesho — stylised m in Jamuni -->
+          <!-- Meesho — official logo -->
           <button class="service-chip" data-platform="meesho" onclick="switchBrand('meesho', this)">
-            <div class="chip-logo">
-              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="msGrad" x1="0" y1="0" x2="40" y2="40">
-                    <stop offset="0%" stop-color="#580A46"/>
-                    <stop offset="100%" stop-color="#9b3af7"/>
-                  </linearGradient>
-                </defs>
-                <rect width="40" height="40" rx="10" fill="url(#msGrad)"/>
-                <!-- m letterform (double-arch) -->
-                <path d="M9 28V16h4v2.2c.8-1.5 2.1-2.5 3.8-2.5 1.8 0 3 .9 3.7 2.3.9-1.5 2.3-2.3 4-2.3 2.8 0 4.5 1.9 4.5 5V28h-4v-6.5c0-1.4-.6-2.2-1.8-2.2-1.2 0-1.9.9-1.9 2.3V28h-4v-6.5c0-1.4-.6-2.2-1.8-2.2-1.2 0-1.9.9-1.9 2.3V28H9z" fill="#FF9D00"/>
-              </svg>
+            <div class="chip-logo" style="background:linear-gradient(135deg,#580A46,#9b3af7);">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/3/33/Meesho_logo.png" alt="Meesho" class="chip-img">
             </div>
             <span class="chip-name">Meesho</span>
             <span class="chip-active-dot"></span>
           </button>
 
-          <!-- BigBasket — bb in lime on ink -->
+          <!-- BigBasket — official logo -->
           <button class="service-chip" data-platform="bigbasket" onclick="switchBrand('bigbasket', this)">
-            <div class="chip-logo">
-              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="40" height="40" rx="10" fill="#231F20"/>
-                <!-- First b -->
-                <path d="M7 10h3v7.2c.7-1 1.8-1.5 3-1.5 2.6 0 4.3 2 4.3 5.1 0 3.2-1.8 5.2-4.4 5.2-1.3 0-2.3-.5-3-1.6V26H7V10zm5.8 8.5c-1.4 0-2.3 1.1-2.3 2.8 0 1.7.9 2.8 2.3 2.8 1.4 0 2.2-1.1 2.2-2.8 0-1.7-.8-2.8-2.2-2.8z" fill="#A6CE39"/>
-                <!-- Second b -->
-                <path d="M19 10h3v7.2c.7-1 1.8-1.5 3-1.5 2.6 0 4.3 2 4.3 5.1 0 3.2-1.8 5.2-4.4 5.2-1.3 0-2.3-.5-3-1.6V26h-2.9V10zm5.8 8.5c-1.4 0-2.3 1.1-2.3 2.8 0 1.7.9 2.8 2.3 2.8 1.4 0 2.2-1.1 2.2-2.8 0-1.7-.8-2.8-2.2-2.8z" fill="#A6CE39"/>
-              </svg>
+            <div class="chip-logo" style="background:#231F20; padding:3px;">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/BigBasket_Logo.png" alt="BigBasket" class="chip-img" style="object-fit:contain;">
             </div>
             <span class="chip-name">BigBasket</span>
             <span class="chip-active-dot"></span>
           </button>
 
-          <!-- Myntra — M with gradient -->
+          <!-- Myntra — official logo -->
           <button class="service-chip" data-platform="myntra" onclick="switchBrand('myntra', this)">
-            <div class="chip-logo">
-              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="myGrad" x1="0" y1="0" x2="40" y2="40">
-                    <stop offset="0%" stop-color="#FF3F6C"/>
-                    <stop offset="100%" stop-color="#FF912E"/>
-                  </linearGradient>
-                </defs>
-                <rect width="40" height="40" rx="4" fill="#282C3F"/>
-                <!-- M letterform -->
-                <path d="M7 30V11l6.5 10.5L20 11l6.5 10.5L33 11v19h-3.5V18.5L24 27h-8l-5.5-8.5V30H7z" fill="url(#myGrad)"/>
-              </svg>
+            <div class="chip-logo" style="background:#282C3F;">
+              <img src="https://www.google.com/s2/favicons?domain=myntra.com&sz=128" alt="Myntra" class="chip-img">
             </div>
             <span class="chip-name">Myntra</span>
             <span class="chip-active-dot"></span>
           </button>
 
-          <!-- Swiggy — orange S-pin logo -->
+          <!-- Swiggy — official logo -->
           <button class="service-chip" data-platform="swiggy" onclick="switchBrand('swiggy', this)">
-            <div class="chip-logo">
-              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="40" height="40" rx="10" fill="#1C1C1C"/>
-                <!-- Swiggy S curve path -->
-                <path d="M26.5 14.5C24.8 12.3 22.1 11 19 11c-5 0-8.5 3.3-8.5 7.5 0 4 3 6.3 7 7.2l2 .5c2.2.5 3.5 1.3 3.5 2.8 0 1.6-1.5 2.7-3.8 2.7-2.5 0-4.5-1.2-5.7-3.2l-3 2C12.2 32.5 15.2 34 19 34c5.3 0 9-3.2 9-7.8 0-4-2.8-6.2-7-7.2l-2-.5c-1.8-.4-3-.9-3-2.4 0-1.4 1.2-2.4 3-2.4 1.8 0 3.5.9 4.5 2.3l3-1.5z" fill="#FC8019"/>
-              </svg>
+            <div class="chip-logo" style="background:#1C1C1C;">
+              <img src="https://www.google.com/s2/favicons?domain=swiggy.com&sz=128" alt="Swiggy" class="chip-img">
             </div>
             <span class="chip-name">Swiggy</span>
             <span class="chip-active-dot"></span>
           </button>
 
-          <!-- Zepto — purple Z with speed feel -->
+          <!-- Zepto — official logo -->
           <button class="service-chip" data-platform="zepto" onclick="switchBrand('zepto', this)">
-            <div class="chip-logo">
-              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="40" height="40" rx="10" fill="#1A1A1A"/>
-                <!-- Z letterform (bold, Zepto style) -->
-                <path d="M10 12h20v3.5L16 27.5h14V31H10v-3.5L24.2 15.5H10V12z" fill="#950EDB"/>
-                <!-- Speed underline accent -->
-                <path d="M14 33h12" stroke="#B44EE8" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
+            <div class="chip-logo" style="background:#1A1A1A;">
+              <img src="https://www.google.com/s2/favicons?domain=zeptonow.com&sz=128" alt="Zepto" class="chip-img">
             </div>
             <span class="chip-name">Zepto</span>
             <span class="chip-active-dot"></span>
           </button>
 
-          <!-- Amazon — squid ink + wordmark + smile -->
+          <!-- Amazon — official logo -->
           <button class="service-chip" data-platform="amazon" onclick="switchBrand('amazon', this)">
-            <div class="chip-logo">
-              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="40" height="40" rx="8" fill="#131A22"/>
-                <!-- amazon wordmark (simplified geometric) -->
-                <path d="M8 17h2.5v-2h2v2H15v2h-2.5v4.5c0 .5.2.7.7.7H15V26h-2.5c-1.5 0-2.5-.8-2.5-2.3V19H8v-2zm7 0h2.2l2.3 6.5 2.3-6.5H24l-3.5 9H18L15 17zm9 0h6.8v2h-4.5v1.5H27v2h-2.7v1.5H28V26h-7v-9h1z" fill="white"/>
-                <!-- Smile arc -->
-                <path d="M11 28.5 Q20 34 29 28.5" stroke="#FF9900" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-              </svg>
+            <div class="chip-logo" style="background:#131A22;">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/d/de/Amazon_icon.png" alt="Amazon" class="chip-img">
             </div>
             <span class="chip-name">Amazon</span>
             <span class="chip-active-dot"></span>
@@ -305,7 +254,10 @@
               <div class="result-card" id="resultCard">
                 <!-- Result Header -->
                 <div class="result-header" id="resultHeader">
-                  <span class="result-brand-name" id="resultBrandName">ZOMATO</span>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <img id="resultBrandLogo" src="https://upload.wikimedia.org/wikipedia/commons/7/75/Zomato_logo.png" alt="Zomato" style="width:22px; height:22px; object-fit:contain; border-radius:5px;">
+                    <span class="result-brand-name" id="resultBrandName">ZOMATO</span>
+                  </div>
                   <div class="result-status-badge" id="resultStatusBadge">
                     <span id="resultStatusIcon">●</span>
                     <span id="resultStatusText">REGISTERED</span>
@@ -425,7 +377,7 @@
           <!-- Zomato Engine Card -->
           <div class="engine-card" data-platform="zomato" onclick="switchBrandFromEngine('zomato')">
             <div class="engine-logo-wrap" style="background:#E23744;">
-              <svg viewBox="0 0 44 44"><rect width="44" height="44" rx="12" fill="#E23744"/><text x="22" y="31" text-anchor="middle" font-size="24" font-weight="900" font-family="Arial" fill="white">z</text></svg>
+              <img src="https://upload.wikimedia.org/wikipedia/commons/7/75/Zomato_logo.png" alt="Zomato" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">
             </div>
             <div class="engine-name">Zomato</div>
             <div class="engine-meta">Food delivery</div>
@@ -435,7 +387,7 @@
           <!-- Flipkart Engine Card -->
           <div class="engine-card" data-platform="flipkart" onclick="switchBrandFromEngine('flipkart')">
             <div class="engine-logo-wrap" style="background:#2874F0;">
-              <svg viewBox="0 0 44 44"><rect width="44" height="44" rx="12" fill="#2874F0"/><text x="22" y="31" text-anchor="middle" font-size="22" font-weight="900" font-family="Arial" fill="#FFD814">F</text></svg>
+              <img src="https://www.google.com/s2/favicons?domain=flipkart.com&sz=128" alt="Flipkart" style="width:100%;height:100%;object-fit:contain;border-radius:10px;">
             </div>
             <div class="engine-name">Flipkart</div>
             <div class="engine-meta">E-commerce</div>
@@ -445,7 +397,7 @@
           <!-- Meesho Engine Card -->
           <div class="engine-card" data-platform="meesho" onclick="switchBrandFromEngine('meesho')">
             <div class="engine-logo-wrap" style="background:linear-gradient(135deg,#580A46,#9b3af7);">
-              <svg viewBox="0 0 44 44"><rect width="44" height="44" rx="12" fill="url(#meeshoEngineGrad)"/><defs><linearGradient id="meeshoEngineGrad" x1="0" y1="0" x2="44" y2="44"><stop offset="0%" stop-color="#580A46"/><stop offset="100%" stop-color="#9b3af7"/></linearGradient></defs><text x="22" y="31" text-anchor="middle" font-size="22" font-weight="900" font-family="Arial" fill="#FF9D00">m</text></svg>
+              <img src="https://upload.wikimedia.org/wikipedia/commons/3/33/Meesho_logo.png" alt="Meesho" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">
             </div>
             <div class="engine-name">Meesho</div>
             <div class="engine-meta">Marketplace</div>
@@ -454,8 +406,8 @@
 
           <!-- BigBasket Engine Card -->
           <div class="engine-card" data-platform="bigbasket" onclick="switchBrandFromEngine('bigbasket')">
-            <div class="engine-logo-wrap" style="background:#231F20;">
-              <svg viewBox="0 0 44 44"><rect width="44" height="44" rx="12" fill="#231F20"/><text x="22" y="31" text-anchor="middle" font-size="18" font-weight="900" font-family="Arial" fill="#A6CE39">bb</text></svg>
+            <div class="engine-logo-wrap" style="background:#231F20; padding:4px;">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/BigBasket_Logo.png" alt="BigBasket" style="width:100%;height:100%;object-fit:contain;border-radius:8px;">
             </div>
             <div class="engine-name">BigBasket</div>
             <div class="engine-meta">Grocery</div>
@@ -464,8 +416,8 @@
 
           <!-- Myntra Engine Card -->
           <div class="engine-card" data-platform="myntra" onclick="switchBrandFromEngine('myntra')">
-            <div class="engine-logo-wrap" style="background:linear-gradient(135deg,#FF3F6C,#FF912E);">
-              <svg viewBox="0 0 44 44"><rect width="44" height="44" rx="12" fill="url(#myntraEngineGrad)"/><defs><linearGradient id="myntraEngineGrad" x1="0" y1="0" x2="44" y2="44"><stop offset="0%" stop-color="#FF3F6C"/><stop offset="100%" stop-color="#FF912E"/></linearGradient></defs><text x="22" y="31" text-anchor="middle" font-size="22" font-weight="900" font-family="Arial" fill="white">M</text></svg>
+            <div class="engine-logo-wrap" style="background:#282C3F;">
+              <img src="https://www.google.com/s2/favicons?domain=myntra.com&sz=128" alt="Myntra" style="width:100%;height:100%;object-fit:contain;border-radius:10px;">
             </div>
             <div class="engine-name">Myntra</div>
             <div class="engine-meta">Fashion</div>
@@ -474,8 +426,8 @@
 
           <!-- Swiggy Engine Card -->
           <div class="engine-card" data-platform="swiggy" onclick="switchBrandFromEngine('swiggy')">
-            <div class="engine-logo-wrap" style="background:#FC8019;">
-              <svg viewBox="0 0 44 44"><rect width="44" height="44" rx="12" fill="#FC8019"/><text x="22" y="31" text-anchor="middle" font-size="22" font-weight="900" font-family="Arial" fill="white">S</text></svg>
+            <div class="engine-logo-wrap" style="background:#1C1C1C;">
+              <img src="https://www.google.com/s2/favicons?domain=swiggy.com&sz=128" alt="Swiggy" style="width:100%;height:100%;object-fit:contain;border-radius:10px;">
             </div>
             <div class="engine-name">Swiggy</div>
             <div class="engine-meta">Food delivery</div>
@@ -484,8 +436,8 @@
 
           <!-- Zepto Engine Card -->
           <div class="engine-card" data-platform="zepto" onclick="switchBrandFromEngine('zepto')">
-            <div class="engine-logo-wrap" style="background:linear-gradient(135deg,#0d0010,#950EDB);">
-              <svg viewBox="0 0 44 44"><rect width="44" height="44" rx="12" fill="url(#zeptoEngineGrad)"/><defs><linearGradient id="zeptoEngineGrad" x1="0" y1="0" x2="44" y2="44"><stop offset="0%" stop-color="#0d0010"/><stop offset="100%" stop-color="#950EDB"/></linearGradient></defs><text x="22" y="31" text-anchor="middle" font-size="22" font-weight="900" font-family="Arial" fill="white">Z</text></svg>
+            <div class="engine-logo-wrap" style="background:#1A1A1A;">
+              <img src="https://www.google.com/s2/favicons?domain=zeptonow.com&sz=128" alt="Zepto" style="width:100%;height:100%;object-fit:contain;border-radius:10px;">
             </div>
             <div class="engine-name">Zepto</div>
             <div class="engine-meta">Quick-commerce</div>
@@ -494,8 +446,8 @@
 
           <!-- Amazon Engine Card -->
           <div class="engine-card" data-platform="amazon" onclick="switchBrandFromEngine('amazon')">
-            <div class="engine-logo-wrap" style="background:#232F3E;">
-              <svg viewBox="0 0 44 44"><rect width="44" height="44" rx="12" fill="#232F3E"/><text x="22" y="21" text-anchor="middle" font-size="9" font-weight="800" font-family="Arial" fill="white">amazon</text><path d="M12 28 Q22 36 32 28" stroke="#FF9900" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg>
+            <div class="engine-logo-wrap" style="background:#131A22;">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/d/de/Amazon_icon.png" alt="Amazon" style="width:100%;height:100%;object-fit:contain;border-radius:10px;">
             </div>
             <div class="engine-name">Amazon</div>
             <div class="engine-meta">E-commerce</div>
