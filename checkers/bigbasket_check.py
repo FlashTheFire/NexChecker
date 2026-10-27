@@ -17,7 +17,14 @@ import os
 import random
 from playwright.async_api import async_playwright
 
-STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bb_state.json")
+from pathlib import Path
+
+_CHECKERS_DIR = Path(__file__).resolve().parent
+_PROJECT_ROOT = _CHECKERS_DIR.parent
+_candidate_bb_state = _PROJECT_ROOT / "bb_state.json"
+if not _candidate_bb_state.exists() and (_CHECKERS_DIR / "bb_state.json").exists():
+    _candidate_bb_state = _CHECKERS_DIR / "bb_state.json"
+STATE_FILE = os.getenv("BB_STATE_FILE", str(_candidate_bb_state))
 
 MAPI_URLS = [
     "https://www.bigbasket.com/mapi/v4.0.0/member-svc/otp/send/",
@@ -401,7 +408,7 @@ import os
 import sys
 from playwright.async_api import async_playwright
 
-STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bb_state.json")
+STATE_FILE = os.getenv("BB_STATE_FILE", str(_candidate_bb_state))
 
 
 def log(msg: str):

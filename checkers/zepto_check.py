@@ -15,15 +15,26 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import sys
 import time
 import uuid
 from pathlib import Path
 from typing import Any
 
-BASE = Path(__file__).resolve().parent
-PROFILE_DIR = BASE / "zepto_chrome_profile"
-STATE_FILE = BASE / "zepto_state.json"
+_CHECKERS_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = _CHECKERS_DIR.parent
+BASE = PROJECT_ROOT
+
+_candidate_profile = PROJECT_ROOT / "zepto_chrome_profile"
+if not _candidate_profile.exists() and (_CHECKERS_DIR / "zepto_chrome_profile").exists():
+    _candidate_profile = _CHECKERS_DIR / "zepto_chrome_profile"
+PROFILE_DIR = Path(os.getenv("ZEPTO_PROFILE_DIR", str(_candidate_profile)))
+
+_candidate_state = PROJECT_ROOT / "zepto_state.json"
+if not _candidate_state.exists() and (_CHECKERS_DIR / "zepto_state.json").exists():
+    _candidate_state = _CHECKERS_DIR / "zepto_state.json"
+STATE_FILE = Path(os.getenv("ZEPTO_STATE_FILE", str(_candidate_state)))
 
 
 def normalize_mobile(mobile: str) -> str:
@@ -445,6 +456,13 @@ async def run(numbers: list[str], headless: bool = True, warmup: bool = False) -
             await context._zepto_browser.close()  # type: ignore
 
     return results
+
+
+async def check_zepto(mobile: str, headless: bool = True) -> dict:
+    """Check a single mobile number on Zepto."""
+    res = await run([mobile], headless=headless)
+    return res[0] if res else {"status": "ERROR", "mobile": mobile, "error": "No response"}
+
 
 
 def pretty(result: dict):

@@ -34,13 +34,28 @@ import requests
 # ------------------------------------------------------------
 # Config & Endpoints
 # ------------------------------------------------------------
+CHECKERS_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = CHECKERS_DIR.parent
+
 ZOMATO_CHECKER_URL = os.getenv(
     "ZOMATO_CHECKER_URL", "http://127.0.0.1:3000/api/checker/phone"
 )
-ZOMATO_ACCOUNTS_DIR = os.getenv(
-    "ZOMATO_ACCOUNTS_DIR",
-    str(Path(__file__).resolve().parent.parent / "NexZomato" / "server" / "data" / "accounts"),
-)
+
+# Detect accounts directory in priority order:
+# 1. ZOMATO_ACCOUNTS_DIR environment variable
+# 2. Local sibling repo: PROJECT_ROOT.parent / "NexZomato" / "server" / "data" / "accounts"
+# 3. Dedicated in-repo directory: PROJECT_ROOT / "data" / "zomato_accounts"
+# 4. Fallback in-repo directory: PROJECT_ROOT / "zomato_accounts"
+_env_accounts = os.getenv("ZOMATO_ACCOUNTS_DIR")
+if _env_accounts:
+    ZOMATO_ACCOUNTS_DIR = _env_accounts
+else:
+    _candidates = [
+        PROJECT_ROOT.parent / "NexZomato" / "server" / "data" / "accounts",
+        PROJECT_ROOT / "data" / "zomato_accounts",
+        PROJECT_ROOT / "zomato_accounts",
+    ]
+    ZOMATO_ACCOUNTS_DIR = str(next((p for p in _candidates if p.is_dir()), _candidates[0]))
 
 ZOMATO_API_BASE = "https://api.zomato.com"
 SYNC_ENDPOINT = f"{ZOMATO_API_BASE}/gw/user-preference/recommendation/sync-contacts"

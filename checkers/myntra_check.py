@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import sys
 import time
 import uuid
@@ -21,10 +22,24 @@ from typing import Any
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-BASE = Path(__file__).resolve().parent
-STATE_FILE = BASE / "myntra_state.json"
-PROFILE_DIR = BASE / "myntra_chrome_profile"
-META_FILE = BASE / "myntra_session_meta.json"
+_CHECKERS_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = _CHECKERS_DIR.parent
+BASE = PROJECT_ROOT
+
+_candidate_state = PROJECT_ROOT / "myntra_state.json"
+if not _candidate_state.exists() and (_CHECKERS_DIR / "myntra_state.json").exists():
+    _candidate_state = _CHECKERS_DIR / "myntra_state.json"
+STATE_FILE = Path(os.getenv("MYNTRA_STATE_FILE", str(_candidate_state)))
+
+_candidate_profile = PROJECT_ROOT / "myntra_chrome_profile"
+if not _candidate_profile.exists() and (_CHECKERS_DIR / "myntra_chrome_profile").exists():
+    _candidate_profile = _CHECKERS_DIR / "myntra_chrome_profile"
+PROFILE_DIR = Path(os.getenv("MYNTRA_PROFILE_DIR", str(_candidate_profile)))
+
+_candidate_meta = PROJECT_ROOT / "myntra_session_meta.json"
+if not _candidate_meta.exists() and (_CHECKERS_DIR / "myntra_session_meta.json").exists():
+    _candidate_meta = _CHECKERS_DIR / "myntra_session_meta.json"
+META_FILE = Path(os.getenv("MYNTRA_META_FILE", str(_candidate_meta)))
 
 BULK_DELAY = 0.35
 HEAL_WAIT = 3.0
