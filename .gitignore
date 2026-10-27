@@ -4,23 +4,34 @@
 *.pem.pem
 
 # Browser profiles (large binary files + auth cookies, platform-specific)
+*_chrome_profile*/
+*_bot_profile*/
 myntra_bot_profile/
+myntra_chrome_profile/
+myntra_chrome_profile_cli/
 zepto_chrome_profile/
-*_chrome_profile/
-*_bot_profile/
 myntra_profile_auth.zip
 
 # Python
 __pycache__/
+*/__pycache__/
 *.py[cod]
 *.pyo
 .venv/
 venv/
 *.egg-info/
 
-# Data / storage
+# Data / storage & states
 NexBot/data/
 *.json
+!package.json
+!tsconfig.json
+
+# Diagnostic & Dump Files
+bb_diag_*.json
+*_diag_*.json
+*_state.json
+*_session_meta.json
 
 # Logs
 *.log
@@ -28,3 +39,4 @@ NexBot/data/
 # OS
 .DS_Store
 Thumbs.db
+
