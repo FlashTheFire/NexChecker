@@ -15,10 +15,17 @@ import sys
 
 # Ensure this package directory is on sys.path so intra-package imports work
 _DIR = str(Path(__file__).resolve().parent)
-if _DIR not in sys.path:
-    sys.path.insert(0, _DIR)
+_ROOT = str(Path(__file__).resolve().parent.parent)
+_NEXBOT = str(Path(__file__).resolve().parent.parent / "NexBot")
+for _p in (_DIR, _ROOT, _NEXBOT):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
-from checkers.foja_client import FojaClient, clean_phone
+try:
+    from core.meesho_api import MeeshoClient, clean_phone
+except ImportError:
+    from NexBot.core.meesho_api import MeeshoClient, clean_phone
+
 from checkers.zomato_check import check_zomato
 from checkers.myntra_check import check_myntra, MyntraChecker, myntra_checker
 from checkers.flipkart_check import check_flipkart
@@ -29,7 +36,7 @@ from checkers.swiggy_check import check_swiggy
 from checkers.zepto_check import check_zepto
 
 __all__ = [
-    "FojaClient",
+    "MeeshoClient",
     "clean_phone",
     "check_zomato",
     "check_myntra",

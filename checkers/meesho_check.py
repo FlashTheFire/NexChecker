@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Meesho Silent Registration Checker (PriceTrackerPro / Foja Engine)
+Meesho Silent Registration Checker (PriceTrackerPro / Meesho Engine)
 =================================================================
 Ultra-fast, authoritative Meesho registration checking without sending
 any OTP or SMS to the target number.
@@ -14,14 +14,24 @@ Usage:
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
 import sys
 import time
 from typing import Any
 
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+_NEXBOT_ROOT = _PROJECT_ROOT / "NexBot"
+for _p in (str(_PROJECT_ROOT), str(_NEXBOT_ROOT)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
 try:
-    from checkers.foja_client import FojaClient, clean_phone
+    from core.meesho_api import MeeshoClient, clean_phone
 except ImportError:
-    from foja_client import FojaClient, clean_phone
+    try:
+        from NexBot.core.meesho_api import MeeshoClient, clean_phone
+    except ImportError:
+        from meesho_api import MeeshoClient, clean_phone
 
 if sys.platform == "win32":
     try:
@@ -44,7 +54,7 @@ def check_meesho(mobile: str) -> dict[str, Any]:
         }
 
     try:
-        client = FojaClient()
+        client = MeeshoClient()
         res = client.check_number(norm)
         status = "REGISTERED" if res.registered else "NOT_REGISTERED"
         return {
