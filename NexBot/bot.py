@@ -11,8 +11,9 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-NEXCHECKER_ROOT = ROOT.parent   # D:/Nex-Projects/NexChecker  (for bigbasket_check.py, etc.)
-for p in (str(ROOT), str(NEXCHECKER_ROOT)):
+NEXCHECKER_ROOT = ROOT.parent   # D:/Nex-Projects/NexChecker
+CHECKERS_DIR = NEXCHECKER_ROOT / "checkers"
+for p in (str(ROOT), str(NEXCHECKER_ROOT), str(CHECKERS_DIR)):
     if p not in sys.path:
         sys.path.insert(0, p)
 

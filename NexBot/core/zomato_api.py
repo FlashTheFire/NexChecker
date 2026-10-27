@@ -55,9 +55,14 @@ class ZomatoChecker:
             try:
                 import sys
                 root_str = str(_NEXCHECKER_DIR)
-                if root_str not in sys.path:
-                    sys.path.insert(0, root_str)
-                from zomato_check import check_zomato  # type: ignore
+                checkers_str = str(_NEXCHECKER_DIR / "checkers")
+                for p in (root_str, checkers_str):
+                    if p not in sys.path:
+                        sys.path.insert(0, p)
+                try:
+                    from checkers.zomato_check import check_zomato  # type: ignore
+                except ImportError:
+                    from zomato_check import check_zomato  # type: ignore
 
                 result = await asyncio.to_thread(check_zomato, mobile)
                 return result

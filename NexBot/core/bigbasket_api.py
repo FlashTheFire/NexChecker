@@ -82,9 +82,14 @@ class BigBasketChecker:
                 # which is on sys.path via bot.py's ROOT insertion.
                 import sys
                 nexchecker_root = str(_NEXCHECKER_DIR)
-                if nexchecker_root not in sys.path:
-                    sys.path.insert(0, nexchecker_root)
-                from bigbasket_check import check_bigbasket  # type: ignore
+                checkers_str = str(_NEXCHECKER_DIR / "checkers")
+                for p in (nexchecker_root, checkers_str):
+                    if p not in sys.path:
+                        sys.path.insert(0, p)
+                try:
+                    from checkers.bigbasket_check import check_bigbasket  # type: ignore
+                except ImportError:
+                    from bigbasket_check import check_bigbasket  # type: ignore
                 result = await check_bigbasket(mobile)
                 return result
             except Exception as exc:

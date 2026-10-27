@@ -10,13 +10,18 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import sys
 from pathlib import Path
 from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
-# Resolve myntra_check.py relative to the NexChecker root (parent of NexBot)
+# Resolve checkers relative to the NexChecker root (parent of NexBot)
 _NEXCHECKER_DIR = Path(__file__).resolve().parent.parent.parent
+_CHECKERS_DIR = _NEXCHECKER_DIR / "checkers"
+for p in (str(_NEXCHECKER_DIR), str(_CHECKERS_DIR)):
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 
 class MyntraChecker:
