@@ -33,7 +33,8 @@ logger = logging.getLogger(__name__)
 POLL_INTERVAL     = 5
 MAX_POLL_DURATION = 19 * 60
 
-_sms_pollers: dict[int, asyncio.Task] = {}
+# {order_id: asyncio.Task} — keyed by order_id so multiple services can poll in parallel
+_sms_pollers: dict[str, asyncio.Task] = {}
 
 # {order_id: {"code": str, "full_sms": str}}  — for copy button callbacks
 _sms_store: dict[str, dict] = {}
@@ -124,6 +125,7 @@ def _sms_notification_text(
 
 async def _persist_otp(
     user_id:  int,
+    order_id: str,
     code:     str,
     full_sms: str,
     seen_ids: list[str] | None = None,
@@ -139,9 +141,9 @@ async def _persist_otp(
         }
         if seen_ids is not None:
             payload["seen_sms_ids"] = seen_ids
-        await user_store.update_order(user_id, payload)
+        await user_store.update_order(user_id, payload, order_id=order_id)
     except Exception as exc:
-        logger.warning("[SmsPoller] persist_otp failed: %s", exc)
+        logger.warning("[SmsPoller] persist_otp failed order=%s: %s", order_id, exc)
 
 
 # ── Poller coroutine ──────────────────────────────────────────────────────────
@@ -173,8 +175,8 @@ async def _run_poller(
     # so a restarted bot never re-delivers SMS already sent before restart.
     try:
         from core import user_store as _us
-        _prev = await _us.get_last_order(user_id)
-        if _prev.get("order_id") == order_id:
+        _prev = await _us.get_order(user_id, order_id)
+        if _prev:
             raw_ids = _prev.get("seen_sms_ids") or []
             if isinstance(raw_ids, list):
                 seen_ids.update(raw_ids)
@@ -335,7 +337,7 @@ async def _run_poller(
 
                 # Persist COMPLETED + latest OTP + full seen_ids list
                 _sms_store[order_id] = {"code": code, "full_sms": full_sms}
-                await _persist_otp(user_id, code, full_sms, list(seen_ids))
+                await _persist_otp(user_id, order_id, code, full_sms, list(seen_ids))
 
                 # ── 1. Edit result card (only on first OTP — cancel removed once) ─
                 if not cancel_removed:
@@ -382,7 +384,7 @@ async def _run_poller(
             logger.warning("[SmsPoller] poll error order=%s: %s", order_id, exc)
 
     logger.info("[SmsPoller] done order=%s sms_count=%d", order_id, new_sms_count)
-    _sms_pollers.pop(user_id, None)
+    _sms_pollers.pop(order_id, None)
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
@@ -398,23 +400,32 @@ def start_sms_poller(
     myn_status:   str         = "REGISTERED",
     cost:         int | float = 0,
     attempt:      int         = 1,
-    platform_key: str         = "myntra",
+    platform_key: str         = "zomato",
 ) -> None:
-    """Start (or restart) the SMS poller for a user. Fire-and-forget."""
-    stop_sms_poller(user_id)
+    """Start (or restart) the SMS poller for a specific order. Fire-and-forget."""
+    # Stop any duplicate poller for the EXACT same order_id only
+    stop_sms_poller(order_id)
     task = asyncio.get_event_loop().create_task(
         _run_poller(bot, user_id, chat_id, msg_id, api_key, order_id, number, myn_status, cost, attempt, platform_key)
     )
-    _sms_pollers[user_id] = task
+    _sms_pollers[order_id] = task
     logger.info("[SmsPoller] task created user=%s order=%s platform=%s", user_id, order_id, platform_key)
 
 
-def stop_sms_poller(user_id: int) -> None:
-    """Cancel any running poller for this user."""
-    task = _sms_pollers.pop(user_id, None)
+def stop_sms_poller(order_id: str) -> None:
+    """Cancel any running poller for this specific order."""
+    task = _sms_pollers.pop(order_id, None)
     if task and not task.done():
         task.cancel()
-        logger.info("[SmsPoller] cancelled user=%s", user_id)
+        logger.info("[SmsPoller] cancelled order=%s", order_id)
+
+
+def stop_all_user_pollers(user_id: int) -> None:
+    """Cancel all active pollers for a user (on account deletion or explicit reset)."""
+    for oid, task in list(_sms_pollers.items()):
+        if task and not task.done():
+            task.cancel()
+            logger.info("[SmsPoller] stopped user poller order=%s", oid)
 
 
 async def restore_pollers(bot: AsyncTeleBot) -> int:
