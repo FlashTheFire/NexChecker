@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-brand="zomato">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#E23744">
+  <meta name="theme-color" content="#0f0f10">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="description" content="Zomato Registration & Freshness Checker - Ultra-fast, authoritative 0-OTP phone verification for Zomato, Meesho, Flipkart, BigBasket, and Myntra.">
-  <title>Zomato Checker — 0-OTP Phone Verification</title>
+  <meta name="description" content="NexChecker — Multi-Service Brand Number Checker. Instant 0-OTP phone verification across Zomato, Flipkart, Meesho, BigBasket, Myntra, Swiggy, Zepto, Amazon.">
+  <title>NexChecker — Multi-Brand Number Checker</title>
 
-  <!-- Google Fonts: Plus Jakarta Sans & Outfit (Okra/Metropolis Aesthetic) -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -20,13 +20,26 @@
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+  <!-- Brand Transition Flash Layer -->
+  <div id="brandFlash" class="brand-transition-flash"></div>
+
+  <!-- Confetti Canvas -->
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- Copy Toast -->
+  <div id="copyToast" class="copy-toast">📋 Copied to clipboard!</div>
+
   <div id="app">
-    <!-- ── Sticky Top Header ─────────────────────────────────────────────── -->
-    <header class="app-header">
+
+    <!-- ── Sticky Top Header ────────────────────────────────────────────────── -->
+    <header class="app-header" id="appHeader">
       <div class="header-inner">
+        <!-- Brand Row: Logo + Status -->
         <div class="brand-row">
           <div class="logo-wrap">
-            <span class="zomato-wordmark">zomato</span>
+            <div class="brand-logo-svg" id="headerLogo">
+              <!-- SVG injected by JS based on active brand -->
+            </div>
             <span class="checker-pill">CHECKER</span>
           </div>
           <div class="header-actions">
@@ -37,114 +50,217 @@
           </div>
         </div>
 
-        <div class="location-row" id="locationSelector">
+        <!-- Location Row -->
+        <div class="location-row" id="locationRow">
           <div class="loc-icon-wrap">
-            <svg class="loc-svg" viewBox="0 0 24 24" fill="#E23744" width="18" height="18">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style="color:rgba(255,255,255,0.9)">
               <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
             </svg>
           </div>
           <div class="loc-meta">
-            <div class="loc-subtitle">0-OTP Registration Engine</div>
+            <div class="loc-subtitle">0-OTP Silent Verification Engine</div>
             <div class="loc-title">
-              <span id="locAddressText">Delivery to: Setu Nagar, Patna</span>
-              <svg class="chevron-svg" viewBox="0 0 24 24" width="14" height="14" fill="#1C1C1C">
+              <span id="locAddressText">India — All Platforms</span>
+              <svg class="chevron-svg" viewBox="0 0 24 24" width="12" height="12" fill="rgba(255,255,255,0.7)">
                 <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
               </svg>
             </div>
           </div>
         </div>
-
-        <!-- Mode Navigation Tabs -->
-        <nav class="mode-tabs">
-          <button class="mode-tab active" data-tab="single" id="tabSingle">
-            <span class="tab-icon">🎯</span>
-            <span class="tab-label">Single Check</span>
-          </button>
-          <button class="mode-tab" data-tab="batch" id="tabBatch">
-            <span class="tab-icon">⚡</span>
-            <span class="tab-label">Batch Scanner</span>
-          </button>
-          <button class="mode-tab" data-tab="history" id="tabHistory">
-            <span class="tab-icon">📜</span>
-            <span class="tab-label">Recent History</span>
-          </button>
-          <button class="mode-tab" data-tab="engines" id="tabEngines">
-            <span class="tab-icon">⚙️</span>
-            <span class="tab-label">Services</span>
-          </button>
-        </nav>
       </div>
+
+      <!-- Service Carousel -->
+      <div class="service-carousel-section">
+        <div class="section-microtitle">SELECT PLATFORM</div>
+        <div class="service-chips-scroll" id="serviceChipsScroll">
+
+          <!-- Zomato -->
+          <button class="service-chip active" data-platform="zomato" onclick="switchBrand('zomato', this)">
+            <div class="chip-logo" style="background:#E23744;">
+              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="40" height="40" rx="10" fill="#E23744"/>
+                <text x="20" y="28" text-anchor="middle" font-size="22" font-weight="900" font-family="Arial" fill="white">z</text>
+              </svg>
+            </div>
+            <span class="chip-name">Zomato</span>
+            <span class="chip-active-dot"></span>
+          </button>
+
+          <!-- Flipkart -->
+          <button class="service-chip" data-platform="flipkart" onclick="switchBrand('flipkart', this)">
+            <div class="chip-logo" style="background:#2874F0;">
+              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="40" height="40" rx="10" fill="#2874F0"/>
+                <!-- Flipkart F bag shape -->
+                <text x="20" y="28" text-anchor="middle" font-size="20" font-weight="900" font-family="Arial" fill="#FFD814">F</text>
+              </svg>
+            </div>
+            <span class="chip-name">Flipkart</span>
+            <span class="chip-active-dot"></span>
+          </button>
+
+          <!-- Meesho -->
+          <button class="service-chip" data-platform="meesho" onclick="switchBrand('meesho', this)">
+            <div class="chip-logo" style="background:linear-gradient(135deg,#580A46,#9b3af7);">
+              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="40" height="40" rx="10" fill="url(#meeshoGrad)"/>
+                <defs>
+                  <linearGradient id="meeshoGrad" x1="0" y1="0" x2="40" y2="40">
+                    <stop offset="0%" stop-color="#580A46"/>
+                    <stop offset="100%" stop-color="#9b3af7"/>
+                  </linearGradient>
+                </defs>
+                <text x="20" y="28" text-anchor="middle" font-size="20" font-weight="900" font-family="Arial" fill="#FF9D00">m</text>
+              </svg>
+            </div>
+            <span class="chip-name">Meesho</span>
+            <span class="chip-active-dot"></span>
+          </button>
+
+          <!-- BigBasket -->
+          <button class="service-chip" data-platform="bigbasket" onclick="switchBrand('bigbasket', this)">
+            <div class="chip-logo" style="background:#231F20;">
+              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="40" height="40" rx="10" fill="#231F20"/>
+                <text x="20" y="28" text-anchor="middle" font-size="17" font-weight="900" font-family="Arial" fill="#A6CE39">bb</text>
+              </svg>
+            </div>
+            <span class="chip-name">BigBasket</span>
+            <span class="chip-active-dot"></span>
+          </button>
+
+          <!-- Myntra -->
+          <button class="service-chip" data-platform="myntra" onclick="switchBrand('myntra', this)">
+            <div class="chip-logo" style="background:linear-gradient(135deg,#FF3F6C,#FF912E);">
+              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="40" height="40" rx="10" fill="url(#myntraGrad)"/>
+                <defs>
+                  <linearGradient id="myntraGrad" x1="0" y1="0" x2="40" y2="40">
+                    <stop offset="0%" stop-color="#FF3F6C"/>
+                    <stop offset="100%" stop-color="#FF912E"/>
+                  </linearGradient>
+                </defs>
+                <text x="20" y="29" text-anchor="middle" font-size="20" font-weight="900" font-family="Arial" fill="white">M</text>
+              </svg>
+            </div>
+            <span class="chip-name">Myntra</span>
+            <span class="chip-active-dot"></span>
+          </button>
+
+          <!-- Swiggy -->
+          <button class="service-chip" data-platform="swiggy" onclick="switchBrand('swiggy', this)">
+            <div class="chip-logo" style="background:#FC8019;">
+              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="40" height="40" rx="10" fill="#FC8019"/>
+                <text x="20" y="28" text-anchor="middle" font-size="20" font-weight="900" font-family="Arial" fill="white">S</text>
+              </svg>
+            </div>
+            <span class="chip-name">Swiggy</span>
+            <span class="chip-active-dot"></span>
+          </button>
+
+          <!-- Zepto -->
+          <button class="service-chip" data-platform="zepto" onclick="switchBrand('zepto', this)">
+            <div class="chip-logo" style="background:linear-gradient(135deg,#0d0010,#950EDB);">
+              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="40" height="40" rx="10" fill="url(#zeptoGrad)"/>
+                <defs>
+                  <linearGradient id="zeptoGrad" x1="0" y1="0" x2="40" y2="40">
+                    <stop offset="0%" stop-color="#0d0010"/>
+                    <stop offset="100%" stop-color="#950EDB"/>
+                  </linearGradient>
+                </defs>
+                <text x="20" y="28" text-anchor="middle" font-size="20" font-weight="900" font-family="Arial" fill="white">Z</text>
+              </svg>
+            </div>
+            <span class="chip-name">Zepto</span>
+            <span class="chip-active-dot"></span>
+          </button>
+
+          <!-- Amazon -->
+          <button class="service-chip" data-platform="amazon" onclick="switchBrand('amazon', this)">
+            <div class="chip-logo" style="background:#232F3E;">
+              <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="40" height="40" rx="10" fill="#232F3E"/>
+                <!-- Amazon smile -->
+                <text x="20" y="22" text-anchor="middle" font-size="11" font-weight="800" font-family="Arial" fill="white">amazon</text>
+                <!-- Smile arc -->
+                <path d="M12 26 Q20 32 28 26" stroke="#FF9900" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+              </svg>
+            </div>
+            <span class="chip-name">Amazon</span>
+            <span class="chip-active-dot"></span>
+          </button>
+
+        </div>
+      </div>
+
+      <!-- Mode Tabs -->
+      <nav class="mode-tabs" id="modeTabs">
+        <button class="mode-tab active" data-tab="single" id="tabSingle">
+          <span class="tab-icon">🎯</span>
+          <span class="tab-label">Single</span>
+        </button>
+        <button class="mode-tab" data-tab="batch" id="tabBatch">
+          <span class="tab-icon">⚡</span>
+          <span class="tab-label">Batch</span>
+        </button>
+        <button class="mode-tab" data-tab="history" id="tabHistory">
+          <span class="tab-icon">📜</span>
+          <span class="tab-label">History</span>
+        </button>
+        <button class="mode-tab" data-tab="engines" id="tabEngines">
+          <span class="tab-icon">⚙️</span>
+          <span class="tab-label">Engines</span>
+        </button>
+      </nav>
     </header>
 
-    <!-- ── Main Content Area ─────────────────────────────────────────────── -->
+    <!-- ── Main Content ─────────────────────────────────────────────────────── -->
     <main class="app-main">
-      <!-- ── Platform Carousel (Sushi Chips) ─────────────────────────────── -->
-      <section class="platform-carousel-section">
-        <div class="section-microtitle">SELECT PLATFORM ENGINE</div>
-        <div class="platform-chips" id="platformChips">
-          <button class="platform-chip active" data-platform="zomato">
-            <span class="p-icon">🍔</span>
-            <span class="p-name">Zomato</span>
-            <span class="p-badge">dy</span>
-          </button>
-          <button class="platform-chip" data-platform="meesho">
-            <span class="p-icon">⚡</span>
-            <span class="p-name">Meesho</span>
-            <span class="p-badge">hp</span>
-          </button>
-          <button class="platform-chip" data-platform="flipkart">
-            <span class="p-icon">🛍️</span>
-            <span class="p-name">Flipkart</span>
-            <span class="p-badge">xt</span>
-          </button>
-          <button class="platform-chip" data-platform="bigbasket">
-            <span class="p-icon">🥦</span>
-            <span class="p-name">BigBasket</span>
-            <span class="p-badge">bb</span>
-          </button>
-          <button class="platform-chip" data-platform="myntra">
-            <span class="p-icon">📦</span>
-            <span class="p-name">Myntra</span>
-            <span class="p-badge">nl</span>
-          </button>
-          <button class="platform-chip" data-platform="all">
-            <span class="p-icon">🌐</span>
-            <span class="p-name">All Platforms</span>
-            <span class="p-badge">PRO</span>
-          </button>
-        </div>
-      </section>
 
-      <!-- ── TAB 1: Single Verification ──────────────────────────────────── -->
+      <!-- ── TAB 1: Single Check ────────────────────────────────────────────── -->
       <section class="tab-content active" id="contentSingle">
-        <!-- Zomato Restaurant Card Style Hero Banner -->
-        <div class="hero-restaurant-card">
-          <div class="hero-banner-visual">
-            <div class="banner-overlay-top">
-              <span class="rating-pill">★ 4.9 • 1.2M+ Scans</span>
-              <span class="eta-pill">⚡ &lt;450ms</span>
+
+        <!-- Brand Hero Card -->
+        <div class="hero-brand-card" id="heroBrandCard">
+
+          <!-- Brand Banner (full-color visual) -->
+          <div class="brand-banner" id="brandBanner">
+            <div class="banner-overlay-pills">
+              <div class="banner-pill">
+                <span>★</span>
+                <span>4.9 • 1.2M+ Checks</span>
+              </div>
+              <div class="banner-pill">
+                <span>⚡</span>
+                <span>&lt;450ms</span>
+              </div>
             </div>
-            <div class="banner-center-text">
-              <div class="banner-title">Instant Silent Check</div>
-              <div class="banner-subtitle">Zero OTP or SMS dispatched to target number</div>
+
+            <!-- Animated brand emoji in corner -->
+            <div class="banner-emoji" id="bannerEmoji">
+              <img id="bannerEmojiImg" src="" alt="" onerror="this.style.display='none'; this.nextSibling.style.display='flex'">
+              <span id="bannerEmojiFallback" style="display:none; font-size:24px; align-items:center; justify-content:center; width:100%; height:100%;">🍽</span>
             </div>
-            <div class="banner-discount-tag">
-              <span class="tag-bold">100% AUTHORITATIVE</span>
-              <span class="tag-sub">Direct platform protocol sync</span>
+
+            <div class="banner-center">
+              <div class="banner-title" id="bannerTitle">Silent Registration Check</div>
+              <div class="banner-subtitle" id="bannerSubtitle">Zero OTP dispatched to target number</div>
             </div>
           </div>
 
-          <!-- Input Controls Form -->
+          <!-- Form Area -->
           <div class="card-form-body">
             <div class="input-label-row">
-              <label for="mobileInput" class="form-label">ENTER INDIAN MOBILE NUMBER</label>
+              <label for="mobileInput" class="form-label">ENTER MOBILE NUMBER</label>
               <div class="quick-helpers">
                 <button type="button" class="text-btn" id="btnPaste">📋 Paste</button>
                 <button type="button" class="text-btn" id="btnClear">✕ Clear</button>
               </div>
             </div>
 
-            <div class="phone-input-wrapper">
+            <div class="phone-input-wrapper" id="phoneInputWrapper">
               <div class="country-prefix">
                 <span class="flag-icon">🇮🇳</span>
                 <span class="prefix-code">+91</span>
@@ -160,286 +276,288 @@
               >
             </div>
 
-            <!-- Demo Quick Test Numbers -->
+            <!-- Demo Numbers -->
             <div class="quick-demo-row">
               <span class="demo-label">Quick Test:</span>
               <button type="button" class="demo-chip demo-registered" id="btnDemoRegistered">
-                🎯 Registered Demo (7631328516)
+                🎯 Registered Demo
               </button>
               <button type="button" class="demo-chip demo-fresh" id="btnDemoFresh">
-                ✨ Fresh Demo (7005999888)
+                ✨ Fresh Demo
               </button>
             </div>
 
-            <!-- Error message banner -->
-            <div class="error-banner" id="errorBanner" style="display:none;"></div>
+            <!-- Error Banner -->
+            <div class="error-banner" id="errorBanner"></div>
 
-            <!-- Primary Action Button -->
-            <button class="zomato-cta-btn" id="btnCheck">
-              <span class="cta-spinner" id="ctaSpinner" style="display:none;"></span>
-              <span class="cta-label" id="ctaLabel">Check Registration • Free</span>
+            <!-- Primary CTA -->
+            <button class="brand-cta-btn" id="btnCheck">
+              <span class="cta-spinner" id="ctaSpinner"></span>
+              <span class="cta-label" id="ctaLabel">Check Registration</span>
             </button>
           </div>
         </div>
 
-        <!-- Scanning Pulse Animation (Visible during active request) -->
-        <div class="scanning-container" id="scanningContainer" style="display:none;">
+        <!-- Scanning Animation -->
+        <div class="scanning-container" id="scanningContainer">
           <div class="scanning-radar">
             <div class="radar-ring ring-1"></div>
             <div class="radar-ring ring-2"></div>
             <div class="radar-ring ring-3"></div>
-            <div class="radar-core">🔍</div>
+            <div class="radar-core">
+              <div class="radar-brand-emoji">
+                <img id="scanEmojiImg" src="" alt="" onerror="this.style.display='none'">
+              </div>
+            </div>
           </div>
-          <div class="scan-status-text" id="scanStepText">Connecting to Zomato platform engine...</div>
+          <div class="scan-status-text" id="scanStepText">Connecting to platform engine...</div>
+          <div class="scan-step-detail" id="scanStepDetail">Establishing silent protocol</div>
           <div class="scan-progressbar">
-            <div class="scan-progress-fill"></div>
+            <div class="scan-progress-fill" id="scanProgressFill"></div>
           </div>
         </div>
 
-        <!-- Verification Result Card (Populated after check) -->
-        <div class="result-card" id="resultCard" style="display:none;">
-          <div class="result-header" id="resultHeader">
-            <div class="diet-indicator" id="resultDietIndicator">
-              <!-- Veg (square+dot) or NonVeg (square+triangle) -->
+        <!-- Result Card — 3D Flip -->
+        <div class="flip-card-outer" id="flipCardOuter">
+          <div class="flip-card-inner" id="flipCardInner">
+            <!-- Front: scanning spinner -->
+            <div class="flip-card-front">
+              <div style="text-align:center; color:var(--text-muted); font-size:13px;">Processing...</div>
             </div>
-            <div class="result-header-text">
-              <div class="result-verdict-title" id="resultVerdictTitle">VERDICT READY</div>
-              <div class="result-verdict-subtitle" id="resultVerdictSubtitle">Processed in real-time</div>
-            </div>
-            <div class="result-status-badge" id="resultStatusBadge">REGISTERED</div>
-          </div>
+            <!-- Back: result -->
+            <div class="flip-card-back">
+              <div class="result-card" id="resultCard">
+                <!-- Result Header -->
+                <div class="result-header" id="resultHeader">
+                  <span class="result-brand-name" id="resultBrandName">ZOMATO</span>
+                  <div class="result-status-badge" id="resultStatusBadge">
+                    <span id="resultStatusIcon">●</span>
+                    <span id="resultStatusText">REGISTERED</span>
+                  </div>
+                </div>
+                <!-- Result Body -->
+                <div class="result-body">
+                  <div class="verdict-row">
+                    <div class="verdict-emoji-wrap" id="verdictEmojiWrap">
+                      <img id="verdictEmojiImg" src="" alt="" onerror="this.style.display='none'; document.getElementById('verdictEmojiFallback').style.display='flex'">
+                      <span id="verdictEmojiFallback" class="verdict-emoji-fallback" style="display:none;"></span>
+                    </div>
+                    <div class="verdict-text">
+                      <div class="verdict-title" id="verdictTitle">Registered</div>
+                      <div class="verdict-subtitle" id="verdictSubtitle">Account exists on this platform</div>
+                    </div>
+                  </div>
 
-          <!-- Result Details Body -->
-          <div class="result-body">
-            <div class="result-phone-highlight" id="resultPhoneHighlight">+91 00000 00000</div>
-            
-            <div class="result-metrics-grid">
-              <div class="metric-item">
-                <span class="m-label">Platform</span>
-                <span class="m-val" id="resPlatformVal">Zomato</span>
-              </div>
-              <div class="metric-item">
-                <span class="m-label">Status</span>
-                <span class="m-val" id="resStatusVal">Active Account</span>
-              </div>
-              <div class="metric-item">
-                <span class="m-label">OTP Sent</span>
-                <span class="m-val" id="resOtpVal">0 (100% Silent)</span>
-              </div>
-              <div class="metric-item">
-                <span class="m-label">Latency</span>
-                <span class="m-val" id="resLatencyVal">180ms</span>
-              </div>
-            </div>
+                  <!-- Result metadata -->
+                  <div class="result-meta-grid">
+                    <div class="meta-item">
+                      <div class="meta-label">Platform</div>
+                      <div class="meta-value highlight" id="resPlatformVal">Zomato</div>
+                    </div>
+                    <div class="meta-item">
+                      <div class="meta-label">Status</div>
+                      <div class="meta-value" id="resStatusVal">Registered</div>
+                    </div>
+                    <div class="meta-item">
+                      <div class="meta-label">Account Age</div>
+                      <div class="meta-value" id="resFreshVal">—</div>
+                    </div>
+                    <div class="meta-item">
+                      <div class="meta-label">Response</div>
+                      <div class="meta-value" id="resTimeVal">—</div>
+                    </div>
+                  </div>
 
-            <!-- Strategic Advice / Coupon Recommendation -->
-            <div class="result-advice-box" id="resultAdviceBox">
-              <div class="advice-icon" id="adviceIcon">💡</div>
-              <div class="advice-content" id="adviceContent">
-                Active customer detected on this number. Not eligible for first-order coupons.
+                  <!-- Phone number (tap to copy) -->
+                  <div class="result-phone-tap" id="resultPhoneTap">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style="color:var(--text-muted)">
+                      <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                    </svg>
+                    <span class="result-phone-num" id="resultPhoneNum">+91 00000 00000</span>
+                    <div class="copy-hint">
+                      <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                      Tap to copy
+                    </div>
+                  </div>
+
+                  <!-- Re-check -->
+                  <button class="result-recheck" id="btnRecheck">↩ Check another number</button>
+                </div>
               </div>
-            </div>
-
-            <!-- Multi-Platform Result Grid (When 'all' platform is scanned) -->
-            <div class="multi-platform-grid" id="multiPlatformGrid" style="display:none;">
-              <div class="multi-grid-title">All Platforms Overview</div>
-              <div class="multi-grid-items" id="multiGridItems"></div>
-            </div>
-
-            <!-- Result Actions -->
-            <div class="result-actions-row">
-              <button class="res-action-btn primary" id="btnCopyResult">
-                📋 Copy Result
-              </button>
-              <button class="res-action-btn secondary" id="btnShareTelegram">
-                ✈️ Share in Bot
-              </button>
             </div>
           </div>
         </div>
+
       </section>
 
-      <!-- ── TAB 2: Batch Verification ───────────────────────────────────── -->
-      <section class="tab-content" id="contentBatch" style="display:none;">
+      <!-- ── TAB 2: Batch Scan ──────────────────────────────────────────────── -->
+      <section class="tab-content" id="contentBatch">
         <div class="batch-card">
-          <div class="batch-header">
-            <div class="batch-title">Bulk Number Verification</div>
-            <div class="batch-desc">Paste up to 50 phone numbers (one per line, comma or space separated)</div>
+          <div class="batch-card-header">
+            <div class="batch-title">⚡ Batch Scanner</div>
+            <div style="font-size:11px; color:var(--text-muted);">Up to 50 numbers</div>
           </div>
-
-          <div class="batch-input-wrap">
+          <div class="batch-card-body">
             <textarea
               id="batchInput"
               class="batch-textarea"
-              placeholder="7631328516&#10;7005999888&#10;9876543210&#10;..."
-              rows="6"
+              placeholder="Enter numbers, one per line:&#10;9876543210&#10;8765432109&#10;7654321098"
             ></textarea>
-            <div class="batch-toolbar">
-              <button type="button" class="text-btn" id="btnPasteBatch">📋 Paste List</button>
-              <button type="button" class="text-btn" id="btnClearBatch">✕ Clear</button>
-              <span class="batch-counter" id="batchCounter">0 numbers</span>
+            <div class="batch-controls">
+              <button class="batch-btn" id="btnBatchPaste">📋 Paste</button>
+              <button class="batch-btn" id="btnBatchClear">✕ Clear</button>
+              <button class="batch-btn primary" id="btnBatchRun">Run Batch ▶</button>
             </div>
-          </div>
-
-          <button class="zomato-cta-btn" id="btnStartBatch">
-            <span class="cta-label">Start Batch Verification</span>
-          </button>
-
-          <!-- Batch Progress -->
-          <div class="batch-progress-box" id="batchProgressBox" style="display:none;">
-            <div class="batch-progress-labels">
-              <span id="batchProgressText">Processing batch...</span>
-              <span id="batchProgressPercent">0%</span>
-            </div>
-            <div class="batch-progress-bar">
-              <div class="batch-progress-fill" id="batchProgressFill" style="width: 0%;"></div>
-            </div>
-          </div>
-
-          <!-- Batch Metrics & Filter -->
-          <div class="batch-summary-panel" id="batchSummaryPanel" style="display:none;">
-            <div class="summary-stats-row">
-              <div class="stat-pill total">
-                <span class="s-val" id="batchTotalCount">0</span>
-                <span class="s-lbl">Total</span>
+            <div id="batchProgress" style="display:none; margin-top:12px;">
+              <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;" id="batchProgressText">Running 0 / 0</div>
+              <div class="scan-progressbar" style="max-width:100%;">
+                <div class="scan-progress-fill" id="batchProgressFill" style="animation:none; width:0%; transition:width 300ms ease;"></div>
               </div>
-              <div class="stat-pill fresh">
-                <span class="s-val" id="batchFreshCount">0</span>
-                <span class="s-lbl">Fresh</span>
-              </div>
-              <div class="stat-pill reg">
-                <span class="s-val" id="batchRegCount">0</span>
-                <span class="s-lbl">Registered</span>
-              </div>
-              <div class="stat-pill err">
-                <span class="s-val" id="batchErrCount">0</span>
-                <span class="s-lbl">Errors</span>
-              </div>
-            </div>
-
-            <!-- Filter Controls -->
-            <div class="batch-filter-bar">
-              <button class="filter-chip active" data-filter="all">All (<span id="fAllCount">0</span>)</button>
-              <button class="filter-chip" data-filter="fresh">Fresh Only (<span id="fFreshCount">0</span>)</button>
-              <button class="filter-chip" data-filter="registered">Registered (<span id="fRegCount">0</span>)</button>
-            </div>
-
-            <!-- Batch Results Table -->
-            <div class="batch-results-list" id="batchResultsList"></div>
-
-            <div class="batch-export-row">
-              <button class="res-action-btn primary" id="btnCopyFreshList">📋 Copy Fresh Numbers</button>
-              <button class="res-action-btn secondary" id="btnExportCsv">📥 Export CSV</button>
             </div>
           </div>
         </div>
-      </section>
 
-      <!-- ── TAB 3: History ──────────────────────────────────────────────── -->
-      <section class="tab-content" id="contentHistory" style="display:none;">
-        <div class="history-card">
-          <div class="history-header">
-            <div class="history-title">Recent Number Verifications</div>
-            <button class="text-btn danger" id="btnClearHistory">Clear All</button>
-          </div>
-          <div class="history-list" id="historyList">
-            <div class="history-empty">
-              <div class="empty-icon">📜</div>
-              <div class="empty-title">No Scans Recorded Yet</div>
-              <div class="empty-desc">Numbers you check will appear here for fast re-auditing.</div>
-            </div>
-          </div>
+        <!-- Batch Results -->
+        <div class="batch-results" id="batchResults"></div>
+
+        <!-- Export button (shows after results) -->
+        <div id="batchExportRow" style="display:none; margin-top:12px;">
+          <button class="batch-btn primary" id="btnBatchExport" style="width:100%;">📥 Export CSV</button>
         </div>
       </section>
 
-      <!-- ── TAB 4: Engine Status ────────────────────────────────────────── -->
-      <section class="tab-content" id="contentEngines" style="display:none;">
-        <div class="engines-card">
-          <div class="engines-header">
-            <div class="engines-title">Registered Checker Microservices</div>
-            <div class="engines-desc">Real-time status of backend platform connection pools</div>
+      <!-- ── TAB 3: History ─────────────────────────────────────────────────── -->
+      <section class="tab-content" id="contentHistory">
+        <!-- Pull-to-refresh indicator -->
+        <div class="ptr-indicator" id="ptrIndicator">
+          <div class="ptr-spinner"></div>
+          <span>Refreshing...</span>
+        </div>
+
+        <div class="history-header-row">
+          <div class="history-title">📜 Recent Checks</div>
+          <button class="history-clear-btn" id="btnHistoryClear">Clear All</button>
+        </div>
+        <div class="history-list" id="historyList"></div>
+      </section>
+
+      <!-- ── TAB 4: Engines ─────────────────────────────────────────────────── -->
+      <section class="tab-content" id="contentEngines">
+        <div class="section-microtitle" style="margin-bottom:12px;">ACTIVE CHECK ENGINES</div>
+        <div class="engines-grid" id="enginesGrid">
+
+          <!-- Zomato Engine Card -->
+          <div class="engine-card" data-platform="zomato" onclick="switchBrandFromEngine('zomato')">
+            <div class="engine-logo-wrap" style="background:#E23744;">
+              <svg viewBox="0 0 44 44"><rect width="44" height="44" rx="12" fill="#E23744"/><text x="22" y="31" text-anchor="middle" font-size="24" font-weight="900" font-family="Arial" fill="white">z</text></svg>
+            </div>
+            <div class="engine-name">Zomato</div>
+            <div class="engine-meta">Food delivery</div>
+            <div class="engine-status-row"><div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span></div>
           </div>
-          <div class="engines-list" id="enginesList">
-            <div class="engine-item">
-              <div class="e-meta">
-                <span class="e-icon">🍔</span>
-                <div class="e-info">
-                  <div class="e-name">Zomato Engine (Service dy)</div>
-                  <div class="e-type">Contact Sync & Microservice Pool</div>
-                </div>
-              </div>
-              <span class="e-status active">ACTIVE</span>
+
+          <!-- Flipkart Engine Card -->
+          <div class="engine-card" data-platform="flipkart" onclick="switchBrandFromEngine('flipkart')">
+            <div class="engine-logo-wrap" style="background:#2874F0;">
+              <svg viewBox="0 0 44 44"><rect width="44" height="44" rx="12" fill="#2874F0"/><text x="22" y="31" text-anchor="middle" font-size="22" font-weight="900" font-family="Arial" fill="#FFD814">F</text></svg>
             </div>
-            <div class="engine-item">
-              <div class="e-meta">
-                <span class="e-icon">⚡</span>
-                <div class="e-info">
-                  <div class="e-name">Meesho Engine (Service hp)</div>
-                  <div class="e-type">Universal Meesho Client API</div>
-                </div>
-              </div>
-              <span class="e-status active">ACTIVE</span>
-            </div>
-            <div class="engine-item">
-              <div class="e-meta">
-                <span class="e-icon">🛍️</span>
-                <div class="e-info">
-                  <div class="e-name">Flipkart Engine (Service xt)</div>
-                  <div class="e-type">Rome API Direct Endpoints</div>
-                </div>
-              </div>
-              <span class="e-status active">ACTIVE</span>
-            </div>
-            <div class="engine-item">
-              <div class="e-meta">
-                <span class="e-icon">🥦</span>
-                <div class="e-info">
-                  <div class="e-name">BigBasket Engine (Service bb)</div>
-                  <div class="e-type">Catalog & Auth Protocol</div>
-                </div>
-              </div>
-              <span class="e-status active">ACTIVE</span>
-            </div>
-            <div class="engine-item">
-              <div class="e-meta">
-                <span class="e-icon">📦</span>
-                <div class="e-info">
-                  <div class="e-name">Myntra Engine (Service nl)</div>
-                  <div class="e-type">Auto-Healed Session Driver</div>
-                </div>
-              </div>
-              <span class="e-status active">ACTIVE</span>
-            </div>
+            <div class="engine-name">Flipkart</div>
+            <div class="engine-meta">E-commerce</div>
+            <div class="engine-status-row"><div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span></div>
           </div>
+
+          <!-- Meesho Engine Card -->
+          <div class="engine-card" data-platform="meesho" onclick="switchBrandFromEngine('meesho')">
+            <div class="engine-logo-wrap" style="background:linear-gradient(135deg,#580A46,#9b3af7);">
+              <svg viewBox="0 0 44 44"><rect width="44" height="44" rx="12" fill="url(#meeshoEngineGrad)"/><defs><linearGradient id="meeshoEngineGrad" x1="0" y1="0" x2="44" y2="44"><stop offset="0%" stop-color="#580A46"/><stop offset="100%" stop-color="#9b3af7"/></linearGradient></defs><text x="22" y="31" text-anchor="middle" font-size="22" font-weight="900" font-family="Arial" fill="#FF9D00">m</text></svg>
+            </div>
+            <div class="engine-name">Meesho</div>
+            <div class="engine-meta">Marketplace</div>
+            <div class="engine-status-row"><div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span></div>
+          </div>
+
+          <!-- BigBasket Engine Card -->
+          <div class="engine-card" data-platform="bigbasket" onclick="switchBrandFromEngine('bigbasket')">
+            <div class="engine-logo-wrap" style="background:#231F20;">
+              <svg viewBox="0 0 44 44"><rect width="44" height="44" rx="12" fill="#231F20"/><text x="22" y="31" text-anchor="middle" font-size="18" font-weight="900" font-family="Arial" fill="#A6CE39">bb</text></svg>
+            </div>
+            <div class="engine-name">BigBasket</div>
+            <div class="engine-meta">Grocery</div>
+            <div class="engine-status-row"><div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span></div>
+          </div>
+
+          <!-- Myntra Engine Card -->
+          <div class="engine-card" data-platform="myntra" onclick="switchBrandFromEngine('myntra')">
+            <div class="engine-logo-wrap" style="background:linear-gradient(135deg,#FF3F6C,#FF912E);">
+              <svg viewBox="0 0 44 44"><rect width="44" height="44" rx="12" fill="url(#myntraEngineGrad)"/><defs><linearGradient id="myntraEngineGrad" x1="0" y1="0" x2="44" y2="44"><stop offset="0%" stop-color="#FF3F6C"/><stop offset="100%" stop-color="#FF912E"/></linearGradient></defs><text x="22" y="31" text-anchor="middle" font-size="22" font-weight="900" font-family="Arial" fill="white">M</text></svg>
+            </div>
+            <div class="engine-name">Myntra</div>
+            <div class="engine-meta">Fashion</div>
+            <div class="engine-status-row"><div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span></div>
+          </div>
+
+          <!-- Swiggy Engine Card -->
+          <div class="engine-card" data-platform="swiggy" onclick="switchBrandFromEngine('swiggy')">
+            <div class="engine-logo-wrap" style="background:#FC8019;">
+              <svg viewBox="0 0 44 44"><rect width="44" height="44" rx="12" fill="#FC8019"/><text x="22" y="31" text-anchor="middle" font-size="22" font-weight="900" font-family="Arial" fill="white">S</text></svg>
+            </div>
+            <div class="engine-name">Swiggy</div>
+            <div class="engine-meta">Food delivery</div>
+            <div class="engine-status-row"><div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span></div>
+          </div>
+
+          <!-- Zepto Engine Card -->
+          <div class="engine-card" data-platform="zepto" onclick="switchBrandFromEngine('zepto')">
+            <div class="engine-logo-wrap" style="background:linear-gradient(135deg,#0d0010,#950EDB);">
+              <svg viewBox="0 0 44 44"><rect width="44" height="44" rx="12" fill="url(#zeptoEngineGrad)"/><defs><linearGradient id="zeptoEngineGrad" x1="0" y1="0" x2="44" y2="44"><stop offset="0%" stop-color="#0d0010"/><stop offset="100%" stop-color="#950EDB"/></linearGradient></defs><text x="22" y="31" text-anchor="middle" font-size="22" font-weight="900" font-family="Arial" fill="white">Z</text></svg>
+            </div>
+            <div class="engine-name">Zepto</div>
+            <div class="engine-meta">Quick-commerce</div>
+            <div class="engine-status-row"><div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span></div>
+          </div>
+
+          <!-- Amazon Engine Card -->
+          <div class="engine-card" data-platform="amazon" onclick="switchBrandFromEngine('amazon')">
+            <div class="engine-logo-wrap" style="background:#232F3E;">
+              <svg viewBox="0 0 44 44"><rect width="44" height="44" rx="12" fill="#232F3E"/><text x="22" y="21" text-anchor="middle" font-size="9" font-weight="800" font-family="Arial" fill="white">amazon</text><path d="M12 28 Q22 36 32 28" stroke="#FF9900" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg>
+            </div>
+            <div class="engine-name">Amazon</div>
+            <div class="engine-meta">E-commerce</div>
+            <div class="engine-status-row"><div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span></div>
+          </div>
+
         </div>
       </section>
+
     </main>
 
-    <!-- ── Zomato App Style Bottom Navigation Bar ────────────────────────── -->
-    <nav class="bottom-nav">
-      <button class="b-nav-item active" data-tab="single" id="bNavSingle">
-        <span class="b-nav-icon">🍕</span>
-        <span class="b-nav-label">Delivery</span>
+    <!-- ── Bottom Navigation Bar ────────────────────────────────────────────── -->
+    <nav class="bottom-nav" id="bottomNav">
+      <button class="b-nav-item active" data-tab="single" id="bnSingle">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Home</span>
       </button>
-      <button class="b-nav-item" data-tab="batch" id="bNavBatch">
-        <span class="b-nav-icon">⚡</span>
-        <span class="b-nav-label">Batch</span>
+      <button class="b-nav-item" data-tab="single" id="bnCheck">
+        <span class="nav-icon">🔍</span>
+        <span class="nav-label">Check</span>
       </button>
-      <button class="b-nav-item" data-tab="history" id="bNavHistory">
-        <span class="b-nav-icon">📜</span>
-        <span class="b-nav-label">History</span>
+      <button class="b-nav-item" data-tab="batch" id="bnBatch">
+        <span class="nav-icon">⚡</span>
+        <span class="nav-label">Batch</span>
       </button>
-      <button class="b-nav-item" data-tab="engines" id="bNavEngines">
-        <span class="b-nav-icon">⚙️</span>
-        <span class="b-nav-label">Services</span>
+      <button class="b-nav-item" data-tab="history" id="bnHistory">
+        <span class="nav-icon">📜</span>
+        <span class="nav-label">History</span>
+      </button>
+      <button class="b-nav-item" data-tab="engines" id="bnEngines">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Engines</span>
       </button>
     </nav>
 
-    <!-- ── Toast Notification Container ──────────────────────────────────── -->
-    <div class="toast-container" id="toastContainer"></div>
-  </div>
+  </div><!-- #app -->
 
-  <!-- Application Logic -->
+  <!-- App Script -->
   <script src="/static/app.js"></script>
 </body>
 </html>

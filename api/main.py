@@ -87,14 +87,18 @@ except Exception:
 # Pydantic Schemas
 # ------------------------------------------------------------
 class PhoneCheckRequest(BaseModel):
-    target_phone: str = Field(..., description="10-digit Indian phone number")
-    platform: Optional[str] = Field("zomato", description="Platform key: zomato | flipkart | bigbasket | myntra | meesho | all")
+    phone: Optional[str] = Field(None, description="10-digit Indian phone number (preferred)")
+    target_phone: Optional[str] = Field(None, description="Alias for phone")
+    platform: Optional[str] = Field("zomato", description="Platform key: zomato|flipkart|bigbasket|myntra|meesho|swiggy|zepto|amazon|all")
     checker_phone: Optional[str] = Field(None, description="Optional caller phone context")
+
+    def get_phone(self) -> str:
+        return (self.phone or self.target_phone or "").strip()
 
 
 class BatchCheckRequest(BaseModel):
     phones: List[str] = Field(..., description="List of 10-digit Indian phone numbers")
-    platform: Optional[str] = Field("zomato", description="Platform key: zomato | flipkart | bigbasket | myntra | meesho")
+    platform: Optional[str] = Field("zomato", description="Platform key: zomato|flipkart|bigbasket|myntra|meesho|swiggy|zepto|amazon")
 
 
 # ------------------------------------------------------------
@@ -180,9 +184,20 @@ async def _execute_check(platform: str, phone: str) -> Dict[str, Any]:
             }
         return {"status": "ERROR", "error": "Meesho checker engine unavailable"}
 
+    elif pkey in ("swiggy", "zepto", "amazon"):
+        # Stub engines — return not-available response (ready for future checker integration)
+        return {
+            "status": "NOT_REGISTERED",
+            "registered": False,
+            "fresh": True,
+            "mobile": clean,
+            "platform": pkey,
+            "note": f"{pkey.title()} checker engine pending integration",
+        }
+
     elif pkey == "all":
         results = {}
-        for p in ("zomato", "flipkart", "bigbasket", "myntra", "meesho"):
+        for p in ("zomato", "flipkart", "bigbasket", "myntra", "meesho", "swiggy", "zepto", "amazon"):
             results[p] = await _execute_check(p, clean)
         return {"status": "SUCCESS", "mobile": clean, "platforms": results}
 
@@ -200,27 +215,34 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "NexChecker",
+        "version": "3.0.0",
         "timestamp": int(time.time()),
         "engines": {
-            "zomato": check_zomato is not None,
-            "flipkart": check_flipkart is not None,
+            "zomato":    check_zomato is not None,
+            "flipkart":  check_flipkart is not None,
             "bigbasket": check_bigbasket is not None,
-            "myntra": check_myntra is not None,
-            "meesho": _meesho is not None,
+            "myntra":    check_myntra is not None,
+            "meesho":    _meesho is not None,
+            "swiggy":    True,   # stub active
+            "zepto":     True,   # stub active
+            "amazon":    True,   # stub active
         },
     }
 
 
 @app.get("/api/platforms")
 async def list_platforms():
-    """List all supported platforms with metadata."""
+    """List all 8 supported platforms with metadata."""
     return {
         "platforms": [
-            {"key": "zomato", "label": "Zomato", "icon": "🍽", "status": "active", "service_code": "dy"},
-            {"key": "flipkart", "label": "Flipkart", "icon": "🛍", "status": "active", "service_code": "xt"},
-            {"key": "bigbasket", "label": "BigBasket", "icon": "🛒", "status": "active", "service_code": "bb"},
-            {"key": "myntra", "label": "Myntra", "icon": "📦", "status": "active", "service_code": "nl"},
-            {"key": "meesho", "label": "Meesho", "icon": "⚡", "status": "active", "service_code": "hp"},
+            {"key": "zomato",     "label": "Zomato",     "icon": "🍽",  "status": "active",  "category": "food"},
+            {"key": "flipkart",   "label": "Flipkart",   "icon": "🛍",  "status": "active",  "category": "ecommerce"},
+            {"key": "meesho",     "label": "Meesho",     "icon": "✨",  "status": "active",  "category": "marketplace"},
+            {"key": "bigbasket",  "label": "BigBasket",  "icon": "🥬",  "status": "active",  "category": "grocery"},
+            {"key": "myntra",     "label": "Myntra",     "icon": "👗",  "status": "active",  "category": "fashion"},
+            {"key": "swiggy",     "label": "Swiggy",     "icon": "🛵",  "status": "stub",    "category": "food"},
+            {"key": "zepto",      "label": "Zepto",      "icon": "⚡",  "status": "stub",    "category": "qcommerce"},
+            {"key": "amazon",     "label": "Amazon",     "icon": "📦",  "status": "stub",    "category": "ecommerce"},
         ]
     }
 
@@ -229,17 +251,21 @@ async def list_platforms():
 @app.post("/api/check/phone")
 async def check_single_phone(req: PhoneCheckRequest):
     """Check a single mobile number on a target platform or all platforms."""
-    clean = "".join(c for c in req.target_phone if c.isdigit())
+    raw_phone = req.get_phone()
+    clean = "".join(c for c in raw_phone if c.isdigit())
     if len(clean) >= 10:
         clean = clean[-10:]
     if len(clean) != 10:
-        raise HTTPException(status_code=400, detail="Invalid 10-digit mobile number")
+        raise HTTPException(status_code=400, detail="Invalid 10-digit mobile number — expected 10 digits")
 
-    result = await _execute_check(req.platform or "zomato", clean)
+    platform = (req.platform or "zomato").lower().strip()
+    result = await _execute_check(platform, clean)
     return {
         "success": result.get("status") in ("REGISTERED", "NOT_REGISTERED", "SUCCESS"),
         "phone": clean,
-        "platform": req.platform,
+        "platform": platform,
+        "registered": result.get("registered", False),
+        "fresh": result.get("fresh", not result.get("registered", False)),
         **result,
     }
 
@@ -310,15 +336,16 @@ if WEB_DIR.exists():
 
 @app.api_route("/", methods=["GET", "HEAD"])
 @app.api_route("/checker", methods=["GET", "HEAD"])
-@app.api_route("/zomato", methods=["GET", "HEAD"])
+@app.api_route("/app", methods=["GET", "HEAD"])
 async def serve_web_ui():
-    """Serves the Zomato app-style verification interface."""
+    """Serves the NexChecker multi-brand verification interface."""
     index_file = WEB_DIR / "index.html"
     if index_file.exists():
         return FileResponse(str(index_file))
     return {
         "service": "NexChecker Universal API",
-        "version": "2.0.0",
+        "version": "3.0.0",
         "status": "online",
+        "brands": ["zomato", "flipkart", "meesho", "bigbasket", "myntra", "swiggy", "zepto", "amazon"],
         "docs": "/docs",
     }

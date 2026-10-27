@@ -1,580 +1,996 @@
 /**
- * Zomato Checker — Web Application Client Logic
- * Handles interactive verification, batch operations, history, and Telegram WebApp integration.
+ * NexChecker — Multi-Brand Adaptive Application Engine
+ * Dark Mode · 8 Brand Themes · Full Micro-Interactions
+ * 
+ * CDN: Fluent Animated Emoji (bignutty/fluent-emoji)
+ * URL: https://raw.githubusercontent.com/bignutty/fluent-emoji/main/animated/{unicode}.png
  */
 
 (function () {
   'use strict';
 
-  // ── Telegram WebApp Initialization ─────────────────────────────────────────
+  // ── Telegram WebApp Init ─────────────────────────────────────────────────────
   const tg = window.Telegram?.WebApp;
   if (tg) {
     try {
       tg.ready();
       tg.expand();
       if (tg.enableClosingConfirmation) tg.enableClosingConfirmation();
-    } catch (e) {
-      console.warn('Telegram WebApp init warning:', e);
-    }
+    } catch (e) { /* non-blocking */ }
   }
 
-  // ── State Management ───────────────────────────────────────────────────────
+  // ── CDN & Emoji Utilities ────────────────────────────────────────────────────
+  const FLUENT_CDN = 'https://raw.githubusercontent.com/bignutty/fluent-emoji/main/animated';
+
+  function emojiToHex(emoji) {
+    if (!emoji) return null;
+    try {
+      const cp = emoji.codePointAt(0);
+      return cp ? cp.toString(16).toLowerCase() : null;
+    } catch { return null; }
+  }
+
+  function fluentUrl(emoji) {
+    const hex = emojiToHex(emoji);
+    return hex ? `${FLUENT_CDN}/${hex}.png` : null;
+  }
+
+  // ── Brand Configuration ──────────────────────────────────────────────────────
+  const BRANDS = {
+    zomato: {
+      name: 'Zomato',
+      primary: '#E23744',
+      emoji: '🍽',
+      scanEmoji: '🔴',
+      registeredEmoji: '✅',
+      freshEmoji: '🆕',
+      bannerTitle: 'Restaurant Verification',
+      bannerSubtitle: '0-OTP silent check via Sushi API',
+      demoRegistered: '7631328516',
+      demoFresh: '7005999888',
+      ctaLabel: 'Check on Zomato',
+      scanSteps: [
+        'Connecting to Zomato Sushi API...',
+        'Authenticating OTP session...',
+        'Probing account registry...',
+        'Resolving registration status...',
+      ],
+      resultDescriptions: {
+        registered: 'Account exists on Zomato',
+        fresh: 'No account found — fresh number',
+      }
+    },
+    flipkart: {
+      name: 'Flipkart',
+      primary: '#2874F0',
+      emoji: '🛍',
+      scanEmoji: '🔵',
+      registeredEmoji: '✅',
+      freshEmoji: '🆕',
+      bannerTitle: 'Flipkart Account Checker',
+      bannerSubtitle: 'Direct platform registry lookup',
+      demoRegistered: '9999999999',
+      demoFresh: '8888888888',
+      ctaLabel: 'Check on Flipkart',
+      scanSteps: [
+        'Connecting to Flipkart registry...',
+        'Querying customer database...',
+        'Checking account existence...',
+        'Verifying user registration...',
+      ],
+      resultDescriptions: {
+        registered: 'Account exists on Flipkart',
+        fresh: 'No account found — fresh number',
+      }
+    },
+    meesho: {
+      name: 'Meesho',
+      primary: '#9b3af7',
+      emoji: '✨',
+      scanEmoji: '🟣',
+      registeredEmoji: '✅',
+      freshEmoji: '🆕',
+      bannerTitle: 'Meesho Account Checker',
+      bannerSubtitle: 'Jamuni-powered silent verification',
+      demoRegistered: '9876543210',
+      demoFresh: '7005999888',
+      ctaLabel: 'Check on Meesho',
+      scanSteps: [
+        'Connecting to Meesho API...',
+        'Initializing Jamuni protocol...',
+        'Probing reseller registry...',
+        'Resolving account status...',
+      ],
+      resultDescriptions: {
+        registered: 'Account exists on Meesho',
+        fresh: 'No account — fresh for reseller signup',
+      }
+    },
+    bigbasket: {
+      name: 'BigBasket',
+      primary: '#A6CE39',
+      emoji: '🥬',
+      scanEmoji: '🟢',
+      registeredEmoji: '✅',
+      freshEmoji: '🆕',
+      bannerTitle: 'BigBasket Account Checker',
+      bannerSubtitle: 'Grocery platform registry lookup',
+      demoRegistered: '9999999991',
+      demoFresh: '8888888881',
+      ctaLabel: 'Check on BigBasket',
+      scanSteps: [
+        'Connecting to BigBasket registry...',
+        'Querying grocery account DB...',
+        'Checking membership status...',
+        'Verifying account existence...',
+      ],
+      resultDescriptions: {
+        registered: 'Account exists on BigBasket',
+        fresh: 'No account — fresh grocery number',
+      }
+    },
+    myntra: {
+      name: 'Myntra',
+      primary: '#FF3F6C',
+      emoji: '👗',
+      scanEmoji: '🩷',
+      registeredEmoji: '✅',
+      freshEmoji: '🆕',
+      bannerTitle: 'Myntra Account Checker',
+      bannerSubtitle: 'Fashion platform account lookup',
+      demoRegistered: '9999999992',
+      demoFresh: '8888888882',
+      ctaLabel: 'Check on Myntra',
+      scanSteps: [
+        'Connecting to Myntra registry...',
+        'Querying fashion account DB...',
+        'Checking shopper profile...',
+        'Verifying account status...',
+      ],
+      resultDescriptions: {
+        registered: 'Account exists on Myntra',
+        fresh: 'No account — fresh fashion number',
+      }
+    },
+    swiggy: {
+      name: 'Swiggy',
+      primary: '#FC8019',
+      emoji: '🛵',
+      scanEmoji: '🟠',
+      registeredEmoji: '✅',
+      freshEmoji: '🆕',
+      bannerTitle: 'Swiggy Account Checker',
+      bannerSubtitle: 'Super-fast delivery account lookup',
+      demoRegistered: '9999999993',
+      demoFresh: '8888888883',
+      ctaLabel: 'Check on Swiggy',
+      scanSteps: [
+        'Connecting to Swiggy platform...',
+        'Initializing delivery API...',
+        'Probing customer registry...',
+        'Verifying account existence...',
+      ],
+      resultDescriptions: {
+        registered: 'Account exists on Swiggy',
+        fresh: 'No account — fresh delivery number',
+      }
+    },
+    zepto: {
+      name: 'Zepto',
+      primary: '#950EDB',
+      emoji: '⚡',
+      scanEmoji: '🟣',
+      registeredEmoji: '✅',
+      freshEmoji: '🆕',
+      bannerTitle: 'Zepto Account Checker',
+      bannerSubtitle: '10-minute delivery account lookup',
+      demoRegistered: '9999999994',
+      demoFresh: '8888888884',
+      ctaLabel: 'Check on Zepto',
+      scanSteps: [
+        'Connecting to Zepto registry...',
+        'Querying quick-commerce DB...',
+        'Checking customer profile...',
+        'Verifying account status...',
+      ],
+      resultDescriptions: {
+        registered: 'Account exists on Zepto',
+        fresh: 'No account — fresh quick-commerce number',
+      }
+    },
+    amazon: {
+      name: 'Amazon',
+      primary: '#FF9900',
+      emoji: '📦',
+      scanEmoji: '🟡',
+      registeredEmoji: '✅',
+      freshEmoji: '🆕',
+      bannerTitle: 'Amazon Account Checker',
+      bannerSubtitle: 'World\'s largest e-commerce lookup',
+      demoRegistered: '9999999995',
+      demoFresh: '8888888885',
+      ctaLabel: 'Check on Amazon',
+      scanSteps: [
+        'Connecting to Amazon registry...',
+        'Querying customer database...',
+        'Checking Prime membership...',
+        'Verifying account existence...',
+      ],
+      resultDescriptions: {
+        registered: 'Account exists on Amazon India',
+        fresh: 'No account — fresh Amazon number',
+      }
+    },
+  };
+
+  // ── App State ────────────────────────────────────────────────────────────────
   const state = {
-    selectedPlatform: 'zomato',
+    activeBrand: 'zomato',
     currentTab: 'single',
-    history: JSON.parse(localStorage.getItem('nex_zomato_history') || '[]'),
+    history: JSON.parse(localStorage.getItem('nex_checker_history') || '[]'),
     batchResults: [],
+    batchRunning: false,
+    checkStartTime: 0,
   };
 
-  // ── DOM Element Cache ──────────────────────────────────────────────────────
+  // ── DOM Cache ────────────────────────────────────────────────────────────────
   const el = {
-    // Tabs & Nav
-    modeTabs: document.querySelectorAll('.mode-tab'),
-    bottomNavItems: document.querySelectorAll('.b-nav-item'),
-    tabContents: document.querySelectorAll('.tab-content'),
-    
-    // Platform Chips
-    platformChips: document.querySelectorAll('.platform-chip'),
+    app:               document.getElementById('app'),
+    htmlRoot:          document.documentElement,
+    brandFlash:        document.getElementById('brandFlash'),
+    headerLogo:        document.getElementById('headerLogo'),
+    bannerEmoji:       document.getElementById('bannerEmoji'),
+    bannerEmojiImg:    document.getElementById('bannerEmojiImg'),
+    bannerEmojiFallback: document.getElementById('bannerEmojiFallback'),
+    bannerTitle:       document.getElementById('bannerTitle'),
+    bannerSubtitle:    document.getElementById('bannerSubtitle'),
+    locAddressText:    document.getElementById('locAddressText'),
 
-    // Single Check Elements
-    mobileInput: document.getElementById('mobileInput'),
-    btnCheck: document.getElementById('btnCheck'),
-    ctaLabel: document.getElementById('ctaLabel'),
-    ctaSpinner: document.getElementById('ctaSpinner'),
-    btnPaste: document.getElementById('btnPaste'),
-    btnClear: document.getElementById('btnClear'),
+    modeTabs:          document.querySelectorAll('.mode-tab'),
+    tabContents:       document.querySelectorAll('.tab-content'),
+    bottomNavItems:    document.querySelectorAll('.b-nav-item'),
+
+    mobileInput:       document.getElementById('mobileInput'),
+    btnCheck:          document.getElementById('btnCheck'),
+    ctaLabel:          document.getElementById('ctaLabel'),
+    ctaSpinner:        document.getElementById('ctaSpinner'),
+    btnPaste:          document.getElementById('btnPaste'),
+    btnClear:          document.getElementById('btnClear'),
     btnDemoRegistered: document.getElementById('btnDemoRegistered'),
-    btnDemoFresh: document.getElementById('btnDemoFresh'),
-    errorBanner: document.getElementById('errorBanner'),
+    btnDemoFresh:      document.getElementById('btnDemoFresh'),
+    errorBanner:       document.getElementById('errorBanner'),
     scanningContainer: document.getElementById('scanningContainer'),
-    scanStepText: document.getElementById('scanStepText'),
-    resultCard: document.getElementById('resultCard'),
+    scanStepText:      document.getElementById('scanStepText'),
+    scanStepDetail:    document.getElementById('scanStepDetail'),
+    scanEmojiImg:      document.getElementById('scanEmojiImg'),
 
-    // Result Fields
-    resultDietIndicator: document.getElementById('resultDietIndicator'),
-    resultVerdictTitle: document.getElementById('resultVerdictTitle'),
-    resultVerdictSubtitle: document.getElementById('resultVerdictSubtitle'),
+    flipCardOuter:     document.getElementById('flipCardOuter'),
+    flipCardInner:     document.getElementById('flipCardInner'),
+    resultCard:        document.getElementById('resultCard'),
+    resultHeader:      document.getElementById('resultHeader'),
+    resultBrandName:   document.getElementById('resultBrandName'),
     resultStatusBadge: document.getElementById('resultStatusBadge'),
-    resultPhoneHighlight: document.getElementById('resultPhoneHighlight'),
-    resPlatformVal: document.getElementById('resPlatformVal'),
-    resStatusVal: document.getElementById('resStatusVal'),
-    resOtpVal: document.getElementById('resOtpVal'),
-    resLatencyVal: document.getElementById('resLatencyVal'),
-    resultAdviceBox: document.getElementById('resultAdviceBox'),
-    adviceIcon: document.getElementById('adviceIcon'),
-    adviceContent: document.getElementById('adviceContent'),
-    multiPlatformGrid: document.getElementById('multiPlatformGrid'),
-    multiGridItems: document.getElementById('multiGridItems'),
-    btnCopyResult: document.getElementById('btnCopyResult'),
-    btnShareTelegram: document.getElementById('btnShareTelegram'),
+    resultStatusIcon:  document.getElementById('resultStatusIcon'),
+    resultStatusText:  document.getElementById('resultStatusText'),
+    verdictTitle:      document.getElementById('verdictTitle'),
+    verdictSubtitle:   document.getElementById('verdictSubtitle'),
+    verdictEmojiImg:   document.getElementById('verdictEmojiImg'),
+    verdictEmojiFallback: document.getElementById('verdictEmojiFallback'),
+    resultPhoneNum:    document.getElementById('resultPhoneNum'),
+    resultPhoneTap:    document.getElementById('resultPhoneTap'),
+    resPlatformVal:    document.getElementById('resPlatformVal'),
+    resStatusVal:      document.getElementById('resStatusVal'),
+    resFreshVal:       document.getElementById('resFreshVal'),
+    resTimeVal:        document.getElementById('resTimeVal'),
+    btnRecheck:        document.getElementById('btnRecheck'),
 
-    // Batch Elements
-    batchInput: document.getElementById('batchInput'),
-    btnPasteBatch: document.getElementById('btnPasteBatch'),
-    btnClearBatch: document.getElementById('btnClearBatch'),
-    batchCounter: document.getElementById('batchCounter'),
-    btnStartBatch: document.getElementById('btnStartBatch'),
-    batchProgressBox: document.getElementById('batchProgressBox'),
+    batchInput:        document.getElementById('batchInput'),
+    btnBatchPaste:     document.getElementById('btnBatchPaste'),
+    btnBatchClear:     document.getElementById('btnBatchClear'),
+    btnBatchRun:       document.getElementById('btnBatchRun'),
+    batchProgress:     document.getElementById('batchProgress'),
+    batchProgressText: document.getElementById('batchProgressText'),
     batchProgressFill: document.getElementById('batchProgressFill'),
-    batchProgressPercent: document.getElementById('batchProgressPercent'),
-    batchSummaryPanel: document.getElementById('batchSummaryPanel'),
-    batchTotalCount: document.getElementById('batchTotalCount'),
-    batchFreshCount: document.getElementById('batchFreshCount'),
-    batchRegCount: document.getElementById('batchRegCount'),
-    batchErrCount: document.getElementById('batchErrCount'),
-    batchFilterChips: document.querySelectorAll('.filter-chip'),
-    fAllCount: document.getElementById('fAllCount'),
-    fFreshCount: document.getElementById('fFreshCount'),
-    fRegCount: document.getElementById('fRegCount'),
-    batchResultsList: document.getElementById('batchResultsList'),
-    btnCopyFreshList: document.getElementById('btnCopyFreshList'),
-    btnExportCsv: document.getElementById('btnExportCsv'),
+    batchResults:      document.getElementById('batchResults'),
+    batchExportRow:    document.getElementById('batchExportRow'),
+    btnBatchExport:    document.getElementById('btnBatchExport'),
 
-    // History Elements
-    historyList: document.getElementById('historyList'),
-    btnClearHistory: document.getElementById('btnClearHistory'),
+    ptrIndicator:      document.getElementById('ptrIndicator'),
+    historyList:       document.getElementById('historyList'),
+    btnHistoryClear:   document.getElementById('btnHistoryClear'),
 
-    // Toast Container
-    toastContainer: document.getElementById('toastContainer'),
+    confettiCanvas:    document.getElementById('confettiCanvas'),
+    copyToast:         document.getElementById('copyToast'),
+    engineStatus:      document.getElementById('engineStatus'),
   };
 
-  // ── Helper Utilities ───────────────────────────────────────────────────────
-  function showToast(msg, duration = 2500) {
-    const toast = document.createElement('div');
-    toast.className = 'toast-msg';
-    toast.textContent = msg;
-    el.toastContainer.appendChild(toast);
-    setTimeout(() => {
-      toast.style.opacity = '0';
-      toast.style.transform = 'translateY(8px)';
-      setTimeout(() => toast.remove(), 200);
-    }, duration);
-  }
+  // ── Brand Switch ─────────────────────────────────────────────────────────────
+  window.switchBrand = function (brandKey, chipEl) {
+    if (state.activeBrand === brandKey) return;
+    state.activeBrand = brandKey;
+    const brand = BRANDS[brandKey];
 
-  function cleanPhone(val) {
-    if (!val) return '';
-    const digits = val.replace(/\D/g, '');
-    if (digits.length >= 10) return digits.slice(-10);
-    return digits;
-  }
+    // 1) Flash overlay
+    el.brandFlash.classList.add('flash');
+    setTimeout(() => el.brandFlash.classList.remove('flash'), 200);
 
-  function formatPhoneDisplay(num) {
-    const p = cleanPhone(num);
-    if (p.length === 10) {
-      return `+91 ${p.slice(0, 5)} ${p.slice(5)}`;
+    // 2) Set data-brand on <html>
+    el.htmlRoot.setAttribute('data-brand', brandKey);
+
+    // 3) Update chips active state
+    document.querySelectorAll('.service-chip').forEach(c => c.classList.remove('active'));
+    if (chipEl) chipEl.classList.add('active');
+
+    // 4) Update banner
+    el.bannerTitle.textContent = brand.bannerTitle;
+    el.bannerSubtitle.textContent = brand.bannerSubtitle;
+
+    // 5) Update banner emoji (Fluent animated)
+    const emojiUrl = fluentUrl(brand.emoji);
+    if (emojiUrl) {
+      el.bannerEmojiImg.src = emojiUrl;
+      el.bannerEmojiImg.style.display = 'block';
+      el.bannerEmojiFallback.style.display = 'none';
+    } else {
+      el.bannerEmojiImg.style.display = 'none';
+      el.bannerEmojiFallback.textContent = brand.emoji;
+      el.bannerEmojiFallback.style.display = 'flex';
     }
-    return `+91 ${p}`;
-  }
 
-  function triggerHaptic(type = 'impact') {
-    if (tg?.HapticFeedback) {
-      try {
-        if (type === 'success') tg.HapticFeedback.notificationOccurred('success');
-        else if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
-        else tg.HapticFeedback.impactOccurred('medium');
-      } catch (e) {}
-    }
-  }
+    // 6) Update scan emoji
+    const scanUrl = fluentUrl(brand.emoji);
+    if (scanUrl) { el.scanEmojiImg.src = scanUrl; }
 
-  // ── Tab Navigation ─────────────────────────────────────────────────────────
-  function switchTab(tabId) {
-    state.currentTab = tabId;
-    el.modeTabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
-    el.bottomNavItems.forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
-    el.tabContents.forEach(c => {
-      c.style.display = c.id === `content${capitalize(tabId)}` ? 'block' : 'none';
+    // 7) Update CTA label
+    el.ctaLabel.textContent = brand.ctaLabel;
+
+    // 8) Update demo buttons
+    el.btnDemoRegistered.textContent = `🎯 Registered (${brand.demoRegistered.slice(-4)})`;
+    el.btnDemoFresh.textContent = `✨ Fresh (${brand.demoFresh.slice(-4)})`;
+
+    // 9) Haptic feedback
+    haptic('selection');
+
+    // 10) Reset any existing result to allow re-check with new brand
+    el.flipCardOuter.style.display = 'none';
+    el.flipCardInner.classList.remove('flipped');
+    el.scanningContainer.style.display = 'none';
+  };
+
+  window.switchBrandFromEngine = function (brandKey) {
+    const chipEl = document.querySelector(`.service-chip[data-platform="${brandKey}"]`);
+    switchBrand(brandKey, chipEl);
+    // Switch to single tab
+    switchTab('single');
+    // Scroll chip into view
+    if (chipEl) chipEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  };
+
+  // ── Tab Navigation ───────────────────────────────────────────────────────────
+  function switchTab(tabName) {
+    state.currentTab = tabName;
+
+    el.tabContents.forEach(tc => tc.classList.remove('active'));
+    const target = document.getElementById('content' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
+    if (target) target.classList.add('active');
+
+    el.modeTabs.forEach(t => {
+      t.classList.toggle('active', t.dataset.tab === tabName);
     });
-    if (tabId === 'history') renderHistory();
-  }
 
-  function capitalize(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  }
-
-  el.modeTabs.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
-  el.bottomNavItems.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
-
-  // ── Platform Selection Carousel ────────────────────────────────────────────
-  el.platformChips.forEach(chip => {
-    chip.addEventListener('click', () => {
-      el.platformChips.forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      state.selectedPlatform = chip.dataset.platform;
-      triggerHaptic('impact');
-      showToast(`Selected Engine: ${chip.querySelector('.p-name').textContent}`);
+    el.bottomNavItems.forEach(b => {
+      b.classList.toggle('active', b.dataset.tab === tabName);
     });
-  });
 
-  // ── Input Helpers ──────────────────────────────────────────────────────────
+    if (tabName === 'history') renderHistory();
+    haptic('selection');
+  }
+
+  // Tab click handlers
+  el.modeTabs.forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+  el.bottomNavItems.forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+
+  // ── Phone Input: Auto-format ─────────────────────────────────────────────────
   el.mobileInput.addEventListener('input', (e) => {
-    const raw = e.target.value.replace(/\D/g, '');
-    e.target.value = raw.slice(0, 10);
-    el.errorBanner.style.display = 'none';
+    let raw = e.target.value.replace(/\D/g, '').slice(0, 10);
+    // Format: "98765 43210"
+    if (raw.length > 5) {
+      e.target.value = raw.slice(0, 5) + ' ' + raw.slice(5);
+    } else {
+      e.target.value = raw;
+    }
+    clearError();
   });
 
+  el.mobileInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); doCheck(); }
+  });
+
+  // Paste & Clear
   el.btnPaste.addEventListener('click', async () => {
     try {
-      const text = await navigator.clipboard.readText();
-      const cleaned = cleanPhone(text);
-      if (cleaned) {
-        el.mobileInput.value = cleaned;
-        showToast('📋 Phone number pasted');
-        triggerHaptic('impact');
-      } else {
-        showToast('⚠️ No valid 10-digit number in clipboard');
-      }
-    } catch {
-      showToast('⚠️ Clipboard permission required');
-    }
+      const t = await navigator.clipboard.readText();
+      const digits = t.replace(/\D/g, '').slice(0, 10);
+      el.mobileInput.value = digits.length > 5 ? digits.slice(0,5) + ' ' + digits.slice(5) : digits;
+      clearError();
+      haptic('selection');
+    } catch (e) { el.mobileInput.focus(); }
   });
 
   el.btnClear.addEventListener('click', () => {
     el.mobileInput.value = '';
-    el.resultCard.style.display = 'none';
-    el.errorBanner.style.display = 'none';
-    el.mobileInput.focus();
+    clearError();
+    el.flipCardOuter.style.display = 'none';
+    el.flipCardInner.classList.remove('flipped');
+    haptic('selection');
   });
 
+  // Demo buttons
   el.btnDemoRegistered.addEventListener('click', () => {
-    el.mobileInput.value = '7631328516';
-    checkSingle('7631328516');
+    const brand = BRANDS[state.activeBrand];
+    const n = brand.demoRegistered;
+    el.mobileInput.value = n.length > 5 ? n.slice(0,5) + ' ' + n.slice(5) : n;
+    clearError();
+    haptic('selection');
   });
 
   el.btnDemoFresh.addEventListener('click', () => {
-    el.mobileInput.value = '7005999888';
-    checkSingle('7005999888');
+    const brand = BRANDS[state.activeBrand];
+    const n = brand.demoFresh;
+    el.mobileInput.value = n.length > 5 ? n.slice(0,5) + ' ' + n.slice(5) : n;
+    clearError();
+    haptic('selection');
   });
 
-  // ── Single Check Execution ─────────────────────────────────────────────────
-  async function checkSingle(targetPhone = null) {
-    const phone = cleanPhone(targetPhone || el.mobileInput.value);
-    if (phone.length !== 10 || !['6', '7', '8', '9'].includes(phone[0])) {
-      el.errorBanner.textContent = 'Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9';
-      el.errorBanner.style.display = 'block';
-      triggerHaptic('error');
-      return;
-    }
+  // ── CTA Button: Spring Bounce ────────────────────────────────────────────────
+  el.btnCheck.addEventListener('click', () => {
+    el.btnCheck.classList.add('spring-bounce');
+    el.btnCheck.addEventListener('animationend', () => el.btnCheck.classList.remove('spring-bounce'), { once: true });
+    doCheck();
+  });
 
+  // Re-check
+  el.btnRecheck.addEventListener('click', () => {
+    el.flipCardOuter.style.display = 'none';
+    el.flipCardInner.classList.remove('flipped');
+    el.mobileInput.value = '';
+    el.mobileInput.focus();
+    haptic('selection');
+  });
+
+  // ── Phone Validation ─────────────────────────────────────────────────────────
+  function getCleanPhone() {
+    return el.mobileInput.value.replace(/\D/g, '');
+  }
+
+  function validatePhone(phone) {
+    if (phone.length !== 10) return 'Enter a valid 10-digit mobile number';
+    if (!/^[6-9]/.test(phone)) return 'Indian numbers must start with 6-9';
+    return null;
+  }
+
+  function showError(msg) {
+    el.errorBanner.textContent = msg;
+    el.errorBanner.style.display = 'block';
+  }
+
+  function clearError() {
     el.errorBanner.style.display = 'none';
-    el.resultCard.style.display = 'none';
-    el.scanningContainer.style.display = 'block';
-    el.btnCheck.disabled = true;
-    el.ctaSpinner.style.display = 'inline-block';
-    el.ctaLabel.textContent = 'Verifying...';
+    el.errorBanner.textContent = '';
+  }
 
-    const scanSteps = [
-      `Connecting to ${capitalize(state.selectedPlatform)} engine...`,
-      'Validating 0-OTP handshake...',
-      'Synchronizing authoritative verdict...',
-    ];
-    let stepIdx = 0;
-    const stepInterval = setInterval(() => {
-      stepIdx = (stepIdx + 1) % scanSteps.length;
-      el.scanStepText.textContent = scanSteps[stepIdx];
-    }, 380);
+  // ── Keyboard Dismiss (iOS) ───────────────────────────────────────────────────
+  function dismissKeyboard() {
+    el.mobileInput.blur();
+    document.activeElement?.blur?.();
+  }
 
-    const startTime = performance.now();
-
+  // ── Haptic Feedback ─────────────────────────────────────────────────────────
+  function haptic(type) {
     try {
-      const response = await fetch('/api/checker/phone', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          target_phone: phone,
-          platform: state.selectedPlatform,
-        }),
-      });
+      if (tg?.HapticFeedback) {
+        if (type === 'success') tg.HapticFeedback.notificationOccurred('success');
+        else if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
+        else if (type === 'selection') tg.HapticFeedback.selectionChanged();
+        else if (type === 'impact') tg.HapticFeedback.impactOccurred('medium');
+      } else if (navigator.vibrate) {
+        if (type === 'success') navigator.vibrate([30, 30, 30]);
+        else if (type === 'error') navigator.vibrate([80, 30, 80]);
+        else if (type === 'impact') navigator.vibrate(40);
+        else navigator.vibrate(20);
+      }
+    } catch { /* non-blocking */ }
+  }
 
-      clearInterval(stepInterval);
-      const latency = Math.round(performance.now() - startTime);
-      const data = await response.json();
+  // ── Sound Cue ─────────────────────────────────────────────────────────────────
+  function playSound(type) {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
 
-      if (!response.ok) {
-        throw new Error(data.detail || data.error || 'Server returned an error');
+      if (type === 'success') {
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.1);
+      } else if (type === 'beep') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(660, ctx.currentTime);
+      } else if (type === 'error') {
+        osc.frequency.setValueAtTime(300, ctx.currentTime);
       }
 
-      displaySingleResult(phone, data, latency);
-      saveHistory(phone, data, latency);
-      triggerHaptic('success');
-    } catch (err) {
-      clearInterval(stepInterval);
-      el.errorBanner.textContent = `Verification Error: ${err.message}`;
-      el.errorBanner.style.display = 'block';
-      triggerHaptic('error');
-    } finally {
-      el.scanningContainer.style.display = 'none';
-      el.btnCheck.disabled = false;
-      el.ctaSpinner.style.display = 'none';
-      el.ctaLabel.textContent = 'Check Registration • Free';
-    }
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.3);
+    } catch { /* non-blocking */ }
   }
 
-  el.btnCheck.addEventListener('click', () => checkSingle());
-  el.mobileInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') checkSingle();
-  });
+  // ── Confetti Burst ────────────────────────────────────────────────────────────
+  function launchConfetti() {
+    const canvas = el.confettiCanvas;
+    const ctx = canvas.getContext('2d');
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    canvas.style.display = 'block';
 
-  // ── Render Single Result ───────────────────────────────────────────────────
-  function displaySingleResult(phone, data, latency) {
-    const isRegistered = data.status === 'REGISTERED' || data.registered === true;
-    const isAll = state.selectedPlatform === 'all' && data.platforms;
+    const brand = BRANDS[state.activeBrand];
+    const colors = [brand.primary, '#fff', '#4ade80', '#fbbf24', '#f472b6', '#38bdf8'];
 
-    el.resultCard.className = `result-card ${isRegistered ? 'verdict-registered' : 'verdict-fresh'}`;
-    el.resultDietIndicator.className = `diet-indicator ${isRegistered ? 'non-veg' : 'veg'}`;
-    el.resultVerdictTitle.textContent = isRegistered ? 'ACCOUNT FOUND 🎯' : '100% FRESH NUMBER ✅';
-    el.resultVerdictSubtitle.textContent = isRegistered
-      ? 'Existing registered customer detected'
-      : '0 existing registrations detected';
-    el.resultStatusBadge.textContent = isRegistered ? 'REGISTERED' : 'UNREGISTERED';
-    el.resultPhoneHighlight.textContent = formatPhoneDisplay(phone);
+    const particles = Array.from({ length: 100 }, () => ({
+      x: Math.random() * canvas.width,
+      y: -10,
+      r: Math.random() * 6 + 3,
+      d: Math.random() * 100,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      tilt: Math.random() * 20 - 10,
+      tiltAngle: 0,
+      tiltAngleIncrement: (Math.random() * 0.07 + 0.05),
+      vy: Math.random() * 3 + 1,
+      vx: Math.random() * 4 - 2,
+    }));
 
-    el.resPlatformVal.textContent = capitalize(state.selectedPlatform);
-    el.resStatusVal.textContent = isRegistered ? 'Active User' : 'Available (Fresh)';
-    el.resOtpVal.textContent = '0 (100% Silent)';
-    el.resLatencyVal.textContent = `${latency}ms`;
+    let frame;
+    let elapsed = 0;
 
-    if (isRegistered) {
-      el.adviceIcon.textContent = '🎯';
-      el.adviceContent.textContent =
-        'Active account on this platform. User already has profile history; not eligible for first-order coupons.';
-    } else {
-      el.adviceIcon.textContent = '✨';
-      el.adviceContent.textContent =
-        'Completely fresh number! 100% eligible for New User Discounts, Free Delivery, and Referral Bonuses.';
-    }
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        ctx.beginPath();
+        ctx.fillStyle = p.color;
+        ctx.ellipse(p.x, p.y, p.r, p.r * 0.6, p.tiltAngle, 0, 2 * Math.PI);
+        ctx.fill();
 
-    // Handle Multi-Platform Grid if 'all' was scanned
-    if (isAll) {
-      el.multiPlatformGrid.style.display = 'block';
-      el.multiGridItems.innerHTML = '';
-      Object.entries(data.platforms).forEach(([plat, res]) => {
-        const reg = res.status === 'REGISTERED' || res.registered === true;
-        const div = document.createElement('div');
-        div.className = `multi-item ${reg ? 'is-reg' : 'is-fresh'}`;
-        div.innerHTML = `
-          <span class="multi-name">${capitalize(plat)}</span>
-          <span class="multi-pill ${reg ? 'reg' : 'fresh'}">${reg ? 'REG' : 'FRESH'}</span>
-        `;
-        el.multiGridItems.appendChild(div);
+        p.tiltAngle += p.tiltAngleIncrement;
+        p.y += p.vy;
+        p.x += p.vx;
+        p.vy += 0.05; // gravity
       });
-    } else {
-      el.multiPlatformGrid.style.display = 'none';
+
+      elapsed++;
+      if (elapsed < 150 && particles.some(p => p.y < canvas.height)) {
+        frame = requestAnimationFrame(draw);
+      } else {
+        cancelAnimationFrame(frame);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.style.display = 'none';
+      }
     }
 
-    el.resultCard.style.display = 'block';
-    el.resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    draw();
   }
 
-  // ── Copy & Share Handlers ──────────────────────────────────────────────────
-  el.btnCopyResult.addEventListener('click', () => {
-    const phone = el.resultPhoneHighlight.textContent;
-    const title = el.resultVerdictTitle.textContent;
-    const plat = el.resPlatformVal.textContent;
-    const text = `Zomato Checker Result:\n📱 Number: ${phone}\n🛒 Platform: ${plat}\n🎯 Status: ${title}\n⚡ 0 OTP Sent | Authoritative Sync`;
-    navigator.clipboard.writeText(text);
-    showToast('📋 Result copied to clipboard!');
-    triggerHaptic('impact');
-  });
-
-  el.btnShareTelegram.addEventListener('click', () => {
-    const phone = el.resultPhoneHighlight.textContent;
-    const title = el.resultVerdictTitle.textContent;
-    const plat = el.resPlatformVal.textContent;
-    const msg = encodeURIComponent(`🔍 Verification Report\n📱 ${phone}\n🛒 ${plat}\n🎯 ${title}`);
-    if (tg?.openTelegramLink) {
-      tg.openTelegramLink(`https://t.me/share/url?url=${msg}`);
-    } else {
-      window.open(`https://t.me/share/url?url=${msg}`, '_blank');
-    }
-  });
-
-  // ── Batch Check Execution ──────────────────────────────────────────────────
-  function parseBatchPhones() {
-    const raw = el.batchInput.value;
-    const matches = raw.match(/\b\d{10}\b/g) || [];
-    return Array.from(new Set(matches)).slice(0, 50);
-  }
-
-  el.batchInput.addEventListener('input', () => {
-    const list = parseBatchPhones();
-    el.batchCounter.textContent = `${list.length} valid numbers`;
-  });
-
-  el.btnPasteBatch.addEventListener('click', async () => {
+  // ── Copy to Clipboard Toast ───────────────────────────────────────────────────
+  function copyToClipboard(text) {
     try {
-      const text = await navigator.clipboard.readText();
-      el.batchInput.value = text;
-      const list = parseBatchPhones();
-      el.batchCounter.textContent = `${list.length} valid numbers`;
-      showToast(`📋 Pasted ${list.length} numbers`);
+      navigator.clipboard.writeText(text).then(() => showCopyToast('📋 Copied!'));
     } catch {
-      showToast('⚠️ Unable to access clipboard');
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;opacity:0;';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showCopyToast('📋 Copied!');
     }
-  });
-
-  el.btnClearBatch.addEventListener('click', () => {
-    el.batchInput.value = '';
-    el.batchCounter.textContent = '0 numbers';
-    el.batchSummaryPanel.style.display = 'none';
-    el.batchProgressBox.style.display = 'none';
-  });
-
-  el.btnStartBatch.addEventListener('click', async () => {
-    const phones = parseBatchPhones();
-    if (phones.length === 0) {
-      showToast('⚠️ Please enter at least 1 valid 10-digit number');
-      return;
-    }
-
-    el.btnStartBatch.disabled = true;
-    el.batchProgressBox.style.display = 'block';
-    el.batchSummaryPanel.style.display = 'none';
-    el.batchProgressFill.style.width = '20%';
-    el.batchProgressPercent.textContent = '20%';
-
-    try {
-      const resp = await fetch('/api/checker/batch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phones: phones,
-          platform: state.selectedPlatform,
-        }),
-      });
-
-      el.batchProgressFill.style.width = '80%';
-      el.batchProgressPercent.textContent = '80%';
-
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.detail || 'Batch check failed');
-
-      el.batchProgressFill.style.width = '100%';
-      el.batchProgressPercent.textContent = '100%';
-
-      state.batchResults = Object.entries(data.results || {}).map(([num, r]) => ({
-        number: num,
-        status: r.status,
-        registered: r.status === 'REGISTERED' || r.registered === true,
-        fresh: r.status === 'NOT_REGISTERED' || r.fresh === true,
-      }));
-
-      renderBatchResults('all');
-      triggerHaptic('success');
-    } catch (e) {
-      showToast(`Batch Error: ${e.message}`);
-      triggerHaptic('error');
-    } finally {
-      el.btnStartBatch.disabled = false;
-      setTimeout(() => {
-        el.batchProgressBox.style.display = 'none';
-      }, 600);
-    }
-  });
-
-  function renderBatchResults(filter = 'all') {
-    const items = state.batchResults;
-    const total = items.length;
-    const fresh = items.filter(i => i.fresh).length;
-    const reg = items.filter(i => i.registered).length;
-    const err = items.filter(i => !i.fresh && !i.registered).length;
-
-    el.batchTotalCount.textContent = total;
-    el.batchFreshCount.textContent = fresh;
-    el.batchRegCount.textContent = reg;
-    el.batchErrCount.textContent = err;
-
-    el.fAllCount.textContent = total;
-    el.fFreshCount.textContent = fresh;
-    el.fRegCount.textContent = reg;
-
-    let filtered = items;
-    if (filter === 'fresh') filtered = items.filter(i => i.fresh);
-    if (filter === 'registered') filtered = items.filter(i => i.registered);
-
-    el.batchResultsList.innerHTML = '';
-    filtered.forEach(item => {
-      const row = document.createElement('div');
-      row.className = 'batch-row';
-      const badgeCls = item.fresh ? 'fresh' : item.registered ? 'reg' : 'err';
-      const badgeText = item.fresh ? 'FRESH' : item.registered ? 'REG' : 'ERR';
-      row.innerHTML = `
-        <span class="batch-phone">+91 ${item.number}</span>
-        <span class="batch-badge ${badgeCls}">${badgeText}</span>
-      `;
-      el.batchResultsList.appendChild(row);
-    });
-
-    el.batchSummaryPanel.style.display = 'block';
+    haptic('selection');
   }
 
-  el.batchFilterChips.forEach(chip => {
-    chip.addEventListener('click', () => {
-      el.batchFilterChips.forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      renderBatchResults(chip.dataset.filter);
+  function showCopyToast(msg) {
+    el.copyToast.textContent = msg;
+    el.copyToast.classList.add('visible');
+    setTimeout(() => el.copyToast.classList.remove('visible'), 2000);
+  }
+
+  el.resultPhoneTap.addEventListener('click', () => {
+    copyToClipboard(getResultPhone());
+  });
+
+  let _resultPhoneRaw = '';
+  function getResultPhone() { return _resultPhoneRaw; }
+
+  // ── Scanning Steps Animation ──────────────────────────────────────────────────
+  function animateScanSteps(steps, duration) {
+    const stepDuration = Math.floor(duration / (steps.length + 1));
+    steps.forEach((step, i) => {
+      setTimeout(() => {
+        el.scanStepText.textContent = step;
+        el.scanStepDetail.textContent = `Step ${i + 1} of ${steps.length}`;
+      }, stepDuration * i);
     });
-  });
+  }
 
-  el.btnCopyFreshList.addEventListener('click', () => {
-    const freshList = state.batchResults.filter(i => i.fresh).map(i => i.number).join('\n');
-    if (!freshList) {
-      showToast('⚠️ No fresh numbers found in batch');
-      return;
+  // ── Main Check Function ───────────────────────────────────────────────────────
+  function doCheck() {
+    const phone = getCleanPhone();
+    const err = validatePhone(phone);
+    if (err) { showError(err); haptic('error'); return; }
+
+    clearError();
+    dismissKeyboard();
+
+    const brand = BRANDS[state.activeBrand];
+    state.checkStartTime = Date.now();
+
+    // Show scanning
+    el.heroBrandCard && (el.heroBrandCard = document.getElementById('heroBrandCard'));
+    document.getElementById('heroBrandCard').style.display = 'none';
+    el.flipCardOuter.style.display = 'none';
+    el.flipCardInner.classList.remove('flipped');
+    el.scanningContainer.style.display = 'flex';
+
+    // Scan emoji
+    const scanUrl = fluentUrl(brand.scanEmoji);
+    if (scanUrl) el.scanEmojiImg.src = scanUrl;
+
+    // Animate steps
+    animateScanSteps(brand.scanSteps, 2400);
+
+    // Disable btn
+    el.btnCheck.disabled = true;
+    el.ctaSpinner.style.display = 'block';
+    el.ctaLabel.textContent = 'Checking...';
+
+    haptic('impact');
+    playSound('beep');
+
+    // API call
+    callCheckAPI(phone, state.activeBrand)
+      .then(result => renderResult(phone, result, brand))
+      .catch(err => {
+        el.scanningContainer.style.display = 'none';
+        document.getElementById('heroBrandCard').style.display = 'block';
+        showError(err.message || 'Check failed. Try again.');
+        haptic('error');
+        playSound('error');
+      })
+      .finally(() => {
+        el.btnCheck.disabled = false;
+        el.ctaSpinner.style.display = 'none';
+        el.ctaLabel.textContent = brand.ctaLabel;
+      });
+  }
+
+  // ── API Call ──────────────────────────────────────────────────────────────────
+  async function callCheckAPI(phone, platform) {
+    const resp = await fetch('/api/checker/phone', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, platform }),
+    });
+    if (!resp.ok) {
+      const data = await resp.json().catch(() => ({}));
+      throw new Error(data.detail || `HTTP ${resp.status}`);
     }
-    navigator.clipboard.writeText(freshList);
-    showToast('📋 Fresh numbers copied to clipboard!');
-    triggerHaptic('impact');
-  });
+    return resp.json();
+  }
 
-  el.btnExportCsv.addEventListener('click', () => {
-    if (!state.batchResults.length) return;
-    const csvContent = 'data:text/csv;charset=utf-8,Number,Status\n' +
-      state.batchResults.map(i => `${i.number},${i.registered ? 'REGISTERED' : 'FRESH'}`).join('\n');
-    const encoded = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encoded);
-    link.setAttribute('download', `zomato_batch_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-  });
+  // ── Render Result ─────────────────────────────────────────────────────────────
+  function renderResult(phone, result, brand) {
+    const elapsed = Date.now() - state.checkStartTime;
+    const isRegistered = result.registered === true;
+    const isFresh      = result.fresh === true || result.registered === false;
 
-  // ── History Storage & Display ──────────────────────────────────────────────
-  function saveHistory(phone, data, latency) {
-    const isRegistered = data.status === 'REGISTERED' || data.registered === true;
-    const item = {
-      phone,
-      platform: state.selectedPlatform,
-      isRegistered,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      latency,
-    };
-    state.history.unshift(item);
-    if (state.history.length > 30) state.history.pop();
-    localStorage.setItem('nex_zomato_history', JSON.stringify(state.history));
+    _resultPhoneRaw = '+91 ' + phone.slice(0,5) + ' ' + phone.slice(5);
+
+    // Result fields
+    el.resultBrandName.textContent = brand.name.toUpperCase();
+    el.resPlatformVal.textContent  = brand.name;
+    el.resStatusVal.textContent    = isRegistered ? 'Registered' : 'Not Registered';
+    el.resFreshVal.textContent     = isFresh ? 'Fresh / New' : 'Existing';
+    el.resTimeVal.textContent      = elapsed + 'ms';
+    el.resultPhoneNum.textContent  = _resultPhoneRaw;
+
+    el.verdictTitle.textContent    = isRegistered ? 'Registered ✓' : 'Not Registered';
+    el.verdictTitle.className      = 'verdict-title ' + (isRegistered ? 'registered' : 'not-registered');
+    el.verdictSubtitle.textContent = isRegistered
+      ? brand.resultDescriptions.registered
+      : brand.resultDescriptions.fresh;
+
+    // Result status badge
+    el.resultStatusIcon.textContent = isRegistered ? '●' : '○';
+    el.resultStatusText.textContent = isRegistered ? 'REGISTERED' : 'NOT FOUND';
+
+    // Verdict emoji (Fluent animated)
+    const resultEmoji = isRegistered ? brand.registeredEmoji : brand.freshEmoji;
+    const resultUrl   = fluentUrl(resultEmoji);
+    if (resultUrl) {
+      el.verdictEmojiImg.src = resultUrl;
+      el.verdictEmojiImg.style.display = 'block';
+      el.verdictEmojiFallback.style.display = 'none';
+    } else {
+      el.verdictEmojiImg.style.display = 'none';
+      el.verdictEmojiFallback.textContent = resultEmoji;
+      el.verdictEmojiFallback.style.display = 'flex';
+    }
+
+    // Hide scanning, show flip card
+    el.scanningContainer.style.display = 'none';
+    el.flipCardOuter.style.display = 'block';
+
+    // Trigger 3D flip after brief delay
+    setTimeout(() => {
+      el.flipCardInner.classList.add('flipped');
+
+      // Post-flip effects
+      setTimeout(() => {
+        if (isRegistered) {
+          launchConfetti();
+          haptic('success');
+          playSound('success');
+        } else {
+          haptic('impact');
+        }
+      }, 400);
+    }, 100);
+
+    // Save to history
+    saveHistory({ phone, platform: state.activeBrand, brandName: brand.name, registered: isRegistered, time: Date.now() });
+  }
+
+  // ── History ───────────────────────────────────────────────────────────────────
+  function saveHistory(entry) {
+    state.history.unshift(entry);
+    if (state.history.length > 50) state.history = state.history.slice(0, 50);
+    localStorage.setItem('nex_checker_history', JSON.stringify(state.history));
   }
 
   function renderHistory() {
-    el.historyList.innerHTML = '';
+    const list = el.historyList;
+    list.innerHTML = '';
+
     if (!state.history.length) {
-      el.historyList.innerHTML = `
+      list.innerHTML = `
         <div class="history-empty">
-          <div class="empty-icon">📜</div>
-          <div class="empty-title">No Scans Recorded Yet</div>
-          <div class="empty-desc">Numbers you check will appear here for fast re-auditing.</div>
-        </div>
-      `;
+          <div class="empty-emoji">📭</div>
+          <div class="empty-title">No checks yet</div>
+          <div class="empty-sub">Run a check on the Home tab</div>
+        </div>`;
       return;
     }
 
-    state.history.forEach((h, idx) => {
+    state.history.forEach((entry, idx) => {
       const item = document.createElement('div');
       item.className = 'history-item';
-      const badgeClass = h.isRegistered ? 'reg' : 'fresh';
-      const badgeText = h.isRegistered ? 'REG' : 'FRESH';
+      item.dataset.idx = idx;
+
+      const brandCfg = BRANDS[entry.platform] || {};
+      const dotColor = brandCfg.primary || '#888';
+      const timeStr  = new Date(entry.time).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+      const dateStr  = new Date(entry.time).toLocaleDateString('en-IN', { day:'numeric', month:'short' });
+
+      const formatted = '+91 ' + entry.phone.slice(0,5) + ' ' + entry.phone.slice(5);
+
       item.innerHTML = `
-        <div class="h-meta">
-          <div class="diet-indicator ${h.isRegistered ? 'non-veg' : 'veg'}" style="transform: scale(0.8);"></div>
-          <div>
-            <div class="h-phone">+91 ${h.phone}</div>
-            <div class="h-time">${capitalize(h.platform)} • ${h.time} (${h.latency || 150}ms)</div>
-          </div>
-        </div>
-        <div class="h-actions">
-          <span class="batch-badge ${badgeClass}">${badgeText}</span>
-          <button class="text-btn" data-phone="${h.phone}" data-plat="${h.platform}">Re-Check</button>
-        </div>
-      `;
-      item.querySelector('button').addEventListener('click', (e) => {
-        el.mobileInput.value = e.target.dataset.phone;
-        state.selectedPlatform = e.target.dataset.plat;
-        el.platformChips.forEach(c => c.classList.toggle('active', c.dataset.platform === state.selectedPlatform));
-        switchTab('single');
-        checkSingle(e.target.dataset.phone);
+        <div class="hist-brand-dot" style="background:${dotColor};"></div>
+        <div class="hist-phone">${formatted}</div>
+        <div class="hist-meta">
+          <span class="hist-status ${entry.registered ? 'registered' : 'not-registered'}">${entry.registered ? '✓ Registered' : '✕ Not Found'}</span>
+          <span class="hist-platform">${entry.brandName || entry.platform}</span>
+          <span class="hist-time">${dateStr}, ${timeStr}</span>
+        </div>`;
+
+      // Long press to delete
+      let pressTimer;
+      item.addEventListener('pointerdown', () => {
+        pressTimer = setTimeout(() => {
+          item.classList.add('shaking');
+          haptic('impact');
+          setTimeout(() => {
+            item.classList.remove('shaking');
+            if (confirm('Delete this history entry?')) {
+              item.classList.add('deleting');
+              setTimeout(() => {
+                state.history.splice(Number(item.dataset.idx), 1);
+                localStorage.setItem('nex_checker_history', JSON.stringify(state.history));
+                renderHistory();
+              }, 300);
+            }
+          }, 400);
+        }, 600);
       });
-      el.historyList.appendChild(item);
+      item.addEventListener('pointerup', () => clearTimeout(pressTimer));
+      item.addEventListener('pointercancel', () => clearTimeout(pressTimer));
+
+      list.appendChild(item);
     });
   }
 
-  el.btnClearHistory.addEventListener('click', () => {
-    state.history = [];
-    localStorage.removeItem('nex_zomato_history');
-    renderHistory();
-    showToast('🗑️ History cleared');
+  el.btnHistoryClear.addEventListener('click', () => {
+    if (confirm('Clear all history?')) {
+      state.history = [];
+      localStorage.removeItem('nex_checker_history');
+      renderHistory();
+      haptic('selection');
+    }
   });
 
-  // ── Init API Health Status Check ───────────────────────────────────────────
-  async function checkEngineHealth() {
-    try {
-      const r = await fetch('/api/health');
-      if (r.ok) {
-        document.getElementById('engineStatus').innerHTML = `
-          <span class="status-pulse"></span>
-          <span class="status-text">ENGINES LIVE</span>
-        `;
+  // Pull-to-refresh on history
+  (function setupPTR() {
+    const histSection = document.getElementById('contentHistory');
+    let startY = 0;
+    let pulling = false;
+
+    histSection.addEventListener('touchstart', e => {
+      if (histSection.scrollTop === 0) { startY = e.touches[0].clientY; pulling = true; }
+    }, { passive: true });
+
+    histSection.addEventListener('touchmove', e => {
+      if (!pulling) return;
+      const dy = e.touches[0].clientY - startY;
+      if (dy > 50) el.ptrIndicator.classList.add('visible');
+    }, { passive: true });
+
+    histSection.addEventListener('touchend', () => {
+      if (el.ptrIndicator.classList.contains('visible')) {
+        setTimeout(() => {
+          el.ptrIndicator.classList.remove('visible');
+          renderHistory();
+          haptic('selection');
+        }, 800);
       }
-    } catch {}
+      pulling = false;
+    });
+  })();
+
+  // ── Batch Check ───────────────────────────────────────────────────────────────
+  el.btnBatchPaste.addEventListener('click', async () => {
+    try {
+      const t = await navigator.clipboard.readText();
+      el.batchInput.value = t;
+    } catch { el.batchInput.focus(); }
+  });
+
+  el.btnBatchClear.addEventListener('click', () => {
+    el.batchInput.value = '';
+    el.batchResults.innerHTML = '';
+    el.batchExportRow.style.display = 'none';
+    el.batchProgress.style.display = 'none';
+  });
+
+  el.btnBatchRun.addEventListener('click', runBatch);
+
+  async function runBatch() {
+    if (state.batchRunning) return;
+    const brand = BRANDS[state.activeBrand];
+
+    const raw = el.batchInput.value;
+    const phones = raw.split(/[\n,;\s]+/)
+      .map(p => p.replace(/\D/g, ''))
+      .filter(p => p.length === 10 && /^[6-9]/.test(p))
+      .slice(0, 50);
+
+    if (!phones.length) { showCopyToast('⚠ No valid numbers found'); return; }
+
+    state.batchRunning = true;
+    state.batchResults = [];
+    el.batchResults.innerHTML = '';
+    el.batchExportRow.style.display = 'none';
+    el.batchProgress.style.display = 'block';
+
+    haptic('impact');
+
+    for (let i = 0; i < phones.length; i++) {
+      const phone = phones[i];
+      el.batchProgressText.textContent = `Checking ${i + 1} / ${phones.length}`;
+      el.batchProgressFill.style.width = ((i + 1) / phones.length * 100) + '%';
+
+      // Add pending row
+      const row = createBatchRow(phone, 'checking');
+      el.batchResults.appendChild(row);
+
+      try {
+        const result = await callCheckAPI(phone, state.activeBrand);
+        const isReg = result.registered === true;
+        row.querySelector('.batch-status-dot').className = `batch-status-dot ${isReg ? 'registered' : 'not-registered'}`;
+        row.querySelector('.batch-status-label').className = `batch-status-label ${isReg ? 'registered' : 'not-registered'}`;
+        row.querySelector('.batch-status-label').textContent = isReg ? '✓ Registered' : '✕ Not Found';
+        state.batchResults.push({ phone, platform: state.activeBrand, brandName: brand.name, registered: isReg });
+        if (isReg) haptic('success');
+      } catch {
+        row.querySelector('.batch-status-dot').className = 'batch-status-dot not-registered';
+        row.querySelector('.batch-status-label').textContent = '⚠ Error';
+        state.batchResults.push({ phone, platform: state.activeBrand, brandName: brand.name, registered: null });
+      }
+
+      // Small delay between requests
+      if (i < phones.length - 1) await sleep(400);
+    }
+
+    state.batchRunning = false;
+    el.batchProgressText.textContent = `Done — ${phones.length} numbers checked`;
+    el.batchExportRow.style.display = 'block';
+    haptic('success');
+    playSound('success');
   }
 
-  checkEngineHealth();
+  function createBatchRow(phone, status) {
+    const row = document.createElement('div');
+    row.className = 'batch-result-row';
+    row.innerHTML = `
+      <div class="batch-status-dot ${status}"></div>
+      <div class="batch-result-phone">+91 ${phone.slice(0,5)} ${phone.slice(5)}</div>
+      <div class="batch-status-label" style="color:var(--text-muted);">Checking...</div>`;
+    return row;
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  // Export CSV
+  el.btnBatchExport.addEventListener('click', () => {
+    const csv = ['Phone,Platform,Status']
+      .concat(state.batchResults.map(r =>
+        `"+91${r.phone}","${r.brandName}","${r.registered === true ? 'Registered' : r.registered === false ? 'Not Found' : 'Error'}"`
+      )).join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = `nexchecker_${state.activeBrand}_${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showCopyToast('📥 CSV downloaded!');
+  });
+
+  // ── API Health Check ──────────────────────────────────────────────────────────
+  async function checkHealth() {
+    try {
+      const r = await fetch('/api/health');
+      if (!r.ok) throw new Error();
+      const { status } = document.querySelector('.status-pulse');
+      // still alive — pulse stays green
+    } catch {
+      const pulse = document.querySelector('.status-pulse');
+      const text  = document.querySelector('.status-text');
+      if (pulse) pulse.style.background = '#f87171';
+      if (text)  { text.textContent = 'DOWN'; text.style.color = '#f87171'; }
+    }
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────────────
+  function init() {
+    // Apply default brand
+    switchBrand('zomato', document.querySelector('.service-chip[data-platform="zomato"]'));
+
+    // Health check every 30s
+    checkHealth();
+    setInterval(checkHealth, 30000);
+
+    // Render history
+    renderHistory();
+
+    // Focus input
+    setTimeout(() => el.mobileInput.focus(), 300);
+
+    // Ensure confetti canvas hidden by default
+    el.confettiCanvas.style.display = 'none';
+  }
+
+  init();
+
 })();
