@@ -1,8 +1,8 @@
 """
-FojaClient - High-Performance Client for PriceTrackerPro / Foja API
+MeeshoClient - High-Performance Client for PriceTrackerPro / Meesho API
 ====================================================================
 Production client providing synchronous and asynchronous access to all
-endpoints on https://pricetrackerpro.fojadomain.fun/api/
+endpoints on PriceTrackerPro Meesho API server.
 
 Supported Features:
   1. Registration & Freshness Checker (Single & Bulk)
@@ -18,7 +18,9 @@ Supported Features:
 
 from __future__ import annotations
 
+import asyncio
 import logging
+import os
 import re
 import time
 from dataclasses import asdict, dataclass, field
@@ -26,10 +28,10 @@ from typing import Any, Dict, List, Optional, Union
 
 import httpx
 
-logger = logging.getLogger("foja_client")
+logger = logging.getLogger("meesho_api")
 
-DEFAULT_BASE_URL = "https://pricetrackerpro.fojadomain.fun"
-DEFAULT_TOKEN = "1889471360.532228cbff3c2dcf"
+DEFAULT_BASE_URL = os.getenv("MEESHO_BASE_URL", "https://pricetrackerpro.fojadomain.fun")
+DEFAULT_TOKEN = os.getenv("MEESHO_API_TOKEN", "1889471360.532228cbff3c2dcf")
 DEFAULT_UA = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36"
@@ -261,14 +263,14 @@ class CartInfo:
 
 
 # ============================================================================
-# Main FojaClient Class
+# Main MeeshoClient Class
 # ============================================================================
 
-class FojaClient:
+class MeeshoClient:
     """
-    Universal Client for PriceTrackerPro / Foja Meesho Platform.
+    Universal Client for PriceTrackerPro Meesho Platform.
 
-    Supports both Async (via `async with FojaClient()`) and
+    Supports both Async (via `async with MeeshoClient()`) and
     Sync (via standard methods on the instance).
     """
 
@@ -298,7 +300,7 @@ class FojaClient:
 
     # ─── Context Managers ─────────────────────────────────────────────────────
 
-    async def __aenter__(self) -> FojaClient:
+    async def __aenter__(self) -> MeeshoClient:
         if self._async_client is None:
             self._async_client = httpx.AsyncClient(
                 base_url=self.base_url,
@@ -312,7 +314,7 @@ class FojaClient:
             await self._async_client.aclose()
             self._async_client = None
 
-    def __enter__(self) -> FojaClient:
+    def __enter__(self) -> MeeshoClient:
         if self._sync_client is None:
             self._sync_client = httpx.Client(
                 base_url=self.base_url,
@@ -880,3 +882,68 @@ class FojaClient:
         return self._sync_request(
             "POST", "/api/referral/save", body={"referral": referral_code}
         )
+
+
+# ============================================================================
+# Unified MeeshoChecker for NexBot Orchestration
+# ============================================================================
+
+class MeeshoChecker:
+    """Manages Meesho registration checks.
+
+    Provides the standard Checker interface for NexBot:
+      - startup()
+      - shutdown()
+      - check_number(mobile) -> Dict[str, Any]
+      - is_ready -> bool
+    """
+
+    def __init__(self) -> None:
+        self._lock = asyncio.Lock()
+        self._ready = False
+        self._client: Optional[MeeshoClient] = None
+
+    async def startup(self) -> None:
+        """Initialize HTTP client session."""
+        self._client = MeeshoClient()
+        self._ready = True
+        logger.info("[Meesho] Ready - Meesho registration checker initialized")
+
+    async def shutdown(self) -> None:
+        """Tear down HTTP client session."""
+        self._ready = False
+        self._client = None
+
+    async def check_number(self, mobile: str) -> Dict[str, Any]:
+        """Check a single mobile number against Meesho."""
+        async with self._lock:
+            try:
+                norm = clean_phone(mobile)
+                if len(norm) != 10 or norm[0] not in "6789":
+                    return {
+                        "status": "ERROR",
+                        "mobile": norm,
+                        "error": "invalid 10-digit Indian mobile",
+                    }
+                client = self._client or MeeshoClient()
+                res = await client.check_number_async(norm)
+                status = "REGISTERED" if res.registered else "NOT_REGISTERED"
+                return {
+                    "status": status,
+                    "mobile": norm,
+                    "registered": res.registered,
+                    "fresh": res.fresh,
+                    "raw": res.raw,
+                }
+            except Exception as exc:
+                logger.error("[Meesho] check_number error: %s", exc)
+                return {"status": "ERROR", "mobile": mobile, "error": str(exc)}
+
+    @property
+    def is_ready(self) -> bool:
+        return self._ready
+
+
+# ── Module singletons ────────────────────────────────────────────────────────
+meesho_checker = MeeshoChecker()
+meesho_client = MeeshoClient()
