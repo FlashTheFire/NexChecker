@@ -693,6 +693,18 @@
   // ── Render Result ─────────────────────────────────────────────────────────────
   function renderResult(phone, result, brand) {
     const elapsed = Date.now() - state.checkStartTime;
+
+    // ── ERROR state: checker engine offline / API error ──────────────────────
+    if (result.status === 'ERROR' || (!result.success && result.status !== 'NOT_REGISTERED' && result.status !== 'REGISTERED')) {
+      el.scanningContainer.style.display = 'none';
+      el.flipCardOuter.style.display = 'none';
+      document.getElementById('heroBrandCard').style.display = 'block';
+      const errMsg = result.error || result.detail || 'Checker engine unavailable. Try again later.';
+      showError('⚠ ' + errMsg);
+      haptic('error');
+      return;
+    }
+
     const isRegistered = result.registered === true;
     const isFresh      = result.fresh === true || result.registered === false;
 
