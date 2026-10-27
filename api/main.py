@@ -76,6 +76,20 @@ try:
 except Exception:
     check_zepto = None
 
+from api.auth import get_request_identity
+from api.history_manager import history_manager
+
+_PLATFORM_LABELS: Dict[str, str] = {
+    "zomato": "Zomato",
+    "flipkart": "Flipkart",
+    "meesho": "Meesho",
+    "bigbasket": "BigBasket",
+    "myntra": "Myntra",
+    "amazon": "Amazon",
+    "swiggy": "Swiggy",
+    "zepto": "Zepto",
+}
+
 
 # ------------------------------------------------------------
 # Pydantic Schemas
@@ -355,7 +369,7 @@ async def list_platforms():
 
 @app.post("/api/checker/phone")
 @app.post("/api/check/phone")
-async def check_single_phone(req: PhoneCheckRequest):
+async def check_single_phone(req: PhoneCheckRequest, request: Request):
     """Check a single mobile number on a target platform or all platforms."""
     raw_phone = req.get_phone()
     clean = "".join(c for c in raw_phone if c.isdigit())
@@ -374,6 +388,24 @@ async def check_single_phone(req: PhoneCheckRequest):
     is_fresh = (result.get("fresh") is True) or (status == "NOT_REGISTERED")
     is_success = status in ("REGISTERED", "NOT_REGISTERED", "SUCCESS")
 
+    # Record to caller's persistent server-side JSON history
+    try:
+        identity = get_request_identity(request)
+        brand_name = _PLATFORM_LABELS.get(platform, platform.capitalize())
+        await history_manager.record_check(
+            user=identity,
+            phone=clean,
+            platform=platform,
+            brand_name=brand_name,
+            registered=is_registered,
+            fresh=is_fresh,
+            status=status,
+            details=result.get("message") or result.get("reason"),
+            latency_ms=result.get("timing_ms"),
+        )
+    except Exception as exc:
+        print(f"[WARN] Failed to record check in server history: {exc}")
+
     return {
         "success": is_success,
         "phone": clean,
@@ -388,7 +420,7 @@ async def check_single_phone(req: PhoneCheckRequest):
 
 @app.post("/api/checker/batch")
 @app.post("/api/check/batch")
-async def check_batch_phones(req: BatchCheckRequest):
+async def check_batch_phones(req: BatchCheckRequest, request: Request):
     """Check a list of phone numbers concurrently."""
     pkey = req.platform or "zomato"
     phones = req.phones[:50]  # Cap at 50 per request
@@ -397,18 +429,97 @@ async def check_batch_phones(req: BatchCheckRequest):
     results_list = await asyncio.gather(*tasks, return_exceptions=True)
 
     formatted = {}
+    identity = get_request_identity(request)
+    brand_name = _PLATFORM_LABELS.get(pkey, pkey.capitalize())
+
     for p, res in zip(phones, results_list):
         clean = "".join(c for c in p if c.isdigit())[-10:]
         if isinstance(res, Exception):
             formatted[clean] = {"status": "ERROR", "error": str(res)}
         else:
             formatted[clean] = res
+            status = res.get("status", "UNKNOWN")
+            is_reg = (res.get("registered") is True) or (status == "REGISTERED")
+            is_fr = (res.get("fresh") is True) or (status == "NOT_REGISTERED")
+            try:
+                await history_manager.record_check(
+                    user=identity,
+                    phone=clean,
+                    platform=pkey,
+                    brand_name=brand_name,
+                    registered=is_reg,
+                    fresh=is_fr,
+                    status=status,
+                    details=res.get("message"),
+                    latency_ms=res.get("timing_ms"),
+                )
+            except Exception:
+                pass
 
     return {
         "success": True,
         "platform": pkey,
         "total": len(phones),
         "results": formatted,
+    }
+
+
+# ------------------------------------------------------------
+# High-Class Server-Side History & User Tracking Endpoints
+# ------------------------------------------------------------
+@app.get("/api/auth/me")
+async def get_current_user_profile(request: Request):
+    """Retrieve verified authentication metadata for the active caller."""
+    identity = get_request_identity(request)
+    return {
+        "success": True,
+        "user": identity.to_dict(),
+    }
+
+
+@app.get("/api/history")
+async def get_user_history_endpoint(request: Request, limit: int = 50):
+    """Fetch persistent server-side check history for the authenticated user/guest."""
+    identity = get_request_identity(request)
+    records = await history_manager.get_history(identity.user_id, limit=limit)
+    return {
+        "success": True,
+        "user": identity.to_dict(),
+        "total": len(records),
+        "history": records,
+    }
+
+
+@app.post("/api/history/clear")
+async def clear_user_history_endpoint(request: Request):
+    """Clear server-side history records for the authenticated user/guest."""
+    identity = get_request_identity(request)
+    await history_manager.clear_history(identity.user_id)
+    return {
+        "success": True,
+        "message": "History cleared successfully",
+        "user_id": identity.user_id,
+    }
+
+
+@app.delete("/api/history/{record_id}")
+async def delete_user_history_item_endpoint(record_id: str, request: Request):
+    """Delete a single specific history record from server storage."""
+    identity = get_request_identity(request)
+    success = await history_manager.delete_item(identity.user_id, record_id)
+    return {
+        "success": success,
+        "record_id": record_id,
+    }
+
+
+@app.get("/api/admin/users")
+async def get_all_users_stats_endpoint(request: Request):
+    """Return aggregated platform usage analytics across all recorded users."""
+    stats = await history_manager.get_stats()
+    return {
+        "success": True,
+        **stats,
     }
 
 
