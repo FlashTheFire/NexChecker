@@ -56,21 +56,20 @@ def decide(http_status: int, data: Any) -> str:
     if data.get("sec-cp-challenge") or data.get("provider") == "crypto" or http_status == 428:
         return "CHALLENGE"
 
-    raw_text = data.get("raw_text", "")
-    if list(data.keys()) == ["raw_text"]:
-        lower = raw_text.lower()
-        if any(x in lower for x in ("<html", "challenge", "captcha", "cloudflare", "cf-ray",
-                                     "just a moment", "checking your browser", "enable javascript", "site maintenance")):
+    raw_text = str(data.get("raw_text", "")).lower()
+    if "raw_text" in data:
+        if any(x in raw_text for x in (
+            "<html", "challenge", "captcha", "cloudflare", "cf-ray",
+            "just a moment", "checking your browser", "enable javascript",
+            "site maintenance", "oops! something went wrong", "contact your administrator"
+        )):
             return "CHALLENGE"
-        return "UNKNOWN"
 
     code = data.get("code")
     msg = (data.get("message") or "").lower()
-    if code == 2002 or "does not exist" in msg:
+    if code == 2002 or "does not exist" in msg or "account does not exist" in raw_text:
         return "NOT_REGISTERED"
-    if code == 2030:
-        return "REGISTERED"
-    if http_status == 200:
+    if code == 2030 or http_status == 200:
         return "REGISTERED"
     if any(x in msg for x in ("email", "password", "otp", "recover")) and "does not exist" not in msg:
         return "REGISTERED"
@@ -193,11 +192,26 @@ async def api_call(page, mobile: str) -> dict:
             "error": (api or {}).get("error", "empty"),
         }
 
-    data = api.get("json") or {"raw_text": api.get("text")}
+    json_data = api.get("json")
+    text_data = api.get("text", "")
+    if json_data is not None:
+        data = json_data
+    elif text_data:
+        try:
+            data = json.loads(text_data)
+        except Exception:
+            data = {"raw_text": text_data}
+    else:
+        data = {"raw_text": ""}
+
     http_status = api.get("http") or 0
     status = decide(http_status, data if isinstance(data, dict) else {})
+    is_reg = (status == "REGISTERED")
+    is_fresh = (status == "NOT_REGISTERED")
     return {
         "status": status,
+        "registered": is_reg,
+        "fresh": is_fresh,
         "mobile": mobile,
         "http": http_status,
         "raw": data,
