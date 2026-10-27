@@ -231,7 +231,7 @@ class CallbackHandler:
             if kind == "code":
                 text = sms_data.get("code", "")
                 if not text:
-                    order = await user_store.get_last_order(call.from_user.id)
+                    order = await user_store.get_order(call.from_user.id, order_id) or await user_store.get_last_order(call.from_user.id)
                     text  = order.get("last_otp", "")
                 await self.bot.answer_callback_query(
                     call.id,
@@ -241,7 +241,7 @@ class CallbackHandler:
             else:
                 text = sms_data.get("full_sms", "")
                 if not text:
-                    order = await user_store.get_last_order(call.from_user.id)
+                    order = await user_store.get_order(call.from_user.id, order_id) or await user_store.get_last_order(call.from_user.id)
                     text  = order.get("last_full_sms", "")
                 if text and len(text) > 196:
                     text = text[:196] + "…"
@@ -352,14 +352,14 @@ class CallbackHandler:
             return
 
         from core.sms_poller import stop_sms_poller, _result_markup_no_cancel, _sms_notification_text, _sms_msg_markup, _sms_store
-        stop_sms_poller(user_id)
+        stop_sms_poller(order_id)
         await checker._stop_session(user_id, cancel_pending=False)
 
-        order      = await user_store.get_last_order(user_id)
+        order      = await user_store.get_order(user_id, order_id) or await user_store.get_active_order(user_id, checker.pkey) or {}
         number     = order.get("number",  "")
         attempt    = order.get("attempt", 1)
         cost       = order.get("cost",    0)
-        myn_status = order.get("status", "REGISTERED")
+        myn_status = order.get("check_result") or order.get("myn_result") or order.get("status", "REGISTERED")
 
         from utils.platforms import get_platform
         platform = get_platform(checker.pkey)
@@ -398,7 +398,7 @@ class CallbackHandler:
                 return
 
             else:
-                await user_store.update_order(user_id, {"status": "REFUNDED"})
+                await user_store.update_order(user_id, {"status": "REFUNDED", "platform": checker.pkey}, order_id=order_id)
                 await safe_edit(
                     self.bot, chat_id, msg_id,
                     build_refunded_card(number, order_id, attempt, cost, platform=platform),
@@ -407,7 +407,7 @@ class CallbackHandler:
                 return
 
         # Normal cancel
-        await user_store.update_order(user_id, {"status": "REFUNDED"})
+        await user_store.update_order(user_id, {"status": "REFUNDED", "platform": checker.pkey}, order_id=order_id)
         immediate_ok = cancel_result is True
         suffix = "" if immediate_ok else f"\n<code>({sc('Refund Queued — Processed Within 60s')})</code>"
         await safe_edit(
@@ -440,10 +440,10 @@ class CallbackHandler:
         full_sms   = status_res.get("full_sms", "").strip()
         sender     = status_res.get("sender",   "").strip()
 
-        order      = await user_store.get_last_order(user_id)
+        order      = await user_store.get_order(user_id, order_id) or await user_store.get_active_order(user_id, checker.pkey) or {}
         number     = order.get("number",  "")
         attempt    = order.get("attempt", 1)
-        myn_status = order.get("myn_result") or order.get("status", "REGISTERED")
+        myn_status = order.get("check_result") or order.get("myn_result") or order.get("status", "REGISTERED")
         if myn_status not in ("REGISTERED", "NOT_REGISTERED"):
             myn_status = "REGISTERED"
         cost       = order.get("cost", 0)
