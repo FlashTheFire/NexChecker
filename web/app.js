@@ -15,7 +15,9 @@
     try {
       tg.ready();
       tg.expand();
-      if (tg.enableClosingConfirmation) tg.enableClosingConfirmation();
+      if (tg.isVersionAtLeast && tg.isVersionAtLeast('6.2') && tg.enableClosingConfirmation) {
+        tg.enableClosingConfirmation();
+      }
     } catch (e) { /* non-blocking */ }
   }
 
@@ -60,6 +62,7 @@
   const BRANDS = {
     zomato: {
       name: 'Zomato',
+      logo: 'https://upload.wikimedia.org/wikipedia/commons/7/75/Zomato_logo.png',
       primary: '#E23744',
       emoji: '🍽',
       scanEmoji: '🍽',
@@ -83,6 +86,7 @@
     },
     flipkart: {
       name: 'Flipkart',
+      logo: 'https://www.google.com/s2/favicons?domain=flipkart.com&sz=128',
       primary: '#2874F0',
       emoji: '🛍',
       scanEmoji: '🛍',
@@ -106,6 +110,7 @@
     },
     meesho: {
       name: 'Meesho',
+      logo: 'https://upload.wikimedia.org/wikipedia/commons/3/33/Meesho_logo.png',
       primary: '#9b3af7',
       emoji: '✨',
       scanEmoji: '✨',
@@ -129,6 +134,7 @@
     },
     bigbasket: {
       name: 'BigBasket',
+      logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a2/BigBasket_Logo.png',
       primary: '#A6CE39',
       emoji: '🥬',
       scanEmoji: '🥬',
@@ -152,6 +158,7 @@
     },
     myntra: {
       name: 'Myntra',
+      logo: 'https://www.google.com/s2/favicons?domain=myntra.com&sz=128',
       primary: '#FF3F6C',
       emoji: '👗',
       scanEmoji: '👗',
@@ -175,6 +182,7 @@
     },
     swiggy: {
       name: 'Swiggy',
+      logo: 'https://www.google.com/s2/favicons?domain=swiggy.com&sz=128',
       primary: '#FC8019',
       emoji: '🛵',
       scanEmoji: '🛵',
@@ -198,6 +206,7 @@
     },
     zepto: {
       name: 'Zepto',
+      logo: 'https://www.google.com/s2/favicons?domain=zeptonow.com&sz=128',
       primary: '#950EDB',
       emoji: '⚡',
       scanEmoji: '⚡',
@@ -221,6 +230,7 @@
     },
     amazon: {
       name: 'Amazon',
+      logo: 'https://upload.wikimedia.org/wikipedia/commons/d/de/Amazon_icon.png',
       primary: '#FF9900',
       emoji: '📦',
       scanEmoji: '📦',
@@ -260,6 +270,7 @@
     htmlRoot:          document.documentElement,
     brandFlash:        document.getElementById('brandFlash'),
     headerLogo:        document.getElementById('headerLogo'),
+    heroBrandCard:     document.getElementById('heroBrandCard'),
     bannerEmoji:       document.getElementById('bannerEmoji'),
     bannerEmojiImg:    document.getElementById('bannerEmojiImg'),
     bannerEmojiFallback: document.getElementById('bannerEmojiFallback'),
@@ -289,6 +300,7 @@
     flipCardInner:     document.getElementById('flipCardInner'),
     resultCard:        document.getElementById('resultCard'),
     resultHeader:      document.getElementById('resultHeader'),
+    resultBrandLogo:   document.getElementById('resultBrandLogo'),
     resultBrandName:   document.getElementById('resultBrandName'),
     resultStatusBadge: document.getElementById('resultStatusBadge'),
     resultStatusIcon:  document.getElementById('resultStatusIcon'),
@@ -339,6 +351,11 @@
     // 2) Set data-brand on <html>
     el.htmlRoot.setAttribute('data-brand', brandKey);
 
+    // 2b) Update header brand logo & wordmark
+    if (el.headerLogo) {
+      el.headerLogo.innerHTML = `<img src="${brand.logo}" alt="${brand.name}" style="height:26px; width:26px; object-fit:contain; border-radius:6px; margin-right:8px; vertical-align:middle; display:inline-block;" /><span style="font-size:17px; font-weight:800; letter-spacing:0.5px; color:var(--brand-header-text); line-height:1;">${brand.name.toUpperCase()}</span>`;
+    }
+
     // 3) Update chips active state
     document.querySelectorAll('.service-chip').forEach(c => c.classList.remove('active'));
     if (chipEl) chipEl.classList.add('active');
@@ -373,7 +390,8 @@
     // 9) Haptic feedback
     haptic('selection');
 
-    // 10) Reset any existing result to allow re-check with new brand
+    // 10) Restore hero input card and reset scanning/result views
+    if (el.heroBrandCard) el.heroBrandCard.style.display = 'block';
     el.flipCardOuter.style.display = 'none';
     el.flipCardInner.classList.remove('flipped');
     el.scanningContainer.style.display = 'none';
@@ -450,6 +468,7 @@
   el.btnClear.addEventListener('click', () => {
     el.mobileInput.value = '';
     clearError();
+    if (el.heroBrandCard) el.heroBrandCard.style.display = 'block';
     el.flipCardOuter.style.display = 'none';
     el.flipCardInner.classList.remove('flipped');
     haptic('selection');
@@ -481,6 +500,7 @@
 
   // Re-check
   el.btnRecheck.addEventListener('click', () => {
+    if (el.heroBrandCard) el.heroBrandCard.style.display = 'block';
     el.flipCardOuter.style.display = 'none';
     el.flipCardInner.classList.remove('flipped');
     el.mobileInput.value = '';
@@ -518,7 +538,7 @@
   // ── Haptic Feedback ─────────────────────────────────────────────────────────
   function haptic(type) {
     try {
-      if (tg?.HapticFeedback) {
+      if (tg && tg.isVersionAtLeast && tg.isVersionAtLeast('6.1') && tg.HapticFeedback) {
         if (type === 'success') tg.HapticFeedback.notificationOccurred('success');
         else if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
         else if (type === 'selection') tg.HapticFeedback.selectionChanged();
@@ -740,6 +760,10 @@
     _resultPhoneRaw = '+91 ' + phone.slice(0,5) + ' ' + phone.slice(5);
 
     // Result fields
+    if (el.resultBrandLogo) {
+      el.resultBrandLogo.src = brand.logo;
+      el.resultBrandLogo.alt = brand.name;
+    }
     el.resultBrandName.textContent = brand.name.toUpperCase();
     el.resPlatformVal.textContent  = brand.name;
     el.resStatusVal.textContent    = isRegistered ? 'Registered' : 'Not Registered';
