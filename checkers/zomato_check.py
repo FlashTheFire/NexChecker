@@ -132,71 +132,161 @@ def pretty_print(result: dict) -> None:
 
 
 # ------------------------------------------------------------
-# Fallback Direct Account Resolver
 # ------------------------------------------------------------
-def _load_direct_tokens(limit: int = 5) -> List[str]:
-    """Find valid logged-in Zomato account tokens from the accounts directory."""
+# Fallback Direct Account Resolver (Auto-Refreshing)
+# ------------------------------------------------------------
+ZOMATO_API_KEY = "7749b19667964b87a3efc739e254ada2"
+ZOMATO_AUTH_CLIENT_ID = "5276d7f1-910b-4243-92ea-d27e758ad02b"
+ZOMATO_APP_CLIENT_ID = "zomato_android_v2"
+REFRESH_URL = "https://accounts.zomato.com/token/refresh"
+
+
+def _load_accounts(limit: int = 5) -> List[Dict[str, Any]]:
+    """Find valid Zomato accounts with access or refresh tokens."""
     acc_dir = get_accounts_dir()
     if not acc_dir or not acc_dir.is_dir():
         return []
 
-    tokens: List[str] = []
+    results: List[Dict[str, Any]] = []
     json_files = list(acc_dir.glob("*.json"))
     for f in sorted(json_files, key=lambda x: x.stat().st_mtime, reverse=True):
         try:
             with open(f, encoding="utf-8") as fp:
                 data = json.load(fp)
-                token = (
-                    data.get("accessToken")
-                    or data.get("access_token")
-                    or data.get("token")
-                    or data.get("session", {}).get("accessToken")
-                )
-                if token and str(token) not in tokens:
-                    tokens.append(str(token))
-                    if len(tokens) >= limit:
+                if data.get("refreshToken") or data.get("accessToken"):
+                    data["_file_path"] = str(f)
+                    results.append(data)
+                    if len(results) >= limit:
                         break
         except Exception:
             continue
-    return tokens
+    return results
 
 
-def _check_direct_contact_sync(m10: str, token: str) -> dict:
-    """Execute direct Zomato contact-sync check with token."""
-    encoded_name = encode_phone_to_name(m10)
+def _refresh_token(account: Dict[str, Any]) -> Optional[str]:
+    """Request a fresh access token from Zomato OAuth server using refresh token."""
+    refresh_token = account.get("refreshToken")
+    if not refresh_token:
+        return None
+
+    dev = account.get("device", {})
     headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/131.0.0.0 Safari/537.36"
-        ),
-        "Accept": "application/json, text/plain, */*",
+        "User-Agent": f"Dalvik/2.1.0 (Linux; U; Android {dev.get('osVersion', '14')}; {dev.get('model', 'SM-M546B')} Build/{dev.get('buildId', 'TP1A.220624.014')})",
+        "Accept": "application/json",
+        "Accept-Language": "en-IN",
+        "X-Zomato-API-Key": ZOMATO_API_KEY,
+        "X-Zomato-Client-Id": ZOMATO_AUTH_CLIENT_ID,
+        "X-Client-Id": ZOMATO_AUTH_CLIENT_ID,
+        "X-Zomato-UUID": dev.get("deviceId", "bcde3e5c-0652-4343-ac11-9f8896e86633"),
+        "X-Android-Id": dev.get("androidId", "bcde3e5c06525343"),
+        "X-Zomato-App-Version": dev.get("appVersion", "19.9.4"),
+        "x-zomato-app": "consumer",
+        "Origin": "https://accounts.zomato.com",
+        "X-Zomato-Refresh-Token": refresh_token,
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
+    if account.get("accessToken"):
+        headers["Authorization"] = f"Bearer {account['accessToken']}"
+        headers["X-Zomato-Access-Token"] = account["accessToken"]
+
+    try:
+        resp = requests.post(
+            REFRESH_URL,
+            headers=headers,
+            data={"scope": "offline openid", "rurl": "https://api.zomato.com"},
+            timeout=TIMEOUT,
+        )
+        if resp.status_code == 200:
+            res_json = resp.json()
+            new_token = res_json.get("token", {}).get("access_token") or res_json.get("access_token")
+            if new_token:
+                account["accessToken"] = new_token
+                file_path = account.get("_file_path")
+                if file_path:
+                    try:
+                        clean_data = {k: v for k, v in account.items() if k != "_file_path"}
+                        with open(file_path, "w", encoding="utf-8") as fp:
+                            json.dump(clean_data, fp, indent=2)
+                    except Exception:
+                        pass
+                return new_token
+    except Exception:
+        pass
+    return None
+
+
+def _build_api_headers(account: Dict[str, Any], token: str) -> Dict[str, str]:
+    """Build authentic Zomato Android app headers."""
+    import uuid
+    dev = account.get("device", {})
+    return {
+        "User-Agent": f"Zomato/{dev.get('appVersion', '19.9.4')} (Linux; U; Android {dev.get('osVersion', '14')}; {dev.get('model', 'SM-M546B')} Build/{dev.get('buildId', 'TP1A.220624.014')})",
         "Content-Type": "application/json",
-        "Origin": "https://www.zomato.com",
-        "Referer": "https://www.zomato.com/",
-        "access_token": token,
-        "x-access-token": token,
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "en-IN,en;q=0.9,hi-IN;q=0.8,hi;q=0.7",
+        "X-Zomato-API-Key": ZOMATO_API_KEY,
+        "X-Zomato-Client-Id": ZOMATO_AUTH_CLIENT_ID,
+        "X-Client-Id": ZOMATO_APP_CLIENT_ID,
+        "X-Zomato-UUID": dev.get("deviceId", "bcde3e5c-0652-4343-ac11-9f8896e86633"),
+        "X-Android-Id": dev.get("androidId", "bcde3e5c06525343"),
+        "X-App-Session-Id": dev.get("sessionId", str(uuid.uuid4())),
+        "X-Zomato-App-Version": str(dev.get("appVersionCode", "1994")),
+        "X-Zomato-App-Version-Code": str(dev.get("appVersionCode", "1994")),
+        "X-App-Language": "en",
+        "X-Device-Language": "en-IN",
+        "X-APP-APPEARANCE": "DARK",
+        "X-APP-THEME": "default",
+        "X-SYSTEM-APPEARANCE": "DARK",
+        "X-City-Id": "4",
+        "X-O2-City-Id": "4",
+        "X-Present-Lat": "12.9716",
+        "X-Present-Long": "77.5946",
+        "X-Request-Id": str(uuid.uuid4()),
+        "X-Request-Tracking-Id": str(uuid.uuid4()),
         "Authorization": f"Bearer {token}",
+        "X-Zomato-Access-Token": token,
+        "X-Access-Token": token,
     }
 
-    # 1. Sync contact
+
+def _check_account_sync(m10: str, account: Dict[str, Any]) -> dict:
+    """Execute live contact-sync check using an account with auto-refresh."""
+    encoded_name = encode_phone_to_name(m10)
+    token = account.get("accessToken")
+
+    # 1. Ensure token exists
+    if not token:
+        token = _refresh_token(account)
+    if not token:
+        return {"status": "AUTH_ERROR"}
+
+    # 2. Sync contact
+    sync_payload = {
+        "flow_type": "revamped_flow",
+        "contacts_access_level": "full_access",
+        "contacts": [
+            {
+                "phone_numbers": [f"+91{m10}", m10],
+                "name": encoded_name,
+                "id": "1",
+            }
+        ],
+    }
+
+    headers = _build_api_headers(account, token)
     try:
-        sync_payload = {
-            "flow_type": "revamped_flow",
-            "contacts_access_level": "full_access",
-            "contacts": [
-                {
-                    "phone_numbers": [f"+91{m10}", m10],
-                    "name": encoded_name,
-                    "id": "1",
-                }
-            ],
-        }
-        requests.post(SYNC_ENDPOINT, headers=headers, json=sync_payload, timeout=TIMEOUT)
+        s_resp = requests.post(SYNC_ENDPOINT, headers=headers, json=sync_payload, timeout=TIMEOUT)
+        if s_resp.status_code in (400, 401, 403):
+            refreshed = _refresh_token(account)
+            if refreshed:
+                token = refreshed
+                headers = _build_api_headers(account, token)
+                requests.post(SYNC_ENDPOINT, headers=headers, json=sync_payload, timeout=TIMEOUT)
     except Exception:
         pass
 
-    # 2. Get contacts recommendations
+    # 3. Query contact recommendations
     get_payload = {
         "request_type": "initial",
         "additional_filters": {},
@@ -211,9 +301,16 @@ def _check_direct_contact_sync(m10: str, token: str) -> dict:
 
     try:
         r = requests.post(GET_ENDPOINT, headers=headers, json=get_payload, timeout=TIMEOUT)
-        if r.status_code in (401, 403):
+        if r.status_code in (400, 401, 403):
+            refreshed = _refresh_token(account)
+            if refreshed:
+                token = refreshed
+                headers = _build_api_headers(account, token)
+                r = requests.post(GET_ENDPOINT, headers=headers, json=get_payload, timeout=TIMEOUT)
+
+        if r.status_code != 200:
             return {"status": "AUTH_ERROR", "code": r.status_code}
-        data = r.json() if r.status_code == 200 else {}
+        data = r.json()
     except Exception as exc:
         return {"status": "ERROR", "mobile": m10, "error": str(exc)}
 
@@ -235,10 +332,12 @@ def _check_direct_contact_sync(m10: str, token: str) -> dict:
                         return {
                             "status": "NOT_REGISTERED",
                             "registered": False,
+                            "fresh": True,
                             "mobile": m10,
+                            "platform": "zomato",
                             "subtitle": subtitle,
                         }
-                    # Extract owner name & recommendation count
+                    # Registered user
                     owner_name = None
                     try:
                         deeplink = item.get("click_action", {}).get("deeplink", {}).get("url", "")
@@ -251,7 +350,7 @@ def _check_direct_contact_sync(m10: str, token: str) -> dict:
                     except Exception:
                         pass
 
-                    rec_count = 1
+                    rec_count = 0
                     try:
                         import re
                         m = re.search(r"(\d+)\s+recommendation", subtitle, re.I)
@@ -263,18 +362,24 @@ def _check_direct_contact_sync(m10: str, token: str) -> dict:
                     return {
                         "status": "REGISTERED",
                         "registered": True,
+                        "fresh": False,
                         "mobile": m10,
+                        "platform": "zomato",
                         "subtitle": subtitle,
-                        "name": owner_name or item.get("title", {}).get("text"),
+                        "name": owner_name or "Zomato User",
                         "recommendations": rec_count,
                     }
 
     return {
         "status": "NOT_REGISTERED",
         "registered": False,
+        "fresh": True,
         "mobile": m10,
+        "platform": "zomato",
         "note": "Not found in Zomato registered contacts list",
     }
+
+
 # ------------------------------------------------------------
 # Core Check Function
 # ------------------------------------------------------------
@@ -310,7 +415,9 @@ def check_zomato(mobile: str) -> dict:
             return {
                 "status": "REGISTERED" if is_reg else "NOT_REGISTERED",
                 "registered": is_reg,
+                "fresh": not is_reg,
                 "mobile": m10,
+                "platform": "zomato",
                 "recommendations": data.get("recommendations", 0),
                 "name": data.get("name", ""),
                 "subtitle": data.get("subtitle", ""),
@@ -320,11 +427,11 @@ def check_zomato(mobile: str) -> dict:
         # Microservice unavailable, attempt fallback
         pass
 
-    # Method 2: Direct contact sync via stored account tokens
-    tokens = _load_direct_tokens(limit=5)
-    for token in tokens:
+    # Method 2: Direct contact sync via stored accounts with auto-refresh
+    accounts = _load_accounts(limit=5)
+    for account in accounts:
         try:
-            res = _check_direct_contact_sync(m10, token)
+            res = _check_account_sync(m10, account)
             if res.get("status") == "AUTH_ERROR":
                 continue
             return res
@@ -334,6 +441,7 @@ def check_zomato(mobile: str) -> dict:
     return {
         "status": "ERROR",
         "mobile": m10,
+        "platform": "zomato",
         "error": "Zomato checker service offline and no valid account token found",
     }
 
