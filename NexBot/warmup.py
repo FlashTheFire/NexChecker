@@ -21,11 +21,12 @@ import argparse
 import asyncio
 import json
 import time
+import os
 from pathlib import Path
 
 _NEXCHECKER_DIR = Path(__file__).resolve().parent.parent
-STATE_FILE      = _NEXCHECKER_DIR / "myntra_state.json"
-BOT_PROFILE_DIR = _NEXCHECKER_DIR / "myntra_bot_profile"
+STATE_FILE      = Path(os.getenv("MYNTRA_STATE_FILE", str(_NEXCHECKER_DIR / "myntra_state.json")))
+BOT_PROFILE_DIR = Path(os.getenv("MYNTRA_BOT_PROFILE", str(_NEXCHECKER_DIR / "myntra_bot_profile")))
 
 
 async def warmup(headless: bool = False) -> None:

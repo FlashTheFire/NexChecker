@@ -17,11 +17,12 @@ import os
 from pathlib import Path
 from typing import Any, Dict
 
+import os
 logger = logging.getLogger(__name__)
 
 # Resolve bb_state.json relative to the NexChecker root (one level above NexBot)
 _NEXCHECKER_DIR = Path(__file__).resolve().parent.parent.parent
-_BB_STATE_FILE  = _NEXCHECKER_DIR / "bb_state.json"
+_BB_STATE_FILE  = Path(os.getenv("BB_STATE_FILE", str(_NEXCHECKER_DIR / "bb_state.json")))
 
 
 class BigBasketChecker:
