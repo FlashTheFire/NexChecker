@@ -43,19 +43,22 @@ ZOMATO_CHECKER_URL = os.getenv(
 
 # Detect accounts directory in priority order:
 # 1. ZOMATO_ACCOUNTS_DIR environment variable
-# 2. Local sibling repo: PROJECT_ROOT.parent / "NexZomato" / "server" / "data" / "accounts"
-# 3. Dedicated in-repo directory: PROJECT_ROOT / "data" / "zomato_accounts"
-# 4. Fallback in-repo directory: PROJECT_ROOT / "zomato_accounts"
-_env_accounts = os.getenv("ZOMATO_ACCOUNTS_DIR")
-if _env_accounts:
-    ZOMATO_ACCOUNTS_DIR = _env_accounts
-else:
-    _candidates = [
-        PROJECT_ROOT.parent / "NexZomato" / "server" / "data" / "accounts",
-        PROJECT_ROOT / "data" / "zomato_accounts",
+# 2. In-repo directory: PROJECT_ROOT / "zomato_accounts"
+# 3. In-repo data directory: PROJECT_ROOT / "data" / "zomato_accounts"
+# 4. Sibling repo: PROJECT_ROOT.parent / "NexZomato" / "server" / "data" / "accounts"
+def get_accounts_dir() -> Optional[Path]:
+    env_dir = os.getenv("ZOMATO_ACCOUNTS_DIR")
+    if env_dir and Path(env_dir).is_dir():
+        return Path(env_dir)
+    candidates = [
         PROJECT_ROOT / "zomato_accounts",
+        PROJECT_ROOT / "data" / "zomato_accounts",
+        PROJECT_ROOT.parent / "NexZomato" / "server" / "data" / "accounts",
     ]
-    ZOMATO_ACCOUNTS_DIR = str(next((p for p in _candidates if p.is_dir()), _candidates[0]))
+    for c in candidates:
+        if c.is_dir():
+            return c
+    return None
 
 ZOMATO_API_BASE = "https://api.zomato.com"
 SYNC_ENDPOINT = f"{ZOMATO_API_BASE}/gw/user-preference/recommendation/sync-contacts"
@@ -103,24 +106,27 @@ def pretty_print(result: dict) -> None:
     status = result.get("status", "UNKNOWN")
     mobile = result.get("mobile", "")
     recs = result.get("recommendations", 0)
+    name = result.get("name", "")
     if status == "REGISTERED":
-        print("❰ \u2705 \ud835\udc00\ud835\udc02\ud835\udc02\ud835\udc0e\ud835\udc14\ud835\udc0d\ud835\udc13 \ud835\udc05\ud835\udc0e\ud835\udc14\ud835\udc0d\ud835\udc03 \ud83c\udfaf ❱")
-        print("\u250f\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2513")
-        print("\u2713 \u0283\u1d1b\u1d00\u1d1b\u1d1cs \u0280\u1d07\u0242\u026as\u1d1b\u1d07\u0280\u1d07\u1d05")
-        print("\ud83c\udfaf \u1d18\u029f\u1d00\u1d1b\ua730\u1d0f\u0280\u1d0d \ud83c\udf7d \u1d22\u1d0f\u1d0d\u1d00\u1d1b\u1d0f")
-        print(f"\ud83d\udcf1 \u0274\u1d1c\u1d0d\u0299\u1d07\u0280 {mobile}")
+        print("❰ [OK] REGISTERED ❱")
+        print("┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓")
+        print(f"✓ Status   : REGISTERED")
+        print(f"🎯 Platform : Zomato 🍽")
+        print(f"📱 Number   : {mobile}")
+        if name:
+            print(f"👤 Name     : {name}")
         if recs:
-            print(f"\ud83d\udcca \u0280\u1d07\u1d04\u1d0f\u1d0d\u1d0d\u1d07\u0274\u1d05\u1d00\u1d1b\u026a\u1d0f\u0274\u0283 {recs}")
-        print("\u2517\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u251b")
-        print("\ud83c\udfaf Active Zomato account detected.")
+            print(f"📊 Recs     : {recs}")
+        print("┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛")
+        print("Active Zomato account detected.")
     elif status == "NOT_REGISTERED":
-        print("❰ \u274c \ud835\udc0d\ud835\udc0e\ud835\udc13 \ud835\udc11\ud835\udc04\ud835\udc06\ud835\udc08\ud835\udc12\ud835\udc13\ud835\udc04\ud835\udc11\ud835\udc04\ud835\udc03 ❱")
-        print("\u250f\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2513")
-        print("\u2717 \u0283\u1d1b\u1d00\u1d1b\u1d1cs \u1d1c\u0274\u0280\u1d07\u0242\u026as\u1d1b\u1d07\u0280\u1d07\u1d05")
-        print("\ud83c\udfaf \u1d18\u029f\u1d00\u1d1b\ua730\u1d0f\u0280\u1d0d \ud83c\udf7d \u1d22\u1d0f\u1d0d\u1d00\u1d1b\u1d0f")
-        print(f"\ud83d\udcf1 \u0274\u1d1c\u1d0d\u0299\u1d07\u0280 {mobile}")
-        print("\u2517\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u251b")
-        print("\u2705 No active Zomato account on this number.")
+        print("❰ [X] NOT REGISTERED ❱")
+        print("┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓")
+        print(f"✗ Status   : NOT_REGISTERED")
+        print(f"🎯 Platform : Zomato 🍽")
+        print(f"📱 Number   : {mobile}")
+        print("┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛")
+        print("No active Zomato account on this number.")
     else:
         print(f"Result: {result}")
 
@@ -128,12 +134,13 @@ def pretty_print(result: dict) -> None:
 # ------------------------------------------------------------
 # Fallback Direct Account Resolver
 # ------------------------------------------------------------
-def _load_direct_token() -> Optional[str]:
-    """Find a valid logged-in Zomato account token from the accounts directory."""
-    acc_dir = Path(ZOMATO_ACCOUNTS_DIR)
-    if not acc_dir.is_dir():
-        return None
+def _load_direct_tokens(limit: int = 5) -> List[str]:
+    """Find valid logged-in Zomato account tokens from the accounts directory."""
+    acc_dir = get_accounts_dir()
+    if not acc_dir or not acc_dir.is_dir():
+        return []
 
+    tokens: List[str] = []
     json_files = list(acc_dir.glob("*.json"))
     for f in sorted(json_files, key=lambda x: x.stat().st_mtime, reverse=True):
         try:
@@ -145,11 +152,13 @@ def _load_direct_token() -> Optional[str]:
                     or data.get("token")
                     or data.get("session", {}).get("accessToken")
                 )
-                if token:
-                    return str(token)
+                if token and str(token) not in tokens:
+                    tokens.append(str(token))
+                    if len(tokens) >= limit:
+                        break
         except Exception:
             continue
-    return None
+    return tokens
 
 
 def _check_direct_contact_sync(m10: str, token: str) -> dict:
@@ -202,6 +211,8 @@ def _check_direct_contact_sync(m10: str, token: str) -> dict:
 
     try:
         r = requests.post(GET_ENDPOINT, headers=headers, json=get_payload, timeout=TIMEOUT)
+        if r.status_code in (401, 403):
+            return {"status": "AUTH_ERROR", "code": r.status_code}
         data = r.json() if r.status_code == 200 else {}
     except Exception as exc:
         return {"status": "ERROR", "mobile": m10, "error": str(exc)}
@@ -227,12 +238,35 @@ def _check_direct_contact_sync(m10: str, token: str) -> dict:
                             "mobile": m10,
                             "subtitle": subtitle,
                         }
+                    # Extract owner name & recommendation count
+                    owner_name = None
+                    try:
+                        deeplink = item.get("click_action", {}).get("deeplink", {}).get("url", "")
+                        if "friend_recommendation_params=" in deeplink:
+                            import urllib.parse
+                            raw_p = urllib.parse.unquote(deeplink.split("friend_recommendation_params=")[1])
+                            p_json = json.loads(raw_p)
+                            if p_json.get("owner_user_name") and not p_json["owner_user_name"].startswith("NexUser"):
+                                owner_name = p_json["owner_user_name"]
+                    except Exception:
+                        pass
+
+                    rec_count = 1
+                    try:
+                        import re
+                        m = re.search(r"(\d+)\s+recommendation", subtitle, re.I)
+                        if m:
+                            rec_count = int(m.group(1))
+                    except Exception:
+                        pass
+
                     return {
                         "status": "REGISTERED",
                         "registered": True,
                         "mobile": m10,
                         "subtitle": subtitle,
-                        "name": item.get("title", {}).get("text"),
+                        "name": owner_name or item.get("title", {}).get("text"),
+                        "recommendations": rec_count,
                     }
 
     return {
@@ -241,8 +275,6 @@ def _check_direct_contact_sync(m10: str, token: str) -> dict:
         "mobile": m10,
         "note": "Not found in Zomato registered contacts list",
     }
-
-
 # ------------------------------------------------------------
 # Core Check Function
 # ------------------------------------------------------------
@@ -288,13 +320,16 @@ def check_zomato(mobile: str) -> dict:
         # Microservice unavailable, attempt fallback
         pass
 
-    # Method 2: Direct contact sync via stored account token
-    token = _load_direct_token()
-    if token:
+    # Method 2: Direct contact sync via stored account tokens
+    tokens = _load_direct_tokens(limit=5)
+    for token in tokens:
         try:
-            return _check_direct_contact_sync(m10, token)
-        except Exception as exc:
-            return {"status": "ERROR", "mobile": m10, "error": str(exc)}
+            res = _check_direct_contact_sync(m10, token)
+            if res.get("status") == "AUTH_ERROR":
+                continue
+            return res
+        except Exception:
+            continue
 
     return {
         "status": "ERROR",

@@ -320,7 +320,7 @@
                 <div class="result-body">
                   <div class="verdict-row">
                     <div class="verdict-emoji-wrap" id="verdictEmojiWrap">
-                      <img id="verdictEmojiImg" src="" alt="" onerror="this.style.display='none'; document.getElementById('verdictEmojiFallback').style.display='flex'">
+                      <img id="verdictEmojiImg" src="" alt="" onerror="this.style.display='none'; var vf=document.getElementById('verdictEmojiFallback'); if(vf){ vf.style.display='flex'; }">
                       <span id="verdictEmojiFallback" class="verdict-emoji-fallback" style="display:none;"></span>
                     </div>
                     <div class="verdict-text">
