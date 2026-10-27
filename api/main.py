@@ -27,7 +27,8 @@ from pydantic import BaseModel, Field
 # Ensure project root is in sys.path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 NEXBOT_ROOT = PROJECT_ROOT / "NexBot"
-for p in (str(PROJECT_ROOT), str(NEXBOT_ROOT)):
+CHECKERS_ROOT = PROJECT_ROOT / "checkers"
+for p in (str(PROJECT_ROOT), str(NEXBOT_ROOT), str(CHECKERS_ROOT)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
@@ -35,31 +36,47 @@ for p in (str(PROJECT_ROOT), str(NEXBOT_ROOT)):
 # Import Checker Functions
 # ------------------------------------------------------------
 try:
-    from zomato_check import check_zomato
+    from checkers.zomato_check import check_zomato
 except Exception:
-    check_zomato = None
+    try:
+        from zomato_check import check_zomato
+    except Exception:
+        check_zomato = None
 
 try:
-    from flipkart_check import check_flipkart
+    from checkers.flipkart_check import check_flipkart
 except Exception:
-    check_flipkart = None
+    try:
+        from flipkart_check import check_flipkart
+    except Exception:
+        check_flipkart = None
 
 try:
-    from bigbasket_check import check_bigbasket
+    from checkers.bigbasket_check import check_bigbasket
 except Exception:
-    check_bigbasket = None
+    try:
+        from bigbasket_check import check_bigbasket
+    except Exception:
+        check_bigbasket = None
 
 try:
-    from myntra_check import check_myntra
+    from checkers.myntra_check import check_myntra
 except Exception:
-    check_myntra = None
+    try:
+        from myntra_check import check_myntra
+    except Exception:
+        check_myntra = None
 
 try:
-    from foja_client import FojaClient, clean_phone
+    from checkers.foja_client import FojaClient, clean_phone
     _foja = FojaClient()
 except Exception:
-    _foja = None
-    clean_phone = None
+    try:
+        from foja_client import FojaClient, clean_phone
+        _foja = FojaClient()
+    except Exception:
+        _foja = None
+        clean_phone = None
 
 
 # ------------------------------------------------------------
