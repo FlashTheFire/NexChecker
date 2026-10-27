@@ -1,27 +1,33 @@
 <!DOCTYPE html>
 <html lang="en" data-brand="zomato">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0f0f10">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="description" content="NexChecker — Multi-Service Brand Number Checker. Instant 0-OTP phone verification across Zomato, Flipkart, Meesho, BigBasket, Myntra, Swiggy, Zepto, Amazon.">
+  <meta name="description"
+    content="NexChecker — Multi-Service Brand Number Checker. Instant 0-OTP phone verification across Zomato, Flipkart, Meesho, BigBasket, Myntra, Swiggy, Zepto, Amazon.">
   <title>NexChecker — Multi-Brand Number Checker</title>
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
 
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/7/75/Zomato_logo.png">
+  <link rel="icon" type="image/png" href="/static/src/logos/zomato.png">
 
   <!-- Stylesheet -->
   <link rel="stylesheet" href="/static/style.css?v=2.2">
 </head>
+
 <body>
   <!-- Brand Transition Flash Layer -->
   <div id="brandFlash" class="brand-transition-flash"></div>
@@ -41,8 +47,11 @@
         <div class="brand-row">
           <div class="logo-wrap">
             <div class="brand-logo-svg" id="headerLogo">
-                <img id="headerLogoImg" src="https://upload.wikimedia.org/wikipedia/commons/7/75/Zomato_logo.png" alt="Zomato" style="height:26px; width:26px; object-fit:contain; border-radius:6px; margin-right:8px; vertical-align:middle; display:inline-block;" />
-                <span id="headerLogoText" style="font-size:17px; font-weight:800; letter-spacing:0.5px; color:var(--brand-header-text); line-height:1;">ZOMATO</span>
+              <img id="headerLogoImg" src="/static/src/logos/zomato.png"
+                alt="Zomato"
+                style="height:26px; width:26px; object-fit:contain; border-radius:6px; margin-right:8px; vertical-align:middle; display:inline-block;" />
+              <span id="headerLogoText"
+                style="font-size:17px; font-weight:800; letter-spacing:0.5px; color:var(--brand-header-text); line-height:1;">ZOMATO</span>
             </div>
             <span class="checker-pill">CHECKER</span>
           </div>
@@ -58,7 +67,8 @@
         <div class="location-row" id="locationRow">
           <div class="loc-icon-wrap">
             <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style="color:rgba(255,255,255,0.9)">
-              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+              <path
+                d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
             </svg>
           </div>
           <div class="loc-meta">
@@ -66,7 +76,7 @@
             <div class="loc-title">
               <span id="locAddressText">India — All Platforms</span>
               <svg class="chevron-svg" viewBox="0 0 24 24" width="12" height="12" fill="rgba(255,255,255,0.7)">
-                <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" />
               </svg>
             </div>
           </div>
@@ -81,7 +91,7 @@
           <!-- Zomato — official logo -->
           <button class="service-chip active" data-platform="zomato" onclick="switchBrand('zomato', this)">
             <div class="chip-logo" style="background:#E23744;">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/7/75/Zomato_logo.png" alt="Zomato" class="chip-img">
+              <img src="/static/src/logos/zomato.png" alt="Zomato" class="chip-img">
             </div>
             <span class="chip-name">Zomato</span>
           </button>
@@ -89,7 +99,7 @@
           <!-- Flipkart — official logo -->
           <button class="service-chip" data-platform="flipkart" onclick="switchBrand('flipkart', this)">
             <div class="chip-logo" style="background:#2874F0;">
-              <img src="https://www.google.com/s2/favicons?domain=flipkart.com&sz=128" alt="Flipkart" class="chip-img">
+              <img src="/static/src/logos/flipkart.png" alt="Flipkart" class="chip-img">
             </div>
             <span class="chip-name">Flipkart</span>
           </button>
@@ -97,15 +107,15 @@
           <!-- Meesho — official logo -->
           <button class="service-chip" data-platform="meesho" onclick="switchBrand('meesho', this)">
             <div class="chip-logo" style="background:linear-gradient(135deg,#580A46,#9b3af7);">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/3/33/Meesho_logo.png" alt="Meesho" class="chip-img">
+              <img src="/static/src/logos/meesho.png" alt="Meesho" class="chip-img">
             </div>
             <span class="chip-name">Meesho</span>
           </button>
 
           <!-- BigBasket — official logo -->
           <button class="service-chip" data-platform="bigbasket" onclick="switchBrand('bigbasket', this)">
-            <div class="chip-logo" style="background:#231F20; padding:3px;">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/BigBasket_Logo.png" alt="BigBasket" class="chip-img" style="object-fit:contain;">
+            <div class="chip-logo" style="background:#84c225;">
+              <img src="/static/src/logos/bigbasket.png" alt="BigBasket" class="chip-img" style="object-fit:cover;">
             </div>
             <span class="chip-name">BigBasket</span>
           </button>
@@ -113,7 +123,7 @@
           <!-- Myntra — official logo -->
           <button class="service-chip" data-platform="myntra" onclick="switchBrand('myntra', this)">
             <div class="chip-logo" style="background:#282C3F;">
-              <img src="https://www.google.com/s2/favicons?domain=myntra.com&sz=128" alt="Myntra" class="chip-img">
+              <img src="/static/src/logos/myntra.png" alt="Myntra" class="chip-img">
             </div>
             <span class="chip-name">Myntra</span>
           </button>
@@ -121,7 +131,7 @@
           <!-- Swiggy — official logo -->
           <button class="service-chip" data-platform="swiggy" onclick="switchBrand('swiggy', this)">
             <div class="chip-logo" style="background:#1C1C1C;">
-              <img src="https://www.google.com/s2/favicons?domain=swiggy.com&sz=128" alt="Swiggy" class="chip-img">
+              <img src="/static/src/logos/swiggy.png" alt="Swiggy" class="chip-img">
             </div>
             <span class="chip-name">Swiggy</span>
           </button>
@@ -129,7 +139,7 @@
           <!-- Zepto — official logo -->
           <button class="service-chip" data-platform="zepto" onclick="switchBrand('zepto', this)">
             <div class="chip-logo" style="background:#1A1A1A;">
-              <img src="https://www.google.com/s2/favicons?domain=zeptonow.com&sz=128" alt="Zepto" class="chip-img">
+              <img src="/static/src/logos/zepto.png" alt="Zepto" class="chip-img">
             </div>
             <span class="chip-name">Zepto</span>
           </button>
@@ -137,7 +147,7 @@
           <!-- Amazon — official logo -->
           <button class="service-chip" data-platform="amazon" onclick="switchBrand('amazon', this)">
             <div class="chip-logo" style="background:#131A22;">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/d/de/Amazon_icon.png" alt="Amazon" class="chip-img">
+              <img src="/static/src/logos/amazon.png" alt="Amazon" class="chip-img">
             </div>
             <span class="chip-name">Amazon</span>
           </button>
@@ -165,8 +175,10 @@
 
             <!-- Animated brand emoji in corner -->
             <div class="banner-emoji" id="bannerEmoji">
-              <img id="bannerEmojiImg" src="" alt="" onerror="this.style.display='none'; var f=document.getElementById('bannerEmojiFallback'); if(f){ f.style.display='flex'; }">
-              <span id="bannerEmojiFallback" style="display:none; font-size:24px; align-items:center; justify-content:center; width:100%; height:100%;">🍽</span>
+              <img id="bannerEmojiImg" src="" alt=""
+                onerror="this.style.display='none'; var f=document.getElementById('bannerEmojiFallback'); if(f){ f.style.display='flex'; }">
+              <span id="bannerEmojiFallback"
+                style="display:none; font-size:24px; align-items:center; justify-content:center; width:100%; height:100%;">🍽</span>
             </div>
 
             <div class="banner-center">
@@ -190,15 +202,8 @@
                 <span class="flag-icon">🇮🇳</span>
                 <span class="prefix-code">+91</span>
               </div>
-              <input
-                type="tel"
-                id="mobileInput"
-                class="mobile-input"
-                placeholder="98765 43210"
-                maxlength="14"
-                autocomplete="tel"
-                inputmode="numeric"
-              >
+              <input type="tel" id="mobileInput" class="mobile-input" placeholder="98765 43210" maxlength="14"
+                autocomplete="tel" inputmode="numeric">
             </div>
 
             <!-- Demo Numbers (Hidden) -->
@@ -250,7 +255,8 @@
                 <!-- Result Header -->
                 <div class="result-header" id="resultHeader">
                   <div style="display:flex; align-items:center; gap:8px;">
-                    <img id="resultBrandLogo" src="https://upload.wikimedia.org/wikipedia/commons/7/75/Zomato_logo.png" alt="Zomato" style="width:22px; height:22px; object-fit:contain; border-radius:5px;">
+                    <img id="resultBrandLogo" src="/static/src/logos/zomato.png"
+                      alt="Zomato" style="width:22px; height:22px; object-fit:contain; border-radius:5px;">
                     <span class="result-brand-name" id="resultBrandName">ZOMATO</span>
                   </div>
                   <div class="result-status-badge" id="resultStatusBadge">
@@ -262,7 +268,8 @@
                 <div class="result-body">
                   <div class="verdict-row">
                     <div class="verdict-emoji-wrap" id="verdictEmojiWrap">
-                      <img id="verdictEmojiImg" src="" alt="" onerror="this.style.display='none'; var vf=document.getElementById('verdictEmojiFallback'); if(vf){ vf.style.display='flex'; }">
+                      <img id="verdictEmojiImg" src="" alt=""
+                        onerror="this.style.display='none'; var vf=document.getElementById('verdictEmojiFallback'); if(vf){ vf.style.display='flex'; }">
                       <span id="verdictEmojiFallback" class="verdict-emoji-fallback" style="display:none;"></span>
                     </div>
                     <div class="verdict-text">
@@ -294,11 +301,15 @@
                   <!-- Phone number (tap to copy) -->
                   <div class="result-phone-tap" id="resultPhoneTap">
                     <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style="color:var(--text-muted)">
-                      <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                      <path
+                        d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
                     </svg>
                     <span class="result-phone-num" id="resultPhoneNum">+91 00000 00000</span>
                     <div class="copy-hint">
-                      <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                      <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12">
+                        <path
+                          d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                      </svg>
                       Tap to copy
                     </div>
                   </div>
@@ -321,20 +332,19 @@
             <div style="font-size:11px; color:var(--text-muted);">Up to 50 numbers</div>
           </div>
           <div class="batch-card-body">
-            <textarea
-              id="batchInput"
-              class="batch-textarea"
-              placeholder="Enter numbers, one per line:&#10;9876543210&#10;8765432109&#10;7654321098"
-            ></textarea>
+            <textarea id="batchInput" class="batch-textarea"
+              placeholder="Enter numbers, one per line:&#10;9876543210&#10;8765432109&#10;7654321098"></textarea>
             <div class="batch-controls">
               <button class="batch-btn" id="btnBatchPaste">📋 Paste</button>
               <button class="batch-btn" id="btnBatchClear">✕ Clear</button>
               <button class="batch-btn primary" id="btnBatchRun">Run Batch ▶</button>
             </div>
             <div id="batchProgress" style="display:none; margin-top:12px;">
-              <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;" id="batchProgressText">Running 0 / 0</div>
+              <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;" id="batchProgressText">Running 0
+                / 0</div>
               <div class="scan-progressbar" style="max-width:100%;">
-                <div class="scan-progress-fill" id="batchProgressFill" style="animation:none; width:0%; transition:width 300ms ease;"></div>
+                <div class="scan-progress-fill" id="batchProgressFill"
+                  style="animation:none; width:0%; transition:width 300ms ease;"></div>
               </div>
             </div>
           </div>
@@ -372,81 +382,105 @@
           <!-- Zomato Engine Card -->
           <div class="engine-card" data-platform="zomato" onclick="switchBrandFromEngine('zomato')">
             <div class="engine-logo-wrap" style="background:#E23744;">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/7/75/Zomato_logo.png" alt="Zomato" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">
+              <img src="/static/src/logos/zomato.png" alt="Zomato"
+                style="width:100%;height:100%;object-fit:cover;border-radius:10px;">
             </div>
             <div class="engine-name">Zomato</div>
             <div class="engine-meta">Food delivery</div>
-            <div class="engine-status-row"><div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span></div>
+            <div class="engine-status-row">
+              <div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span>
+            </div>
           </div>
 
           <!-- Flipkart Engine Card -->
           <div class="engine-card" data-platform="flipkart" onclick="switchBrandFromEngine('flipkart')">
             <div class="engine-logo-wrap" style="background:#2874F0;">
-              <img src="https://www.google.com/s2/favicons?domain=flipkart.com&sz=128" alt="Flipkart" style="width:100%;height:100%;object-fit:contain;border-radius:10px;">
+              <img src="/static/src/logos/flipkart.png" alt="Flipkart"
+                style="width:100%;height:100%;object-fit:contain;border-radius:10px;">
             </div>
             <div class="engine-name">Flipkart</div>
             <div class="engine-meta">E-commerce</div>
-            <div class="engine-status-row"><div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span></div>
+            <div class="engine-status-row">
+              <div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span>
+            </div>
           </div>
 
           <!-- Meesho Engine Card -->
           <div class="engine-card" data-platform="meesho" onclick="switchBrandFromEngine('meesho')">
             <div class="engine-logo-wrap" style="background:linear-gradient(135deg,#580A46,#9b3af7);">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/3/33/Meesho_logo.png" alt="Meesho" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">
+              <img src="/static/src/logos/meesho.png" alt="Meesho"
+                style="width:100%;height:100%;object-fit:cover;border-radius:10px;">
             </div>
             <div class="engine-name">Meesho</div>
             <div class="engine-meta">Marketplace</div>
-            <div class="engine-status-row"><div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span></div>
+            <div class="engine-status-row">
+              <div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span>
+            </div>
           </div>
 
           <!-- BigBasket Engine Card -->
           <div class="engine-card" data-platform="bigbasket" onclick="switchBrandFromEngine('bigbasket')">
-            <div class="engine-logo-wrap" style="background:#231F20; padding:4px;">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/BigBasket_Logo.png" alt="BigBasket" style="width:100%;height:100%;object-fit:contain;border-radius:8px;">
+            <div class="engine-logo-wrap" style="background:#84c225; padding:4px;">
+              <img src="/static/src/logos/bigbasket.png" alt="BigBasket"
+                style="width:100%;height:100%;object-fit:contain;border-radius:8px;">
             </div>
             <div class="engine-name">BigBasket</div>
             <div class="engine-meta">Grocery</div>
-            <div class="engine-status-row"><div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span></div>
+            <div class="engine-status-row">
+              <div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span>
+            </div>
           </div>
 
           <!-- Myntra Engine Card -->
           <div class="engine-card" data-platform="myntra" onclick="switchBrandFromEngine('myntra')">
             <div class="engine-logo-wrap" style="background:#282C3F;">
-              <img src="https://www.google.com/s2/favicons?domain=myntra.com&sz=128" alt="Myntra" style="width:100%;height:100%;object-fit:contain;border-radius:10px;">
+              <img src="/static/src/logos/myntra.png" alt="Myntra"
+                style="width:100%;height:100%;object-fit:contain;border-radius:10px;">
             </div>
             <div class="engine-name">Myntra</div>
             <div class="engine-meta">Fashion</div>
-            <div class="engine-status-row"><div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span></div>
+            <div class="engine-status-row">
+              <div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span>
+            </div>
           </div>
 
           <!-- Swiggy Engine Card -->
           <div class="engine-card" data-platform="swiggy" onclick="switchBrandFromEngine('swiggy')">
             <div class="engine-logo-wrap" style="background:#1C1C1C;">
-              <img src="https://www.google.com/s2/favicons?domain=swiggy.com&sz=128" alt="Swiggy" style="width:100%;height:100%;object-fit:contain;border-radius:10px;">
+              <img src="/static/src/logos/swiggy.png" alt="Swiggy"
+                style="width:100%;height:100%;object-fit:contain;border-radius:10px;">
             </div>
             <div class="engine-name">Swiggy</div>
             <div class="engine-meta">Food delivery</div>
-            <div class="engine-status-row"><div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span></div>
+            <div class="engine-status-row">
+              <div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span>
+            </div>
           </div>
 
           <!-- Zepto Engine Card -->
           <div class="engine-card" data-platform="zepto" onclick="switchBrandFromEngine('zepto')">
             <div class="engine-logo-wrap" style="background:#1A1A1A;">
-              <img src="https://www.google.com/s2/favicons?domain=zeptonow.com&sz=128" alt="Zepto" style="width:100%;height:100%;object-fit:contain;border-radius:10px;">
+              <img src="/static/src/logos/zepto.png" alt="Zepto"
+                style="width:100%;height:100%;object-fit:contain;border-radius:10px;">
             </div>
             <div class="engine-name">Zepto</div>
             <div class="engine-meta">Quick-commerce</div>
-            <div class="engine-status-row"><div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span></div>
+            <div class="engine-status-row">
+              <div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span>
+            </div>
           </div>
 
           <!-- Amazon Engine Card -->
           <div class="engine-card" data-platform="amazon" onclick="switchBrandFromEngine('amazon')">
             <div class="engine-logo-wrap" style="background:#131A22;">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/d/de/Amazon_icon.png" alt="Amazon" style="width:100%;height:100%;object-fit:contain;border-radius:10px;">
+              <img src="/static/src/logos/amazon.png" alt="Amazon"
+                style="width:100%;height:100%;object-fit:contain;border-radius:10px;">
             </div>
             <div class="engine-name">Amazon</div>
             <div class="engine-meta">E-commerce</div>
-            <div class="engine-status-row"><div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span></div>
+            <div class="engine-status-row">
+              <div class="engine-dot"></div><span class="engine-status-label">ACTIVE</span>
+            </div>
           </div>
 
         </div>
@@ -459,7 +493,7 @@
       <button class="b-nav-item active" data-tab="single" id="bnSingle">
         <span class="nav-icon-svg">
           <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
-            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
           </svg>
         </span>
         <span class="nav-label">Home</span>
@@ -467,7 +501,8 @@
       <button class="b-nav-item" data-tab="batch" id="bnBatch">
         <span class="nav-icon-svg">
           <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
-            <path d="M13 2.05V4.05C17.39 4.59 20.5 8.58 19.96 12.97C19.5 16.61 16.64 19.5 13 19.93V21.93C18.5 21.38 22.5 16.5 21.95 11C21.5 6.25 17.73 2.5 13 2.05M11 2.06C9.05 2.25 7.19 3 5.67 4.26L7.1 5.74C8.22 4.84 9.57 4.26 11 4.06V2.06M4.26 5.67C3 7.19 2.25 9.04 2.05 11H4.05C4.24 9.58 4.8 8.23 5.69 7.1L4.26 5.67M2.06 13C2.26 14.96 3.03 16.81 4.27 18.33L5.69 16.9C4.81 15.77 4.24 14.42 4.06 13H2.06M7.1 18.37L5.67 19.74C7.18 21 9.04 21.79 11 22V20C9.58 19.82 8.23 19.25 7.1 18.37M12 7C9.24 7 7 9.24 7 12S9.24 17 12 17 17 14.76 17 12 14.76 7 12 7M12 9C13.66 9 15 10.34 15 12S13.66 15 12 15 9 13.66 9 12 10.34 9 12 9Z"/>
+            <path
+              d="M13 2.05V4.05C17.39 4.59 20.5 8.58 19.96 12.97C19.5 16.61 16.64 19.5 13 19.93V21.93C18.5 21.38 22.5 16.5 21.95 11C21.5 6.25 17.73 2.5 13 2.05M11 2.06C9.05 2.25 7.19 3 5.67 4.26L7.1 5.74C8.22 4.84 9.57 4.26 11 4.06V2.06M4.26 5.67C3 7.19 2.25 9.04 2.05 11H4.05C4.24 9.58 4.8 8.23 5.69 7.1L4.26 5.67M2.06 13C2.26 14.96 3.03 16.81 4.27 18.33L5.69 16.9C4.81 15.77 4.24 14.42 4.06 13H2.06M7.1 18.37L5.67 19.74C7.18 21 9.04 21.79 11 22V20C9.58 19.82 8.23 19.25 7.1 18.37M12 7C9.24 7 7 9.24 7 12S9.24 17 12 17 17 14.76 17 12 14.76 7 12 7M12 9C13.66 9 15 10.34 15 12S13.66 15 12 15 9 13.66 9 12 10.34 9 12 9Z" />
           </svg>
         </span>
         <span class="nav-label">Batch</span>
@@ -475,7 +510,8 @@
       <button class="b-nav-item" data-tab="history" id="bnHistory">
         <span class="nav-icon-svg">
           <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
-            <path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6a7 7 0 0 1 7-7 7 7 0 0 1 7 7 7 7 0 0 1-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 9-9 9 9 0 0 0-9-9m-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+            <path
+              d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6a7 7 0 0 1 7-7 7 7 0 0 1 7 7 7 7 0 0 1-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 9-9 9 9 0 0 0-9-9m-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z" />
           </svg>
         </span>
         <span class="nav-label">History</span>
@@ -485,6 +521,7 @@
   </div><!-- #app -->
 
   <!-- App Script -->
-  <script src="/static/app.js?v=3.0.1"></script>
+  <script src="/static/app.js?v=3.0.2"></script>
 </body>
+
 </html>

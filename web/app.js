@@ -67,10 +67,17 @@
     '🔍': '1f50d.png',
     '🎉': '1f389.png',
     '🔥': '1f525.png',
+    '🛒': '1f6d2.png',
+    '👜': '1f45c.png',
+    '🚀': '1f680.png',
   };
 
   function fluentUrl(emoji) {
     if (!emoji) return null;
+    if (typeof emoji === 'string') {
+      if (emoji.endsWith('.png')) return `${FLUENT_CDN}/${emoji}`;
+      if (/^[0-9a-fA-F\-]+$/.test(emoji)) return `${FLUENT_CDN}/${emoji.toLowerCase()}.png`;
+    }
     if (EMOJI_MAP[emoji]) {
       return `${FLUENT_CDN}/${EMOJI_MAP[emoji]}`;
     }
@@ -86,7 +93,7 @@
   const BRANDS = {
     zomato: {
       name: 'Zomato',
-      logo: 'https://upload.wikimedia.org/wikipedia/commons/7/75/Zomato_logo.png',
+      logo: '/static/src/logos/zomato.png',
       primary: '#E23744',
       emoji: '🍽',
       scanEmoji: '🍽',
@@ -110,7 +117,7 @@
     },
     flipkart: {
       name: 'Flipkart',
-      logo: 'https://www.google.com/s2/favicons?domain=flipkart.com&sz=128',
+      logo: '/static/src/logos/flipkart.png',
       primary: '#2874F0',
       emoji: '🛍',
       scanEmoji: '🛍',
@@ -134,10 +141,10 @@
     },
     meesho: {
       name: 'Meesho',
-      logo: 'https://upload.wikimedia.org/wikipedia/commons/3/33/Meesho_logo.png',
+      logo: '/static/src/logos/meesho.png',
       primary: '#9b3af7',
-      emoji: '✨',
-      scanEmoji: '✨',
+      emoji: '🛒',
+      scanEmoji: '🛒',
       registeredEmoji: '✅',
       freshEmoji: '🌱',
       bannerTitle: 'Meesho Account Checker',
@@ -158,7 +165,7 @@
     },
     bigbasket: {
       name: 'BigBasket',
-      logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a2/BigBasket_Logo.png',
+      logo: '/static/src/logos/bigbasket.png',
       primary: '#A6CE39',
       emoji: '🥬',
       scanEmoji: '🥬',
@@ -182,10 +189,10 @@
     },
     myntra: {
       name: 'Myntra',
-      logo: 'https://www.google.com/s2/favicons?domain=myntra.com&sz=128',
+      logo: '/static/src/logos/myntra.png',
       primary: '#FF3F6C',
-      emoji: '👗',
-      scanEmoji: '👗',
+      emoji: '👜',
+      scanEmoji: '👜',
       registeredEmoji: '✅',
       freshEmoji: '✨',
       bannerTitle: 'Myntra Account Checker',
@@ -206,7 +213,7 @@
     },
     swiggy: {
       name: 'Swiggy',
-      logo: 'https://www.google.com/s2/favicons?domain=swiggy.com&sz=128',
+      logo: '/static/src/logos/swiggy.png',
       primary: '#FC8019',
       emoji: '🛵',
       scanEmoji: '🛵',
@@ -230,10 +237,10 @@
     },
     zepto: {
       name: 'Zepto',
-      logo: 'https://www.google.com/s2/favicons?domain=zeptonow.com&sz=128',
+      logo: '/static/src/logos/zepto.png',
       primary: '#950EDB',
-      emoji: '⚡',
-      scanEmoji: '⚡',
+      emoji: '🚀',
+      scanEmoji: '🚀',
       registeredEmoji: '✅',
       freshEmoji: '✨',
       bannerTitle: 'Zepto Account Checker',
@@ -254,7 +261,7 @@
     },
     amazon: {
       name: 'Amazon',
-      logo: 'https://upload.wikimedia.org/wikipedia/commons/d/de/Amazon_icon.png',
+      logo: '/static/src/logos/amazon.png',
       primary: '#FF9900',
       emoji: '📦',
       scanEmoji: '📦',
