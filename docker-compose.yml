@@ -19,6 +19,8 @@ services:
       ENVIRONMENT: production
       PORT: 8000
       HOST: 0.0.0.0
+      WEBHOOK_URL: ${WEBHOOK_URL:-}
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-}
     volumes:
       - .:/app
     networks:
@@ -45,9 +47,9 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
+      ENVIRONMENT: production
       WEBHOOK_URL: ${WEBHOOK_URL:-}
       WEBHOOK_SECRET: ${WEBHOOK_SECRET:-}
-      API_BASE_URL: http://api:8000
     volumes:
       - .:/app
     networks:
