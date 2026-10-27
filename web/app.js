@@ -403,24 +403,16 @@
     renderBannerStats();
   };
 
-  // ── Render Universal & Brand Stats Pills ─────────────────────────────────────
+  // ── Render Brand Stats Pill ──────────────────────────────────────────────────
   function renderBannerStats() {
     if (!el.bannerStatsPills) return;
     const stats = state.stats || {};
-    const total = Number(stats.total_checks || 0);
-    const totalLabel = total >= 1000000
-      ? (total / 1000000).toFixed(1) + 'M+'
-      : total >= 1000 ? Math.floor(total / 1000) + 'K+' : String(total);
-
     const activeKey = state.activeBrand || 'zomato';
     const brand = BRANDS[activeKey] || { name: activeKey };
     const pchecks = Number((stats.platform_checks && stats.platform_checks[activeKey]) || 0);
     const brandLabel = pchecks >= 1000 ? Math.floor(pchecks / 1000) + 'K+' : String(pchecks);
 
     el.bannerStatsPills.innerHTML = `
-      <div class="banner-pill" title="Total universal checks across all services">
-        <span>⚡</span><span id="bannerUniversalTotal">${totalLabel} Checks</span>
-      </div>
       <div class="banner-pill brand-stat-pill" title="${brand.name} platform total checks">
         <span>✓</span><span id="bannerPlatformTotal">${brand.name}: ${brandLabel}</span>
       </div>
