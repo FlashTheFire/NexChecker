@@ -21,41 +21,38 @@
     } catch (e) { /* non-blocking */ }
   }
 
-  // ── CDN & Emoji Utilities ────────────────────────────────────────────────────
-  const FLUENT_ANIMATED_CDN = 'https://raw.githubusercontent.com/bignutty/fluent-emoji/main/animated';
-  const FLUENT_STATIC_CDN   = 'https://raw.githubusercontent.com/bignutty/fluent-emoji/main/static';
+  // ── CDN & Fluent Emoji Utilities ─────────────────────────────────────────────
+  const FLUENT_CDN = 'https://cdn.jsdelivr.net/gh/bignutty/fluent-emoji@main/animated-static';
 
-  function emojiToHex(emoji) {
-    if (!emoji) return null;
-    try {
-      const cp = emoji.codePointAt(0);
-      return cp ? cp.toString(16).toLowerCase() : null;
-    } catch { return null; }
-  }
-
-  const ANIMATED_HEX = new Set([
-    '2705',  // ✅
-    '2728',  // ✨
-    '1f331', // 🌱
-    '1f37d', // 🍽
-    '1f6cd', // 🛍
-    '1f457', // 👗
-    '1f96c', // 🥬
-    '1f6f5', // 🛵
-    '26a1',  // ⚡
-    '1f4e6', // 📦
-    '1f50d', // 🔍
-    '1f389', // 🎉
-    '1f525', // 🔥
-  ]);
+  const EMOJI_MAP = {
+    '✅': '2705.png',
+    '✨': '2728.png',
+    '🍽': '1f37d-fe0f.png',
+    '🍽️': '1f37d-fe0f.png',
+    '📦': '1f4e6.png',
+    '🥬': '1f96c.png',
+    '👗': '1f457.png',
+    '🛵': '1f6f5.png',
+    '🛍': '1f6cd-fe0f.png',
+    '🛍️': '1f6cd-fe0f.png',
+    '⚡': '26a1.png',
+    '🌱': '1f331.png',
+    '🔍': '1f50d.png',
+    '🎉': '1f389.png',
+    '🔥': '1f525.png',
+  };
 
   function fluentUrl(emoji) {
-    const hex = emojiToHex(emoji);
-    if (!hex) return null;
-    if (ANIMATED_HEX.has(hex)) {
-      return `${FLUENT_ANIMATED_CDN}/${hex}.png`;
+    if (!emoji) return null;
+    if (EMOJI_MAP[emoji]) {
+      return `${FLUENT_CDN}/${EMOJI_MAP[emoji]}`;
     }
-    return `${FLUENT_STATIC_CDN}/${hex}.png`;
+    try {
+      const cp = emoji.codePointAt(0);
+      return cp ? `${FLUENT_CDN}/${cp.toString(16).toLowerCase()}.png` : null;
+    } catch {
+      return null;
+    }
   }
 
   // ── Brand Configuration ──────────────────────────────────────────────────────
