@@ -279,7 +279,9 @@ async def check_single_phone(req: PhoneCheckRequest):
     """Check a single mobile number on a target platform or all platforms."""
     raw_phone = req.get_phone()
     clean = "".join(c for c in raw_phone if c.isdigit())
-    if len(clean) >= 10:
+    if clean.startswith("91") and len(clean) >= 11:
+        clean = clean[2:]
+    if len(clean) > 10:
         clean = clean[-10:]
     if len(clean) != 10:
         raise HTTPException(status_code=400, detail="Invalid 10-digit mobile number — expected 10 digits")

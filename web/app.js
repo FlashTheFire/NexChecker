@@ -20,7 +20,8 @@
   }
 
   // ── CDN & Emoji Utilities ────────────────────────────────────────────────────
-  const FLUENT_CDN = 'https://raw.githubusercontent.com/bignutty/fluent-emoji/main/animated';
+  const FLUENT_ANIMATED_CDN = 'https://raw.githubusercontent.com/bignutty/fluent-emoji/main/animated';
+  const FLUENT_STATIC_CDN   = 'https://raw.githubusercontent.com/bignutty/fluent-emoji/main/static';
 
   function emojiToHex(emoji) {
     if (!emoji) return null;
@@ -30,9 +31,29 @@
     } catch { return null; }
   }
 
+  const ANIMATED_HEX = new Set([
+    '2705',  // ✅
+    '2728',  // ✨
+    '1f331', // 🌱
+    '1f37d', // 🍽
+    '1f6cd', // 🛍
+    '1f457', // 👗
+    '1f96c', // 🥬
+    '1f6f5', // 🛵
+    '26a1',  // ⚡
+    '1f4e6', // 📦
+    '1f50d', // 🔍
+    '1f389', // 🎉
+    '1f525', // 🔥
+  ]);
+
   function fluentUrl(emoji) {
     const hex = emojiToHex(emoji);
-    return hex ? `${FLUENT_CDN}/${hex}.png` : null;
+    if (!hex) return null;
+    if (ANIMATED_HEX.has(hex)) {
+      return `${FLUENT_ANIMATED_CDN}/${hex}.png`;
+    }
+    return `${FLUENT_STATIC_CDN}/${hex}.png`;
   }
 
   // ── Brand Configuration ──────────────────────────────────────────────────────
@@ -41,9 +62,9 @@
       name: 'Zomato',
       primary: '#E23744',
       emoji: '🍽',
-      scanEmoji: '🔴',
+      scanEmoji: '🍽',
       registeredEmoji: '✅',
-      freshEmoji: '🆕',
+      freshEmoji: '✨',
       bannerTitle: 'Restaurant Verification',
       bannerSubtitle: '0-OTP silent check via Sushi API',
       demoRegistered: '7631328516',
@@ -64,9 +85,9 @@
       name: 'Flipkart',
       primary: '#2874F0',
       emoji: '🛍',
-      scanEmoji: '🔵',
+      scanEmoji: '🛍',
       registeredEmoji: '✅',
-      freshEmoji: '🆕',
+      freshEmoji: '✨',
       bannerTitle: 'Flipkart Account Checker',
       bannerSubtitle: 'Direct platform registry lookup',
       demoRegistered: '9999999999',
@@ -87,9 +108,9 @@
       name: 'Meesho',
       primary: '#9b3af7',
       emoji: '✨',
-      scanEmoji: '🟣',
+      scanEmoji: '✨',
       registeredEmoji: '✅',
-      freshEmoji: '🆕',
+      freshEmoji: '🌱',
       bannerTitle: 'Meesho Account Checker',
       bannerSubtitle: 'Jamuni-powered silent verification',
       demoRegistered: '9876543210',
@@ -110,9 +131,9 @@
       name: 'BigBasket',
       primary: '#A6CE39',
       emoji: '🥬',
-      scanEmoji: '🟢',
+      scanEmoji: '🥬',
       registeredEmoji: '✅',
-      freshEmoji: '🆕',
+      freshEmoji: '✨',
       bannerTitle: 'BigBasket Account Checker',
       bannerSubtitle: 'Grocery platform registry lookup',
       demoRegistered: '9999999991',
@@ -133,9 +154,9 @@
       name: 'Myntra',
       primary: '#FF3F6C',
       emoji: '👗',
-      scanEmoji: '🩷',
+      scanEmoji: '👗',
       registeredEmoji: '✅',
-      freshEmoji: '🆕',
+      freshEmoji: '✨',
       bannerTitle: 'Myntra Account Checker',
       bannerSubtitle: 'Fashion platform account lookup',
       demoRegistered: '9999999992',
@@ -156,9 +177,9 @@
       name: 'Swiggy',
       primary: '#FC8019',
       emoji: '🛵',
-      scanEmoji: '🟠',
+      scanEmoji: '🛵',
       registeredEmoji: '✅',
-      freshEmoji: '🆕',
+      freshEmoji: '✨',
       bannerTitle: 'Swiggy Account Checker',
       bannerSubtitle: 'Super-fast delivery account lookup',
       demoRegistered: '9999999993',
@@ -179,9 +200,9 @@
       name: 'Zepto',
       primary: '#950EDB',
       emoji: '⚡',
-      scanEmoji: '🟣',
+      scanEmoji: '⚡',
       registeredEmoji: '✅',
-      freshEmoji: '🆕',
+      freshEmoji: '✨',
       bannerTitle: 'Zepto Account Checker',
       bannerSubtitle: '10-minute delivery account lookup',
       demoRegistered: '9999999994',
@@ -202,9 +223,9 @@
       name: 'Amazon',
       primary: '#FF9900',
       emoji: '📦',
-      scanEmoji: '🟡',
+      scanEmoji: '📦',
       registeredEmoji: '✅',
-      freshEmoji: '🆕',
+      freshEmoji: '✨',
       bannerTitle: 'Amazon Account Checker',
       bannerSubtitle: 'World\'s largest e-commerce lookup',
       demoRegistered: '9999999995',
@@ -392,8 +413,16 @@
   el.bottomNavItems.forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
 
   // ── Phone Input: Auto-format ─────────────────────────────────────────────────
+  function cleanIndianPhone(val) {
+    let raw = String(val || '').replace(/\D/g, '');
+    if (raw.startsWith('91') && raw.length >= 11) {
+      raw = raw.slice(2);
+    }
+    return raw.slice(0, 10);
+  }
+
   el.mobileInput.addEventListener('input', (e) => {
-    let raw = e.target.value.replace(/\D/g, '').slice(0, 10);
+    let raw = cleanIndianPhone(e.target.value);
     // Format: "98765 43210"
     if (raw.length > 5) {
       e.target.value = raw.slice(0, 5) + ' ' + raw.slice(5);
@@ -411,8 +440,8 @@
   el.btnPaste.addEventListener('click', async () => {
     try {
       const t = await navigator.clipboard.readText();
-      const digits = t.replace(/\D/g, '').slice(0, 10);
-      el.mobileInput.value = digits.length > 5 ? digits.slice(0,5) + ' ' + digits.slice(5) : digits;
+      const digits = cleanIndianPhone(t);
+      el.mobileInput.value = digits.length > 5 ? digits.slice(0, 5) + ' ' + digits.slice(5) : digits;
       clearError();
       haptic('selection');
     } catch (e) { el.mobileInput.focus(); }
@@ -461,7 +490,7 @@
 
   // ── Phone Validation ─────────────────────────────────────────────────────────
   function getCleanPhone() {
-    return el.mobileInput.value.replace(/\D/g, '');
+    return cleanIndianPhone(el.mobileInput.value);
   }
 
   function validatePhone(phone) {
@@ -741,25 +770,18 @@
       el.verdictEmojiFallback.style.display = 'flex';
     }
 
-    // Hide scanning, show flip card
+    // Hide scanning, show result card directly
     el.scanningContainer.style.display = 'none';
     el.flipCardOuter.style.display = 'block';
 
-    // Trigger 3D flip after brief delay
-    setTimeout(() => {
-      el.flipCardInner.classList.add('flipped');
-
-      // Post-flip effects
-      setTimeout(() => {
-        if (isRegistered) {
-          launchConfetti();
-          haptic('success');
-          playSound('success');
-        } else {
-          haptic('impact');
-        }
-      }, 400);
-    }, 100);
+    // Trigger reveal effects
+    if (isRegistered) {
+      launchConfetti();
+      haptic('success');
+      playSound('success');
+    } else {
+      haptic('impact');
+    }
 
     // Save to history
     saveHistory({ phone, platform: state.activeBrand, brandName: brand.name, registered: isRegistered, time: Date.now() });
@@ -1009,6 +1031,26 @@
     // Apply default brand
     switchBrand('zomato', document.querySelector('.service-chip[data-platform="zomato"]'));
 
+    // Handle URL search parameters (e.g. ?phone=9027936246&platform=zomato)
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const qPlatform = (urlParams.get('platform') || '').toLowerCase();
+      const qPhone = urlParams.get('phone');
+      if (qPlatform && BRANDS[qPlatform]) {
+        const chip = document.querySelector(`.service-chip[data-platform="${qPlatform}"]`);
+        switchBrand(qPlatform, chip);
+      }
+      if (qPhone) {
+        const clean = cleanIndianPhone(qPhone);
+        if (clean) {
+          el.mobileInput.value = clean.length > 5 ? clean.slice(0, 5) + ' ' + clean.slice(5) : clean;
+          if (clean.length === 10) {
+            setTimeout(() => doCheck(), 350);
+          }
+        }
+      }
+    } catch (_) {}
+
     // Health check every 30s
     checkHealth();
     setInterval(checkHealth, 30000);
@@ -1016,8 +1058,10 @@
     // Render history
     renderHistory();
 
-    // Focus input
-    setTimeout(() => el.mobileInput.focus(), 300);
+    // Focus input if not pre-filled
+    if (!el.mobileInput.value) {
+      setTimeout(() => el.mobileInput.focus(), 300);
+    }
 
     // Ensure confetti canvas hidden by default
     el.confettiCanvas.style.display = 'none';

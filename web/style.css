@@ -904,45 +904,44 @@ body {
 }
 
 /* ══ RESULT CARD — 3D FLIP REVEAL ═════════════════════════════════════════ */
+@keyframes resultCardReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .flip-card-outer {
   perspective: 1000px;
   display: none;
   margin-bottom: var(--sp-4);
+  animation: resultCardReveal 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .flip-card-inner {
   position: relative;
-  transform-style: preserve-3d;
-  transition: transform 600ms cubic-bezier(0.4, 0.2, 0.2, 1);
-  min-height: 200px;
-}
-
-.flip-card-outer.flipped .flip-card-inner {
-  transform: rotateY(180deg);
-}
-
-.flip-card-front,
-.flip-card-back {
-  position: absolute;
   width: 100%;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  border-radius: var(--radius-card);
-  overflow: hidden;
+  transition: transform 600ms cubic-bezier(0.4, 0.2, 0.2, 1);
+}
+
+.flip-card-outer.flipped .flip-card-inner,
+.flip-card-inner.flipped {
+  transform: none;
 }
 
 .flip-card-front {
-  background: var(--bg-card);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 200px;
-  border: 1px solid var(--border-subtle);
+  display: none !important;
 }
 
 .flip-card-back {
-  transform: rotateY(180deg);
   position: relative;
+  width: 100%;
+  border-radius: var(--radius-card);
+  overflow: hidden;
 }
 
 /* Result Card Brand-Native Styles */
