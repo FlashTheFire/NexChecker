@@ -817,6 +817,7 @@ body {
   background: var(--bg-card);
   border-radius: var(--radius-card);
   border: 1px solid var(--border-subtle);
+  margin-top: 14px;
   margin-bottom: var(--sp-4);
   text-align: center;
 }
@@ -1073,6 +1074,10 @@ body {
   border-radius: var(--radius-chip);
   padding: var(--sp-2) var(--sp-3);
   border: 1px solid var(--border-subtle);
+}
+
+.meta-item.meta-hidden {
+  display: none !important;
 }
 
 .meta-label {
