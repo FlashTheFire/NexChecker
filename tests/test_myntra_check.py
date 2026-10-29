@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Unit tests for Myntra silent registration checker and platform registry."""
 
+import asyncio
 import unittest
 from unittest.mock import patch, MagicMock
 import sys
@@ -18,6 +19,7 @@ try:
         clean_phone,
         normalize_mobile,
         check_myntra,
+        check_myntra_sync,
         check_myntra_async,
         MyntraClient,
         MyntraChecker,
@@ -28,6 +30,7 @@ except ImportError:
         clean_phone,
         normalize_mobile,
         check_myntra,
+        check_myntra_sync,
         check_myntra_async,
         MyntraClient,
         MyntraChecker,
@@ -47,7 +50,7 @@ class TestMyntraCheckHelpers(unittest.TestCase):
         self.assertEqual(normalize_mobile("+91 98765-43210"), "9876543210")
 
     def test_invalid_mobile(self):
-        res = check_myntra("12345")
+        res = check_myntra_sync("12345")
         self.assertEqual(res["status"], "ERROR")
         self.assertIn("invalid 10-digit", res.get("error", "").lower())
 
@@ -61,7 +64,7 @@ class TestMyntraCheckHelpers(unittest.TestCase):
             raw={"number": "9027936246", "registered": True},
         )
 
-        res = check_myntra("9027936246")
+        res = check_myntra_sync("9027936246")
         self.assertEqual(res["status"], "REGISTERED")
         self.assertTrue(res["registered"])
         self.assertFalse(res["fresh"])
@@ -77,11 +80,26 @@ class TestMyntraCheckHelpers(unittest.TestCase):
             raw={"number": "9999999999", "registered": False},
         )
 
-        res = check_myntra("9999999999")
+        res = check_myntra_sync("9999999999")
         self.assertEqual(res["status"], "NOT_REGISTERED")
         self.assertFalse(res["registered"])
         self.assertTrue(res["fresh"])
         self.assertEqual(res["mobile"], "9999999999")
+
+    @patch.object(MyntraClient, "check_number_async")
+    def test_check_myntra_async(self, mock_check_async):
+        from core.myntra_api import CheckResult
+        mock_check_async.return_value = CheckResult(
+            number="9027936246",
+            registered=True,
+            fresh=False,
+            raw={"number": "9027936246", "registered": True},
+        )
+
+        res = asyncio.run(check_myntra("9027936246"))
+        self.assertEqual(res["status"], "REGISTERED")
+        self.assertTrue(res["registered"])
+        self.assertEqual(res["via"], "api")
 
 
 class TestMyntraPlatformRegistry(unittest.TestCase):

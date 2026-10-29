@@ -1,69 +1,475 @@
 #!/usr/bin/env python3
 """
-Myntra Silent Registration Checker (ProMyntra Engine)
-===================================================
-Ultra-fast, authoritative Myntra registration checking without sending
-any OTP or SMS to the target number.
+Myntra Registration Checker (Dual-Engine: ProMyntra API + Real Chrome Fallback)
+==============================================================================
+Fast, authoritative Myntra registration checking.
+- Primary: Ultra-fast ProMyntra Server API (promyntra.eu.cc /api/check)
+- Fallback: Playwright persistent Chrome profile with auto-healing
+- Works for single, bulk, API server and browser warmup
 
 Usage:
   python myntra_check.py 9027936246
-  python myntra_check.py 9027936246 9999999999 8891523001
-  python myntra_check.py --raw 9027936246
+  python myntra_check.py 9027936246 9999999999
+  python myntra_check.py --playwright 9027936246
+  python myntra_check.py --warmup
 """
 
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
+import asyncio
+import json
+import os
+import re
 import sys
 import time
-from typing import Any
+import uuid
+from pathlib import Path
+from typing import Any, Optional
 
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent
-_NEXBOT_ROOT = _PROJECT_ROOT / "NexBot"
-for _p in (str(_PROJECT_ROOT), str(_NEXBOT_ROOT)):
-    if _p not in sys.path:
-        sys.path.insert(0, _p)
-
-try:
-    from core.myntra_api import (
-        MyntraClient,
-        MyntraChecker,
-        myntra_checker,
-        clean_phone,
-    )
-except ImportError:
+if hasattr(sys.stdout, "reconfigure"):
     try:
-        from NexBot.core.myntra_api import (
-            MyntraClient,
-            MyntraChecker,
-            myntra_checker,
-            clean_phone,
-        )
-    except ImportError:
-        from myntra_api import (
-            MyntraClient,
-            MyntraChecker,
-            myntra_checker,
-            clean_phone,
-        )
-
-# Backward compatibility alias
-normalize_mobile = clean_phone
-
-if sys.platform == "win32":
-    try:
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+        sys.stdout.reconfigure(encoding="utf-8")
     except Exception:
         pass
 
-BULK_DELAY = 0.5
+_CHECKERS_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = _CHECKERS_DIR.parent
+BASE = PROJECT_ROOT
+_NEXBOT_ROOT = PROJECT_ROOT / "NexBot"
+for _p in (str(PROJECT_ROOT), str(_CHECKERS_DIR), str(_NEXBOT_ROOT)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+_SESSIONS_DIR = PROJECT_ROOT / "sessions"
+
+_candidate_state = _SESSIONS_DIR / "myntra_state.json"
+if not _candidate_state.exists() and (PROJECT_ROOT / "myntra_state.json").exists():
+    _candidate_state = PROJECT_ROOT / "myntra_state.json"
+elif not _candidate_state.exists() and (_CHECKERS_DIR / "myntra_state.json").exists():
+    _candidate_state = _CHECKERS_DIR / "myntra_state.json"
+STATE_FILE = Path(os.getenv("MYNTRA_STATE_FILE", str(_candidate_state)))
+
+_candidate_profile = _SESSIONS_DIR / "myntra_chrome_profile"
+if not _candidate_profile.exists() and (PROJECT_ROOT / "myntra_chrome_profile").exists():
+    _candidate_profile = PROJECT_ROOT / "myntra_chrome_profile"
+elif not _candidate_profile.exists() and (_CHECKERS_DIR / "myntra_chrome_profile").exists():
+    _candidate_profile = _CHECKERS_DIR / "myntra_chrome_profile"
+PROFILE_DIR = Path(os.getenv("MYNTRA_PROFILE_DIR", str(_candidate_profile)))
+
+_candidate_meta = _SESSIONS_DIR / "myntra_session_meta.json"
+if not _candidate_meta.exists() and (PROJECT_ROOT / "myntra_session_meta.json").exists():
+    _candidate_meta = PROJECT_ROOT / "myntra_session_meta.json"
+elif not _candidate_meta.exists() and (_CHECKERS_DIR / "myntra_session_meta.json").exists():
+    _candidate_meta = _CHECKERS_DIR / "myntra_session_meta.json"
+META_FILE = Path(os.getenv("MYNTRA_META_FILE", str(_candidate_meta)))
+
+BULK_DELAY = 0.35
+HEAL_WAIT = 3.0
+
+# Import new ProMyntra HTTP API client
+try:
+    from core.myntra_api import MyntraClient, clean_phone as api_clean_phone
+except ImportError:
+    try:
+        from NexBot.core.myntra_api import MyntraClient, clean_phone as api_clean_phone
+    except ImportError:
+        try:
+            from myntra_api import MyntraClient, clean_phone as api_clean_phone
+        except ImportError:
+            MyntraClient = None  # type: ignore
+            api_clean_phone = None  # type: ignore
 
 
-def check_myntra(mobile: str) -> dict[str, Any]:
-    """Check a single Indian mobile number against Myntra."""
-    norm = clean_phone(mobile)
+def normalize_mobile(mobile: str) -> str:
+    """Normalize phone number to last 10 digits."""
+    digits = "".join(c for c in str(mobile) if c.isdigit())
+    return digits[-10:] if len(digits) >= 10 else digits
+
+
+clean_phone = normalize_mobile
+
+
+# ============================================================================
+# Playwright Browser Logic (Preserved Old Code)
+# ============================================================================
+
+def decide(http_status: int, data: Any) -> str:
+    if not isinstance(data, dict):
+        return "UNKNOWN"
+    if data.get("sec-cp-challenge") or data.get("provider") == "crypto" or http_status == 428:
+        return "CHALLENGE"
+
+    raw_text = str(data.get("raw_text", "")).lower()
+    if "raw_text" in data:
+        if any(x in raw_text for x in (
+            "<html", "challenge", "captcha", "cloudflare", "cf-ray",
+            "just a moment", "checking your browser", "enable javascript",
+            "site maintenance", "oops! something went wrong", "contact your administrator"
+        )):
+            return "CHALLENGE"
+
+    code = data.get("code")
+    msg = (data.get("message") or "").lower()
+    if code == 2002 or "does not exist" in msg or "account does not exist" in raw_text:
+        return "NOT_REGISTERED"
+    if code == 2030 or http_status == 200:
+        return "REGISTERED"
+    if any(x in msg for x in ("email", "password", "otp", "recover")) and "does not exist" not in msg:
+        return "REGISTERED"
+    return "UNKNOWN"
+
+
+def save_meta(ok: bool, note: str = ""):
+    META_FILE.write_text(
+        json.dumps(
+            {"ok": ok, "note": note, "ts": int(time.time()), "iso": time.strftime("%Y-%m-%d %H:%M:%S")},
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+
+async def open_context(playwright, headless: bool = False, proxy: str = ""):
+    """Same technique: persistent real Chrome profile."""
+    PROFILE_DIR.mkdir(parents=True, exist_ok=True)
+    is_linux = sys.platform.startswith("linux")
+    launch_args = [
+        "--disable-blink-features=AutomationControlled",
+        "--disable-http2",
+    ]
+    if is_linux:
+        launch_args.extend(["--no-sandbox", "--disable-dev-shm-usage"])
+    elif headless:
+        launch_args.append("--window-position=-10000,-10000")
+
+    proxy_cfg = {"server": proxy} if proxy else None
+
+    launch_kwargs = dict(
+        user_data_dir=str(PROFILE_DIR),
+        headless=is_linux if is_linux else False,
+        viewport={"width": 1366, "height": 768},
+        locale="en-IN",
+        timezone_id="Asia/Kolkata",
+        args=launch_args,
+        proxy=proxy_cfg,
+    )
+    try:
+        context = await playwright.chromium.launch_persistent_context(
+            channel="chrome",
+            **launch_kwargs,
+        )
+    except Exception:
+        context = await playwright.chromium.launch_persistent_context(
+            **launch_kwargs,
+        )
+    page = context.pages[0] if context.pages else await context.new_page()
+    return context, page
+
+
+async def ensure_forgot_page(page) -> None:
+    """Navigate to /forgot; ignore soft failures."""
+    try:
+        await page.goto(
+            "https://www.myntra.com/forgot",
+            wait_until="domcontentloaded",
+            timeout=60000,
+        )
+        await page.wait_for_timeout(2000)
+    except Exception as e:
+        print(f"[!] goto warning: {e}")
+
+
+async def heal_challenge(page) -> None:
+    """Full Akamai challenge recovery: homepage -> JS sensor -> /forgot."""
+    try:
+        await page.goto(
+            "https://www.myntra.com/",
+            wait_until="domcontentloaded",
+            timeout=60000,
+        )
+        await page.wait_for_timeout(5000)
+    except Exception as e:
+        print(f"[!] heal homepage warning: {e}")
+    await ensure_forgot_page(page)
+
+
+async def api_call(page, mobile: str) -> dict:
+    """Exact working technique: fetch inside page with profile cookies."""
+    device_id = str(uuid.uuid4())
+    api = await page.evaluate(
+        """async ({ mobile, deviceId }) => {
+            try {
+                const res = await fetch(
+                    'https://www.myntra.com/gateway/auth/v1/forgetpassword',
+                    {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': '*/*',
+                            'Origin': 'https://www.myntra.com',
+                            'Referer': 'https://www.myntra.com/forgot',
+                            'x-myntraweb': 'Yes',
+                            'x-requested-with': 'browser',
+                            'deviceid': deviceId,
+                            'x-meta-app': 'deviceId=' + deviceId + ';reqChannel=web;channel=web;'
+                        },
+                        body: JSON.stringify({ phoneNumber: mobile })
+                    }
+                );
+                const text = await res.text();
+                let json = null;
+                try { json = JSON.parse(text); } catch (e) {}
+                return { http: res.status, json, text: text.slice(0, 500) };
+            } catch (e) {
+                return { error: e.toString() };
+            }
+        }""",
+        {"mobile": mobile, "deviceId": device_id},
+    )
+
+    if not api or api.get("error"):
+        return {
+            "status": "ERROR",
+            "mobile": mobile,
+            "error": (api or {}).get("error", "empty"),
+            "via": "playwright",
+        }
+
+    json_data = api.get("json")
+    text_data = api.get("text", "")
+    if json_data is not None:
+        data = json_data
+    elif text_data:
+        try:
+            data = json.loads(text_data)
+        except Exception:
+            data = {"raw_text": text_data}
+    else:
+        data = {"raw_text": ""}
+
+    http_status = api.get("http") or 0
+    status = decide(http_status, data if isinstance(data, dict) else {})
+    is_reg = (status == "REGISTERED")
+    is_fresh = (status == "NOT_REGISTERED")
+    return {
+        "status": status,
+        "registered": is_reg,
+        "fresh": is_fresh,
+        "mobile": mobile,
+        "http": http_status,
+        "raw": data,
+        "via": "playwright",
+    }
+
+
+async def check_with_heal(page, mobile: str, max_heal: int = 3) -> dict:
+    """Call API; on CHALLENGE reload /forgot and retry."""
+    last = None
+    for attempt in range(1, max_heal + 1):
+        r = await api_call(page, mobile)
+        last = r
+        if r.get("status") in ("REGISTERED", "NOT_REGISTERED"):
+            save_meta(True, "ok")
+            return r
+        if r.get("status") == "CHALLENGE":
+            save_meta(False, "challenge")
+            if attempt == 1:
+                print(f"    heal {attempt}/{max_heal}: reload /forgot ...")
+                await ensure_forgot_page(page)
+                await page.wait_for_timeout(int(HEAL_WAIT * 1000))
+            else:
+                print(f"    heal {attempt}/{max_heal}: full homepage reload ...")
+                await heal_challenge(page)
+            continue
+        if r.get("status") == "ERROR":
+            await ensure_forgot_page(page)
+            await page.wait_for_timeout(1500)
+            continue
+        break
+    return last or {"status": "ERROR", "mobile": mobile, "error": "no result", "via": "playwright"}
+
+
+async def warmup(headless: bool = False) -> bool:
+    from playwright.async_api import async_playwright
+
+    print("[*] Warmup (real Chrome profile)...")
+    async with async_playwright() as p:
+        context, page = await open_context(p, headless=headless)
+        await ensure_forgot_page(page)
+        if not headless:
+            print("    Confirm Reset Password page, then press ENTER...")
+            await asyncio.get_event_loop().run_in_executor(None, input)
+        else:
+            await page.wait_for_timeout(5000)
+        await context.storage_state(path=str(STATE_FILE))
+        await context.close()
+    save_meta(True, "warmup")
+    print(f"[+] Saved {STATE_FILE}")
+    return True
+
+
+async def run_bulk(numbers: list[str], headless: bool = False) -> list[dict]:
+    """ONE browser for entire bulk — same technique, no reopen per number."""
+    from playwright.async_api import async_playwright
+
+    results = []
+    async with async_playwright() as p:
+        context, page = await open_context(p, headless=headless)
+        await ensure_forgot_page(page)
+
+        for i, raw in enumerate(numbers, 1):
+            mobile = normalize_mobile(raw)
+            if len(mobile) != 10:
+                results.append({"status": "ERROR", "mobile": raw, "error": "bad number"})
+                continue
+
+            print(f"[{i}/{len(numbers)}] {mobile} ...", end=" ", flush=True)
+            r = await check_with_heal(page, mobile)
+            results.append(r)
+            print(r.get("status"))
+
+            if r.get("status") == "CHALLENGE":
+                print("[!] Still challenged after heal — run --warmup")
+                break
+
+            if i < len(numbers):
+                await page.wait_for_timeout(int(BULK_DELAY * 1000))
+
+        # persist cookies for next run
+        try:
+            await context.storage_state(path=str(STATE_FILE))
+        except Exception:
+            pass
+        await context.close()
+
+    return results
+
+
+# ============================================================================
+# Dual-Engine Checker Class (API Primary + Playwright Fallback)
+# ============================================================================
+
+class MyntraChecker:
+    """
+    Myntra Registration Checker Engine.
+    - Uses high-speed ProMyntra Server API (promyntra.eu.cc) by default.
+    - Preserves persistent Chrome Playwright profile as backup and warmup tool.
+    """
+
+    def __init__(self) -> None:
+        self._playwright = None
+        self._context = None
+        self._page = None
+        self._lock = asyncio.Lock()
+        self._ready = False
+        self._api_client = None
+
+    async def startup(self, headless: bool = False, proxy: str = "") -> None:
+        """Initialize checker resources."""
+        if MyntraClient is not None:
+            try:
+                self._api_client = MyntraClient()
+                self._ready = True
+            except Exception:
+                pass
+
+    async def shutdown(self) -> None:
+        """Close browser context if active."""
+        if self._context:
+            try:
+                if self._page and not self._page.is_closed():
+                    await self._context.storage_state(path=str(STATE_FILE))
+            except Exception:
+                pass
+            try:
+                await self._context.close()
+            except Exception:
+                pass
+        if self._playwright:
+            try:
+                await self._playwright.stop()
+            except Exception:
+                pass
+        self._ready = False
+        self._page = None
+        self._context = None
+        self._playwright = None
+        self._api_client = None
+
+    async def _init_playwright(self) -> None:
+        if self._page is not None and not self._page.is_closed():
+            return
+        from playwright.async_api import async_playwright
+        proxy = os.getenv("MYNTRA_PROXY", os.getenv("PROXY", ""))
+        is_linux = sys.platform.startswith("linux")
+        self._playwright = await async_playwright().start()
+        self._context, self._page = await open_context(self._playwright, headless=is_linux, proxy=proxy)
+        await ensure_forgot_page(self._page)
+        self._ready = True
+
+    async def check_number(self, mobile: str, force_playwright: bool = False) -> dict:
+        """Check a mobile number using the new API server, falling back to Playwright if needed."""
+        norm = normalize_mobile(mobile)
+        if len(norm) != 10 or norm[0] not in "6789":
+            return {
+                "status": "ERROR",
+                "mobile": norm,
+                "error": "invalid 10-digit Indian mobile",
+            }
+
+        # 1. Primary: Use the new ProMyntra server API
+        if not force_playwright and MyntraClient is not None:
+            try:
+                client = self._api_client or MyntraClient()
+                res = await client.check_number_async(norm)
+                status = "REGISTERED" if res.registered else "NOT_REGISTERED"
+                return {
+                    "status": status,
+                    "registered": res.registered,
+                    "fresh": res.fresh,
+                    "mobile": norm,
+                    "http": 200,
+                    "raw": res.raw,
+                    "via": "api",
+                }
+            except Exception as exc:
+                print(f"[!] ProMyntra API call failed: {exc} — attempting Playwright fallback...")
+
+        # 2. Fallback: Use Playwright Chrome Profile
+        async with self._lock:
+            try:
+                await self._init_playwright()
+                return await check_with_heal(self._page, norm)
+            except Exception as exc:
+                return {
+                    "status": "ERROR",
+                    "mobile": norm,
+                    "error": f"Playwright error: {exc}",
+                    "via": "playwright",
+                }
+
+    async def reload_page(self) -> None:
+        if self._ready and self._page:
+            async with self._lock:
+                await ensure_forgot_page(self._page)
+
+    @property
+    def is_ready(self) -> bool:
+        return self._ready
+
+
+myntra_checker = MyntraChecker()
+
+
+# ============================================================================
+# Synchronous & Asynchronous Entrypoints
+# ============================================================================
+
+def check_myntra_sync(mobile: str) -> dict[str, Any]:
+    """Synchronous check of a mobile number via ProMyntra API."""
+    norm = normalize_mobile(mobile)
     if len(norm) != 10 or norm[0] not in "6789":
         return {
             "status": "ERROR",
@@ -72,92 +478,102 @@ def check_myntra(mobile: str) -> dict[str, Any]:
             "raw": None,
         }
 
-    try:
-        client = MyntraClient()
-        res = client.check_number(norm)
-        status = "REGISTERED" if res.registered else "NOT_REGISTERED"
-        return {
-            "status": status,
-            "mobile": norm,
-            "registered": res.registered,
-            "fresh": res.fresh,
-            "raw": res.raw,
-        }
-    except Exception as e:
-        return {
-            "status": "ERROR",
-            "mobile": norm,
-            "error": f"{type(e).__name__}: {e}",
-            "raw": None,
-        }
+    if MyntraClient is not None:
+        try:
+            client = MyntraClient()
+            res = client.check_number(norm)
+            status = "REGISTERED" if res.registered else "NOT_REGISTERED"
+            return {
+                "status": status,
+                "registered": res.registered,
+                "fresh": res.fresh,
+                "mobile": norm,
+                "http": 200,
+                "raw": res.raw,
+                "via": "api",
+            }
+        except Exception as e:
+            return {
+                "status": "ERROR",
+                "mobile": norm,
+                "error": f"{type(e).__name__}: {e}",
+                "raw": None,
+                "via": "api",
+            }
+
+    return asyncio.run(check_myntra(mobile))
 
 
-async def check_myntra_async(mobile: str) -> dict[str, Any]:
-    """Asynchronous check of a single mobile number against Myntra."""
-    norm = clean_phone(mobile)
-    if len(norm) != 10 or norm[0] not in "6789":
-        return {
-            "status": "ERROR",
-            "mobile": norm,
-            "error": "invalid 10-digit Indian mobile",
-            "raw": None,
-        }
-
-    try:
-        client = MyntraClient()
-        res = await client.check_number_async(norm)
-        status = "REGISTERED" if res.registered else "NOT_REGISTERED"
-        return {
-            "status": status,
-            "mobile": norm,
-            "registered": res.registered,
-            "fresh": res.fresh,
-            "raw": res.raw,
-        }
-    except Exception as e:
-        return {
-            "status": "ERROR",
-            "mobile": norm,
-            "error": f"{type(e).__name__}: {e}",
-            "raw": None,
-        }
+async def check_myntra(mobile: str) -> dict:
+    """Check a single mobile number against Myntra (API server first, Playwright fallback)."""
+    return await myntra_checker.check_number(mobile)
 
 
-def pretty_print(result: dict) -> None:
+async def check_myntra_async(mobile: str) -> dict:
+    """Async check alias."""
+    return await myntra_checker.check_number(mobile)
+
+
+def pretty(result: dict):
     status = result.get("status")
-    mobile = result.get("mobile", "")
-
+    mobile = result.get("mobile")
     if status == "REGISTERED":
-        print(
-            f"""❰ ✅ 𝗔𝗖𝗖𝗢𝗨𝗡𝗧 𝗙𝗢𝗨𝗡𝗗 🎯 ❱
+        print(f"""
+❰ ✅ 𝗔𝗖𝗖𝗢𝗨𝗡𝗧 𝗙𝗢𝗨𝗡𝗗 🎯 ❱
 ┏━━━━━━━━━━━━━━━━━━━━┓
 ✓ sᴛᴀᴛᴜs ʀᴇɢɪsᴛᴇʀᴇᴅ
 🎯 ᴘʟᴀᴛғᴏʀᴍ 📦 ᴍʏɴᴛʀᴀ
 📱 ɴᴜᴍʙᴇʀ {mobile}
 ┗━━━━━━━━━━━━━━━━━━━━┛
-🎯 Active Myntra account detected."""
-        )
+🎯 Active Myntra account detected.
+""")
     elif status == "NOT_REGISTERED":
-        print(
-            f"""❰ ❌ 𝗡𝗢𝗧 𝗥𝗘𝗚𝗜𝗦𝗧𝗘𝗥𝗘𝗗 ❱
+        print(f"""
+❰ ❌ 𝗡𝗢𝗧 𝗥𝗘𝗚𝗜𝗦𝗧𝗘𝗥𝗘𝗗 ❱
 ┏━━━━━━━━━━━━━━━━━━━━┓
 ✗ sᴛᴀᴛᴜs ᴜɴʀᴇɢɪsᴛᴇʀᴇᴅ
 🎯 ᴘʟᴀᴛғᴏʀᴍ 📦 ᴍʏɴᴛʀᴀ
 📱 ɴᴜᴍʙᴇʀ {mobile}
 ┗━━━━━━━━━━━━━━━━━━━━┛
-✅ No active Myntra account on this number (FRESH)."""
-        )
+✅ No active Myntra account on this number (FRESH).
+""")
     else:
-        print(f"Result: {result}")
+        print("Result:", result)
 
 
-def main() -> None:
-    ap = argparse.ArgumentParser(description="Myntra silent registration checker")
-    ap.add_argument("mobiles", nargs="*", help="10-digit mobile number(s)")
-    ap.add_argument("-f", "--file", help="file containing numbers (one per line)")
-    ap.add_argument("--raw", action="store_true", help="always print full result dict")
-    ap.add_argument("--json", action="store_true", help="print JSON output")
+pretty_print = pretty
+
+
+# ============================================================================
+# CLI Execution
+# ============================================================================
+
+def main():
+    ap = argparse.ArgumentParser(description="Myntra registration checker (ProMyntra API + Playwright)")
+    ap.add_argument("numbers", nargs="*", help="mobile numbers")
+    ap.add_argument("-f", "--file", help="file with numbers (one per line)")
+    ap.add_argument("--playwright", action="store_true", help="force Playwright Chrome browser check")
+    ap.add_argument("--warmup", action="store_true", help="warmup Playwright Chrome profile")
+    ap.add_argument("--headless", action="store_true", help="run Playwright headless")
+    ap.add_argument("--json", action="store_true", help="output JSON")
+    ap.add_argument("--status", action="store_true", help="show session profile status")
+    ap.add_argument("--raw", action="store_true", help="show raw result dict")
     args = ap.parse_args()
+
+    if args.status:
+        meta = {}
+        if META_FILE.exists():
+            meta = json.loads(META_FILE.read_text(encoding="utf-8"))
+        print(json.dumps({
+            "state_file": STATE_FILE.exists(),
+            "profile_dir": PROFILE_DIR.is_dir(),
+            "meta": meta,
+        }, indent=2))
+        return
+
+    if args.warmup:
+        asyncio.run(warmup(headless=args.headless))
+        return
 
     numbers: list[str] = []
     if args.file:
@@ -166,36 +582,49 @@ def main() -> None:
             for ln in Path(args.file).read_text(encoding="utf-8").splitlines()
             if ln.strip()
         ]
-    numbers.extend(args.mobiles)
-
+    numbers.extend(args.numbers)
     if not numbers:
         ap.print_help()
         print("\nExamples:")
         print("  python myntra_check.py 9027936246")
         print("  python myntra_check.py 9027936246 9999999999")
+        print("  python myntra_check.py --playwright 9027936246")
+        print("  python myntra_check.py --warmup")
         sys.exit(1)
 
+    # If forcing Playwright, run legacy browser bulk
+    if args.playwright:
+        results = asyncio.run(run_bulk(numbers, headless=args.headless))
+        if args.json:
+            print(json.dumps(results, indent=2, default=str))
+        elif len(results) == 1:
+            pretty(results[0])
+        else:
+            print("\n===== SUMMARY =====")
+            for r in results:
+                print(f"{r.get('mobile')}\t{r.get('status')}")
+        return
+
+    # Default: Use fast new ProMyntra API server
+    results = []
     total = len(numbers)
-    json_results = []
     for i, raw in enumerate(numbers, 1):
-        mobile = clean_phone(raw)
+        mobile = normalize_mobile(raw)
         if not args.json:
             print(f"[{i}/{total}] {mobile} ... ", end="", flush=True)
-        result = check_myntra(mobile)
-        if args.json:
-            json_results.append(result)
-        else:
-            print(result.get("status", "ERROR"))
-            if args.raw or result.get("status") not in ("REGISTERED", "NOT_REGISTERED"):
-                print(f"Result: {result}")
+        res = check_myntra_sync(mobile)
+        results.append(res)
+        if not args.json:
+            print(res.get("status", "ERROR"))
+            if args.raw or res.get("status") not in ("REGISTERED", "NOT_REGISTERED"):
+                print(f"Result: {res}")
             else:
-                pretty_print(result)
+                pretty(res)
             if i < total:
                 time.sleep(BULK_DELAY)
 
     if args.json:
-        import json
-        print(json.dumps(json_results, indent=2))
+        print(json.dumps(results, indent=2, default=str))
 
 
 if __name__ == "__main__":
