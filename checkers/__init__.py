@@ -26,6 +26,11 @@ try:
 except ImportError:
     from NexBot.core.meesho_api import MeeshoClient, clean_phone
 
+try:
+    from core.myntra_api import MyntraClient
+except ImportError:
+    from NexBot.core.myntra_api import MyntraClient
+
 from checkers.zomato_check import check_zomato
 from checkers.myntra_check import check_myntra, MyntraChecker, myntra_checker
 from checkers.flipkart_check import check_flipkart
@@ -37,6 +42,7 @@ from checkers.zepto_check import check_zepto
 
 __all__ = [
     "MeeshoClient",
+    "MyntraClient",
     "clean_phone",
     "check_zomato",
     "check_myntra",

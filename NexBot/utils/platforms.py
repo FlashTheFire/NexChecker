@@ -53,7 +53,7 @@ def _build_platforms() -> dict[str, PlatformDef]:
             command      = "myntra",
             description  = "Myntra registration checker",
             checker      = myntra_checker,
-            needs_warmup = True,
+            needs_warmup = False,
         ),
         "bigbasket": PlatformDef(
             key          = "bigbasket",
