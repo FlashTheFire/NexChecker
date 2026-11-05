@@ -21,6 +21,10 @@ services:
       HOST: 0.0.0.0
       WEBHOOK_URL: ${WEBHOOK_URL:-}
       WEBHOOK_SECRET: ${WEBHOOK_SECRET:-}
+    ports:
+      - "${PORT:-8000}:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - .:/app
     networks:
@@ -50,6 +54,8 @@ services:
       ENVIRONMENT: production
       WEBHOOK_URL: ${WEBHOOK_URL:-}
       WEBHOOK_SECRET: ${WEBHOOK_SECRET:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - .:/app
     networks:
@@ -71,8 +77,8 @@ services:
     environment:
       NGINX_DOMAIN: ${LOCAL_DOMAIN:-nexchecker.127.0.0.1.nip.io}
     ports:
-      - "80:80"
-      - "443:443"
+      - "${NGINX_HTTP_PORT:-8088}:80"
+      - "${NGINX_HTTPS_PORT:-8443}:443"
     volumes:
       - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./docker/certs:/etc/nginx/certs:ro
@@ -83,6 +89,8 @@ services:
     depends_on:
       api:
         condition: service_healthy
+    profiles:
+      - proxy
     logging:
       driver: "json-file"
       options:
@@ -101,6 +109,8 @@ services:
       - nexchecker_internal
     depends_on:
       - nginx
+    profiles:
+      - proxy
     logging:
       driver: "json-file"
       options:
