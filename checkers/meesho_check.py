@@ -56,7 +56,28 @@ def check_meesho(mobile: str) -> dict[str, Any]:
     try:
         client = MeeshoClient()
         res = client.check_number(norm)
-        status = "REGISTERED" if res.registered else "NOT_REGISTERED"
+        if res.error:
+            return {
+                "status": "ERROR",
+                "mobile": norm,
+                "error": res.error,
+                "registered": False,
+                "fresh": False,
+                "raw": res.raw,
+            }
+        if res.registered:
+            status = "REGISTERED"
+        elif res.fresh:
+            status = "NOT_REGISTERED"
+        else:
+            return {
+                "status": "UNKNOWN",
+                "mobile": norm,
+                "error": "Indeterminate registration status",
+                "registered": False,
+                "fresh": False,
+                "raw": res.raw,
+            }
         return {
             "status": status,
             "mobile": norm,
