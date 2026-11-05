@@ -69,7 +69,15 @@ class CheckResult:
                 raw=data,
             )
         is_registered = bool(data.get("registered", False))
-        is_fresh = bool(data.get("fresh", not is_registered))
+        is_fresh = bool(data.get("fresh", False))
+        if not is_registered and not is_fresh:
+            return cls(
+                number=str(data.get("number", "")),
+                registered=False,
+                fresh=False,
+                error="Meesho engine returned inconclusive response (upstream session issue)",
+                raw=data,
+            )
         return cls(
             number=str(data.get("number", "")),
             registered=is_registered,

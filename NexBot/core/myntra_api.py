@@ -52,19 +52,36 @@ class CheckResult:
     number: str
     registered: bool
     fresh: bool
+    error: Optional[str] = None
     raw: dict = field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, data: dict) -> CheckResult:
+        err = data.get("error")
+        is_ok = data.get("ok")
+        if err or is_ok is False:
+            return cls(
+                number=str(data.get("number", "")),
+                registered=False,
+                fresh=False,
+                error=str(err) if err else "Upstream check failed",
+                raw=data,
+            )
         is_registered = bool(data.get("registered", False))
-        if "error" in data or data.get("ok") is False:
-            is_fresh = bool(data.get("fresh", False))
-        else:
-            is_fresh = bool(data.get("fresh", not is_registered))
+        is_fresh = bool(data.get("fresh", False))
+        if not is_registered and not is_fresh:
+            return cls(
+                number=str(data.get("number", "")),
+                registered=False,
+                fresh=False,
+                error="Myntra engine returned inconclusive response (upstream session issue)",
+                raw=data,
+            )
         return cls(
             number=str(data.get("number", "")),
             registered=is_registered,
             fresh=is_fresh,
+            error=None,
             raw=data,
         )
 
@@ -417,22 +434,34 @@ class MyntraClient:
         No SMS/OTP sent. Authoritative verdict.
         """
         mobile = clean_phone(phone)
-        data = await self._async_request("POST", "/api/check", body={"number": mobile})
+        try:
+            data = await self._async_request("POST", "/api/check", body={"number": mobile})
+        except Exception as exc:
+            return CheckResult(number=mobile, registered=False, fresh=False, error=str(exc))
+        if not isinstance(data, dict):
+            return CheckResult(number=mobile, registered=False, fresh=False, error="Invalid response from Myntra service")
+        if data.get("ok") is False or "error" in data:
+            return CheckResult(number=mobile, registered=False, fresh=False, error=data.get("error", "Upstream check failed"), raw=data)
         results = data.get("results") or []
-        if results:
+        if results and isinstance(results[0], dict):
             return CheckResult.from_dict(results[0])
-        is_ok = bool(data.get("ok", False))
-        return CheckResult(number=mobile, registered=False, fresh=is_ok, raw=data)
+        return CheckResult(number=mobile, registered=False, fresh=False, error="No verification results returned", raw=data)
 
     def check_number(self, phone: str) -> CheckResult:
         """Synchronous version of check_number_async."""
         mobile = clean_phone(phone)
-        data = self._sync_request("POST", "/api/check", body={"number": mobile})
+        try:
+            data = self._sync_request("POST", "/api/check", body={"number": mobile})
+        except Exception as exc:
+            return CheckResult(number=mobile, registered=False, fresh=False, error=str(exc))
+        if not isinstance(data, dict):
+            return CheckResult(number=mobile, registered=False, fresh=False, error="Invalid response from Myntra service")
+        if data.get("ok") is False or "error" in data:
+            return CheckResult(number=mobile, registered=False, fresh=False, error=data.get("error", "Upstream check failed"), raw=data)
         results = data.get("results") or []
-        if results:
+        if results and isinstance(results[0], dict):
             return CheckResult.from_dict(results[0])
-        is_ok = bool(data.get("ok", False))
-        return CheckResult(number=mobile, registered=False, fresh=is_ok, raw=data)
+        return CheckResult(number=mobile, registered=False, fresh=False, error="No verification results returned", raw=data)
 
     async def check_numbers_async(self, phones: List[str]) -> BatchCheckResponse:
         """Bulk check a list of Indian mobile numbers."""
@@ -949,7 +978,21 @@ class MyntraChecker:
                     }
                 client = self._client or MyntraClient()
                 res = await client.check_number_async(norm)
-                status = "REGISTERED" if res.registered else "NOT_REGISTERED"
+                if res.error:
+                    return {
+                        "status": "ERROR",
+                        "mobile": norm,
+                        "error": res.error,
+                        "registered": False,
+                        "fresh": False,
+                        "raw": res.raw,
+                    }
+                if res.registered:
+                    status = "REGISTERED"
+                elif res.fresh:
+                    status = "NOT_REGISTERED"
+                else:
+                    status = "UNKNOWN"
                 return {
                     "status": status,
                     "mobile": norm,

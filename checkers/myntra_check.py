@@ -424,16 +424,30 @@ class MyntraChecker:
             try:
                 client = self._api_client or MyntraClient()
                 res = await client.check_number_async(norm)
-                status = "REGISTERED" if res.registered else "NOT_REGISTERED"
-                return {
-                    "status": status,
-                    "registered": res.registered,
-                    "fresh": res.fresh,
-                    "mobile": norm,
-                    "http": 200,
-                    "raw": res.raw,
-                    "via": "api",
-                }
+                if res.error:
+                    print(f"[!] ProMyntra API returned error: {res.error} — attempting Playwright fallback...")
+                elif res.registered:
+                    return {
+                        "status": "REGISTERED",
+                        "registered": True,
+                        "fresh": False,
+                        "mobile": norm,
+                        "http": 200,
+                        "raw": res.raw,
+                        "via": "api",
+                    }
+                elif res.fresh:
+                    return {
+                        "status": "NOT_REGISTERED",
+                        "registered": False,
+                        "fresh": True,
+                        "mobile": norm,
+                        "http": 200,
+                        "raw": res.raw,
+                        "via": "api",
+                    }
+                else:
+                    print(f"[!] ProMyntra API inconclusive for {norm} — attempting Playwright fallback...")
             except Exception as exc:
                 print(f"[!] ProMyntra API call failed: {exc} — attempting Playwright fallback...")
 
@@ -482,7 +496,30 @@ def check_myntra_sync(mobile: str) -> dict[str, Any]:
         try:
             client = MyntraClient()
             res = client.check_number(norm)
-            status = "REGISTERED" if res.registered else "NOT_REGISTERED"
+            if res.error:
+                return {
+                    "status": "ERROR",
+                    "mobile": norm,
+                    "error": res.error,
+                    "registered": False,
+                    "fresh": False,
+                    "raw": res.raw,
+                    "via": "api",
+                }
+            if res.registered:
+                status = "REGISTERED"
+            elif res.fresh:
+                status = "NOT_REGISTERED"
+            else:
+                return {
+                    "status": "UNKNOWN",
+                    "mobile": norm,
+                    "error": "Indeterminate registration status",
+                    "registered": False,
+                    "fresh": False,
+                    "raw": res.raw,
+                    "via": "api",
+                }
             return {
                 "status": status,
                 "registered": res.registered,
