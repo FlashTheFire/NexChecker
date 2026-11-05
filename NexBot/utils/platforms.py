@@ -55,18 +55,8 @@ def _build_platforms() -> dict[str, PlatformDef]:
             checker      = myntra_checker,
             needs_warmup = False,
         ),
-        "bigbasket": PlatformDef(
-            key          = "bigbasket",
-            label        = "BigBasket",
-            icon         = "🛒",
-            flag         = "🇮🇳",
-            service_code = BIGBASKET_SERVICE_CODE,
-            country_code = "22",
-            command      = "bigbasket",
-            description  = "BigBasket registration checker",
-            checker      = bigbasket_checker,
-            needs_warmup = False,
-        ),
+# bigbasket: DISABLED
+
         "flipkart": PlatformDef(
             key          = "flipkart",
             label        = "Flipkart",

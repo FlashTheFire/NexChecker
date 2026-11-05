@@ -218,30 +218,7 @@
         fresh: 'No account — fresh for reseller signup',
       }
     },
-    bigbasket: {
-      name: 'BigBasket',
-      logo: '/static/src/logos/bigbasket.png',
-      primary: '#A6CE39',
-      emoji: '🥬',
-      scanEmoji: '🥬',
-      registeredEmoji: '✅',
-      freshEmoji: '✨',
-      bannerTitle: 'BigBasket Account Checker',
-      bannerSubtitle: 'Grocery platform registry lookup',
-      demoRegistered: '9999999991',
-      demoFresh: '8888888881',
-      ctaLabel: 'Check on BigBasket',
-      scanSteps: [
-        'Connecting to BigBasket registry...',
-        'Querying grocery account DB...',
-        'Checking membership status...',
-        'Verifying account existence...',
-      ],
-      resultDescriptions: {
-        registered: 'Account exists on BigBasket',
-        fresh: 'No account — fresh grocery number',
-      }
-    },
+    /* bigbasket turned off */
     myntra: {
       name: 'Myntra',
       logo: '/static/src/logos/myntra.png',
@@ -893,8 +870,8 @@
     }
     renderBannerStats();
 
-    const isRegistered = result.registered === true;
-    const isFresh      = result.fresh === true || result.registered === false;
+    const isRegistered = result.registered === true || result.status === 'REGISTERED';
+    const isFresh      = !isRegistered && (result.fresh === true || result.status === 'NOT_REGISTERED');
 
     _resultPhoneRaw = '+91 ' + phone.slice(0,5) + ' ' + phone.slice(5);
 

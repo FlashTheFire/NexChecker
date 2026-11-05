@@ -271,10 +271,12 @@ async def _execute_check(platform: str, phone: str) -> Dict[str, Any]:
             result = {"status": "ERROR", "error": "Flipkart checker engine unavailable"}
 
     elif pkey == "bigbasket":
-        if check_bigbasket:
-            result = await _run_checker(check_bigbasket, clean)
-        else:
-            result = {"status": "ERROR", "error": "BigBasket checker engine unavailable"}
+        result = {
+            "status": "DISABLED",
+            "registered": False,
+            "fresh": False,
+            "error": "BigBasket checker is currently turned off.",
+        }
 
     elif pkey == "myntra":
         if check_myntra:
@@ -362,7 +364,7 @@ async def list_platforms():
             {"key": "zomato",     "label": "Zomato",     "icon": "🍽",  "status": "active",  "category": "food"},
             {"key": "flipkart",   "label": "Flipkart",   "icon": "🛍",  "status": "active",  "category": "ecommerce"},
             {"key": "meesho",     "label": "Meesho",     "icon": "✨",  "status": "active",  "category": "marketplace"},
-            {"key": "bigbasket",  "label": "BigBasket",  "icon": "🥬",  "status": "active",  "category": "grocery"},
+            {"key": "bigbasket",  "label": "BigBasket",  "icon": "🥬",  "status": "disabled",  "category": "grocery"},
             {"key": "myntra",     "label": "Myntra",     "icon": "👗",  "status": "active",  "category": "fashion"},
             {"key": "amazon",     "label": "Amazon",     "icon": "📦",  "status": "active",  "category": "ecommerce"},
             {"key": "swiggy",     "label": "Swiggy",     "icon": "🛵",  "status": "active",  "category": "food"},
