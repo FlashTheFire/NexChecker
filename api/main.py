@@ -303,10 +303,12 @@ async def _execute_check(platform: str, phone: str) -> Dict[str, Any]:
             result = {"status": "ERROR", "error": "Swiggy checker engine unavailable"}
 
     elif pkey == "zepto":
-        if check_zepto:
-            result = await _run_checker(check_zepto, clean)
-        else:
-            result = {"status": "ERROR", "error": "Zepto checker engine unavailable"}
+        result = {
+            "status": "DISABLED",
+            "registered": False,
+            "fresh": False,
+            "error": "Zepto checker is currently turned off.",
+        }
 
     elif pkey == "all":
         results = {}
@@ -368,7 +370,7 @@ async def list_platforms():
             {"key": "myntra",     "label": "Myntra",     "icon": "👗",  "status": "active",  "category": "fashion"},
             {"key": "amazon",     "label": "Amazon",     "icon": "📦",  "status": "active",  "category": "ecommerce"},
             {"key": "swiggy",     "label": "Swiggy",     "icon": "🛵",  "status": "active",  "category": "food"},
-            {"key": "zepto",      "label": "Zepto",      "icon": "⚡",  "status": "active",  "category": "qcommerce"},
+            {"key": "zepto",      "label": "Zepto",      "icon": "⚡",  "status": "disabled",  "category": "qcommerce"},
         ]
     }
 

@@ -267,30 +267,7 @@
         fresh: 'No account — fresh delivery number',
       }
     },
-    zepto: {
-      name: 'Zepto',
-      logo: '/static/src/logos/zepto.png',
-      primary: '#950EDB',
-      emoji: '🚀',
-      scanEmoji: '🚀',
-      registeredEmoji: '✅',
-      freshEmoji: '✨',
-      bannerTitle: 'Zepto Account Checker',
-      bannerSubtitle: '10-minute delivery account lookup',
-      demoRegistered: '9999999994',
-      demoFresh: '8888888884',
-      ctaLabel: 'Check on Zepto',
-      scanSteps: [
-        'Connecting to Zepto registry...',
-        'Querying quick-commerce DB...',
-        'Checking customer profile...',
-        'Verifying account status...',
-      ],
-      resultDescriptions: {
-        registered: 'Account exists on Zepto',
-        fresh: 'No account — fresh quick-commerce number',
-      }
-    },
+    /* zepto turned off */
     amazon: {
       name: 'Amazon',
       logo: '/static/src/logos/amazon.png',
