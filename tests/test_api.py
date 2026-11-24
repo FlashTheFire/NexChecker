@@ -125,6 +125,36 @@ class TestNexCheckerAPI(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(resp.json().get("ok"))
 
+    def test_openapi_schema_visibility(self):
+        docs_resp = client.get("/docs")
+        self.assertEqual(docs_resp.status_code, 200)
+
+        spec = client.get("/openapi.json").json()
+        paths = set(spec.get("paths", {}).keys())
+        expected_visible = {"/health", "/api/health", "/api/platforms", "/api/purchase", "/api-docs"}
+        self.assertEqual(paths, expected_visible)
+
+        hidden_routes = (
+            "/",
+            "/checker",
+            "/app",
+            "/api/v1/purchase",
+            "/api/auth/verify",
+            "/api/auth/me",
+            "/api/history",
+            "/api/history/clear",
+            "/api/history/{record_id}",
+            "/api/admin/users",
+            "/bot/webhook",
+            "/api/bot/webhook",
+            "/api/check/phone",
+            "/api/checker/phone",
+            "/api/check/batch",
+            "/api/checker/batch",
+        )
+        for route in hidden_routes:
+            self.assertNotIn(route, paths)
+
 
 if __name__ == "__main__":
     unittest.main()
