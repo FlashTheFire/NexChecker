@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#070709">
-  <meta name="description" content="NexChecker API Reference — Authentication, Targeted Purchase API, Checker Engines & Error Reference.">
+  <meta name="description" content="NexChecker API Reference — Authentication, Targeted Purchase API, Checker Engines &amp; Rules.">
   <title>NexChecker — API Docs</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -61,7 +61,7 @@
         </a>
         <a href="#cancel-queue" class="nav-link">Cancel Queue</a>
         <a href="#engines-matrix" class="nav-link">Checker Engines</a>
-        <a href="#error-codes" class="nav-link">Error Reference</a>
+        <a href="#rules" class="nav-link">Rules &amp; Notes</a>
       </nav>
     </aside>
 
@@ -114,9 +114,6 @@
               </tr>
             </tbody>
           </table>
-        </div>
-        <div class="callout info">
-          <strong>Test Bypass:</strong> <code>ENVIRONMENT=testing</code> or <code>X-Test-Bypass: 1</code> injects <code>tg_99999999</code>. Never enable in production.
         </div>
       </section>
 
@@ -197,10 +194,6 @@
               </table>
             </div>
 
-            <div class="callout warn">
-              <strong>Rules:</strong> <code>BAD_KEY</code> (400) &amp; <code>NO_BALANCE</code>/<code>BANNED</code> (402) stop immediately. Two consecutive inconclusive checks (<code>ERROR</code>/<code>TIMEOUT</code>/<code>UNKNOWN</code>/<code>DISABLED</code>) abort with <code>422 CHECKER_INCONCLUSIVE</code>. Keep <code>max_attempts</code> within Nginx <code>60s</code> timeout.
-            </div>
-
             <h3 class="sub-h3">200 OK Response</h3>
             <div class="code-block">
               <div class="code-head">
@@ -249,24 +242,14 @@
         </div>
       </section>
 
-      <!-- ══ 4. ERROR REFERENCE ═════════════════════════════════════════════ -->
-      <section class="doc-section" id="error-codes">
-        <h2 class="sec-h2">Error Reference</h2>
-        <div class="table-wrap">
-          <table class="doc-table">
-            <thead><tr><th>HTTP</th><th>Error Code</th><th>Source</th><th>Resolution</th></tr></thead>
-            <tbody>
-              <tr><td><code>400</code></td><td><code>NEXNUM_KEY_REQUIRED</code></td><td>Purchase</td><td>Provide key via <code>X-NexNum-Key</code> header or body <code>api_key</code>.</td></tr>
-              <tr><td><code>400</code></td><td><code>INVALID_TARGET_STATUS</code></td><td>Purchase</td><td>Must be <code>REGISTERED</code> or <code>NOT_REGISTERED</code>.</td></tr>
-              <tr><td><code>400</code></td><td><code>BAD_KEY</code></td><td>NexNum</td><td>Invalid caller NexNum API key.</td></tr>
-              <tr><td><code>401</code></td><td><code>UNAUTHORIZED</code></td><td>Auth</td><td>Invalid or missing <code>X-API-Key</code> / <code>Bearer</code> token.</td></tr>
-              <tr><td><code>401/403</code></td><td><code>AUTH_REQUIRED / AUTH_FAILED</code></td><td>Telegram</td><td>Missing, expired (<code>&gt;24h</code>), or tampered <code>X-Telegram-Init-Data</code>.</td></tr>
-              <tr><td><code>402</code></td><td><code>NO_BALANCE / BANNED</code></td><td>NexNum</td><td>Insufficient NexNum balance or restricted account.</td></tr>
-              <tr><td><code>422</code></td><td><code>CHECKER_INCONCLUSIVE</code></td><td>Purchase</td><td>2 consecutive inconclusive checks; numbers queued for cancel.</td></tr>
-              <tr><td><code>422</code></td><td><code>MAX_ATTEMPTS_EXHAUSTED</code></td><td>Purchase</td><td>No match within <code>max_attempts</code>; discards queued for refund.</td></tr>
-              <tr><td><code>422</code></td><td><code>NO_NUMBERS</code></td><td>NexNum</td><td>Out of stock for requested <code>service_code</code> &amp; <code>country_code</code>.</td></tr>
-            </tbody>
-          </table>
+      <!-- ══ 4. RULES & NOTES ══════════════════════════════════════════════ -->
+      <section class="doc-section" id="rules">
+        <h2 class="sec-h2">Rules &amp; Notes</h2>
+        <div class="callout warn">
+          <strong>Rules:</strong> <code>BAD_KEY</code> (400) &amp; <code>NO_BALANCE</code>/<code>BANNED</code> (402) stop immediately. Two consecutive inconclusive checks (<code>ERROR</code>/<code>TIMEOUT</code>/<code>UNKNOWN</code>/<code>DISABLED</code>) abort with <code>422 CHECKER_INCONCLUSIVE</code>. Keep <code>max_attempts</code> within Nginx <code>60s</code> timeout.
+        </div>
+        <div class="callout info">
+          <strong>Test Bypass:</strong> <code>ENVIRONMENT=testing</code> or <code>X-Test-Bypass: 1</code> injects <code>tg_99999999</code>. Never enable in production.
         </div>
       </section>
 
