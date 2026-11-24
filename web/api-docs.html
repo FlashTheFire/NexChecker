@@ -1,19 +1,18 @@
 <!DOCTYPE html>
-<html lang="en" data-brand="zomato">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0a0a0c">
-  <meta name="description" content="NexChecker API v3.0 — Complete Frontend-to-Backend Architecture, REST API Reference, Interactive Playground, Checker Engines & Deployment Documentation.">
-  <title>NexChecker — Full-Stack API & Architecture Docs</title>
+  <meta name="theme-color" content="#09090b">
+  <meta name="description" content="NexChecker API Docs — Authentication, Interactive Playground, Targeted Purchase API, Dynamic Checker Engines & Error Diagnostics.">
+  <title>NexChecker — API Documentation</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="icon" type="image/png" href="/static/src/logos/zomato.png">
-  <link rel="stylesheet" href="/static/api-docs.css?v=1.0">
+  <link rel="stylesheet" href="/static/api-docs.css?v=2.0">
 </head>
 <body>
 
@@ -26,7 +25,11 @@
         </svg>
       </button>
       <a href="/api-docs" class="brand-mark">
-        <img src="/static/src/logos/zomato.png" alt="NexChecker" id="headerBrandLogo">
+        <div class="brand-icon-box" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+        </div>
         <span class="brand-title">
           NexChecker API
           <span class="version-badge">v3.0.0</span>
@@ -36,7 +39,7 @@
 
     <div class="header-right">
       <button class="base-url-pill" id="copyBaseUrlBtn" title="Click to copy Base URL">
-        <span id="baseUrlText">https://nexchecker</span>
+        <span id="baseUrlText">http://127.0.0.1:8000</span>
         <span>📋</span>
       </button>
 
@@ -44,15 +47,6 @@
         <span class="health-dot"></span>
         <span class="health-label" id="liveHealthText">CHECKING</span>
       </div>
-
-      <select class="brand-select" id="brandThemeSelect" aria-label="Theme Brand">
-        <option value="zomato">Theme: Zomato</option>
-        <option value="flipkart">Theme: Flipkart</option>
-        <option value="meesho">Theme: Meesho</option>
-        <option value="myntra">Theme: Myntra</option>
-        <option value="swiggy">Theme: Swiggy</option>
-        <option value="amazon">Theme: Amazon</option>
-      </select>
 
       <a href="/docs" class="nav-btn" target="_blank" rel="noopener">OpenAPI</a>
       <a href="/" class="nav-btn primary" id="backToAppBtn">← WebApp</a>
@@ -62,178 +56,33 @@
   <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
   <div class="docs-shell">
-    <!-- Left Sidebar -->
+    <!-- Compact Sidebar -->
     <aside class="docs-sidebar" id="docsSidebar">
-      <div class="sidebar-search-wrap">
-        <input type="search" id="sidebarSearch" class="sidebar-search" placeholder="Filter sections & endpoints...">
-        <span class="kbd-hint">/</span>
+      <div class="sidebar-active-box">
+        <span class="sidebar-active-label">Active Services</span>
+        <span class="sidebar-active-count" id="sidebarActiveCount">—</span>
       </div>
 
       <nav id="sidebarNav">
         <div class="nav-group">
-          <div class="nav-group-title">Architecture</div>
-          <a href="#overview" class="nav-link active">System Overview</a>
-          <a href="#auth" class="nav-link">Authentication & Security</a>
+          <div class="nav-group-title">Documentation</div>
+          <a href="#auth" class="nav-link active">Security Layer</a>
           <a href="#playground" class="nav-link">Interactive Playground</a>
-        </div>
-
-        <div class="nav-group">
-          <div class="nav-group-title">Purchase & NexNum</div>
           <a href="#ep-purchase" class="nav-link">
             <span>Targeted Purchase</span>
             <span class="method-tag post">POST</span>
           </a>
           <a href="#cancel-queue" class="nav-link">Deferred Cancel Queue</a>
-        </div>
-
-        <div class="nav-group">
-          <div class="nav-group-title">Verification Checkers</div>
-          <a href="#ep-check-phone" class="nav-link">
-            <span>Single Phone Check</span>
-            <span class="method-tag post">POST</span>
-          </a>
-          <a href="#ep-check-batch" class="nav-link">
-            <span>Batch Scan (50x)</span>
-            <span class="method-tag post">POST</span>
-          </a>
-          <a href="#engines-matrix" class="nav-link">8 Platform Engines</a>
-        </div>
-
-        <div class="nav-group">
-          <div class="nav-group-title">System & Platforms</div>
-          <a href="#ep-health" class="nav-link">
-            <span>Health & Telemetry</span>
-            <span class="method-tag get">GET</span>
-          </a>
-          <a href="#ep-platforms" class="nav-link">
-            <span>Platform Registry</span>
-            <span class="method-tag get">GET</span>
-          </a>
-          <a href="#ep-admin-users" class="nav-link">
-            <span>User Analytics</span>
-            <span class="method-tag get">GET</span>
-          </a>
-        </div>
-
-        <div class="nav-group">
-          <div class="nav-group-title">Auth & History</div>
-          <a href="#ep-auth-verify" class="nav-link">
-            <span>Verify initData</span>
-            <span class="method-tag get">GET</span>
-          </a>
-          <a href="#ep-auth-me" class="nav-link">
-            <span>Caller Profile</span>
-            <span class="method-tag get">GET</span>
-          </a>
-          <a href="#ep-history-get" class="nav-link">
-            <span>Fetch History</span>
-            <span class="method-tag get">GET</span>
-          </a>
-          <a href="#ep-history-clear" class="nav-link">
-            <span>Clear History</span>
-            <span class="method-tag post">POST</span>
-          </a>
-          <a href="#ep-history-del" class="nav-link">
-            <span>Delete History Item</span>
-            <span class="method-tag delete">DEL</span>
-          </a>
-        </div>
-
-        <div class="nav-group">
-          <div class="nav-group-title">Bot, Frontend & Ops</div>
-          <a href="#ep-webhook" class="nav-link">
-            <span>Telegram Webhook</span>
-            <span class="method-tag post">POST</span>
-          </a>
-          <a href="#frontend-arch" class="nav-link">Frontend WebApp Spec</a>
-          <a href="#nexbot-arch" class="nav-link">NexBot & Storage Spec</a>
+          <a href="#engines-matrix" class="nav-link">Platform Checkers</a>
           <a href="#error-codes" class="nav-link">Error Reference</a>
-          <a href="#deployment" class="nav-link">Docker, Nginx & Env</a>
         </div>
       </nav>
     </aside>
 
-    <!-- Main Documentation Content -->
+    <!-- Streamlined Documentation Content -->
     <main class="docs-main">
 
-      <!-- ══ 1. SYSTEM OVERVIEW ═════════════════════════════════════════════ -->
-      <section class="doc-section" id="overview">
-        <div class="section-kicker">Full-Stack Technical Documentation</div>
-        <h1 class="hero-h1">NexChecker API &amp; System Architecture</h1>
-        <p class="lead">
-          Complete engineering reference covering the Telegram Mini App frontend, FastAPI verification &amp; targeted purchase backend, NexNum virtual number lifecycle, asynchronous deferred cancellation engine, multi-brand silent checker engines, and Docker/Nginx deployment stack.
-        </p>
-
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-label">Backend Framework</div>
-            <div class="stat-value">FastAPI</div>
-            <div class="stat-sub">Uvicorn ASGI • 2 workers • Port 8000</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Platform Engines</div>
-            <div class="stat-value">6 Active / 8 Total</div>
-            <div class="stat-sub">0-OTP silent registration checks</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Auth Models</div>
-            <div class="stat-value">HMAC + API Key</div>
-            <div class="stat-sub">Telegram initData &amp; X-API-Key</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Live Total Checks</div>
-            <div class="stat-value" id="statTotalChecks">—</div>
-            <div class="stat-sub" id="statBreakdown">Fetching /api/health...</div>
-          </div>
-        </div>
-
-        <h3 class="sub-h3">End-to-End Request &amp; Data Flow</h3>
-        <div class="arch-diagram">
-          <div class="arch-row">
-            <div class="arch-node">
-              <div class="arch-node-title">1. Clients &amp; Channels</div>
-              <ul class="arch-node-list">
-                <li>• Telegram Mini App (<code>web/index.html</code>)</li>
-                <li>• External REST Consumers (<code>X-API-Key</code>)</li>
-                <li>• Telegram Bot (<code>@NexChecker_Robot</code>)</li>
-                <li>• API Docs Portal (<code>/api-docs</code>)</li>
-              </ul>
-            </div>
-            <div class="arch-arrow">→</div>
-            <div class="arch-node">
-              <div class="arch-node-title">2. Edge &amp; TLS Proxy</div>
-              <ul class="arch-node-list">
-                <li>• Nginx 1.27 SSL (<code>docker/nginx.conf</code>)</li>
-                <li>• Cloudflare Tunnel HTTPS</li>
-                <li>• Rate Limit: <code>60 req/s</code> burst <code>100</code></li>
-                <li>• Read Timeout: <code>60s</code></li>
-              </ul>
-            </div>
-            <div class="arch-arrow">→</div>
-            <div class="arch-node highlight">
-              <div class="arch-node-title">3. FastAPI Core (<code>api/main.py</code>)</div>
-              <ul class="arch-node-list">
-                <li>• <code>api/auth.py</code> (HMAC / Key Gate)</li>
-                <li>• <code>api/purchase_service.py</code></li>
-                <li>• <code>api/cancel_queue.py</code> (BG worker)</li>
-                <li>• <code>api/history_manager.py</code></li>
-              </ul>
-            </div>
-            <div class="arch-arrow">→</div>
-            <div class="arch-node">
-              <div class="arch-node-title">4. Downstream Engines</div>
-              <ul class="arch-node-list">
-                <li>• <code>checkers/*_check.py</code></li>
-                <li>• NexNum API (<code>handler_api.php</code>)</li>
-                <li>• Disk JSON (<code>data/server_history</code>)</li>
-                <li>• <code>universal_stats.json</code></li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ══ 2. AUTHENTICATION & SECURITY ═══════════════════════════════════ -->
+      <!-- ══ 1. SECURITY LAYER ══════════════════════════════════════════════ -->
       <section class="doc-section" id="auth">
         <div class="section-kicker">Security Layer</div>
         <h2 class="sec-h2">Authentication &amp; Access Control (<code>api/auth.py</code>)</h2>
@@ -292,12 +141,12 @@
         </div>
       </section>
 
-      <!-- ══ 3. INTERACTIVE PLAYGROUND ══════════════════════════════════════ -->
+      <!-- ══ 2. INTERACTIVE API PLAYGROUND ══════════════════════════════════ -->
       <section class="doc-section" id="playground">
         <div class="section-kicker">Live Runner</div>
         <h2 class="sec-h2">Interactive API Playground</h2>
         <p class="desc">
-          Select any endpoint, configure headers and JSON payload, execute live HTTP requests against this server, and copy auto-generated client snippets.
+          Select any endpoint, pick an active platform dynamically, configure headers and JSON payload, execute live HTTP requests against this server, and copy auto-generated client snippets.
         </p>
 
         <div class="playground-card">
@@ -305,7 +154,7 @@
             <select class="pg-select" id="pgEndpointSelect" aria-label="Select Endpoint">
               <option value="health">GET  /api/health — System Health &amp; Stats</option>
               <option value="platforms">GET  /api/platforms — Platform Registry</option>
-              <option value="purchase">POST /api/v1/purchase — Targeted Number Purchase</option>
+              <option value="purchase" selected>POST /api/v1/purchase — Targeted Number Purchase</option>
               <option value="check_phone">POST /api/checker/phone — Single Phone Check</option>
               <option value="check_batch">POST /api/checker/batch — Concurrent Batch Check</option>
               <option value="auth_verify">GET  /api/auth/verify — Verify Telegram initData</option>
@@ -315,6 +164,12 @@
               <option value="admin_users">GET  /api/admin/users — Aggregate User Stats</option>
             </select>
             <button class="pg-send-btn" id="pgSendBtn">▶ Send Request</button>
+          </div>
+
+          <!-- Dynamic Active Platform Switcher -->
+          <div class="pg-services-bar" id="pgServicesBar">
+            <span class="pg-services-label">Active Services:</span>
+            <span style="font-size:12px; color:var(--text-muted);">Loading platforms...</span>
           </div>
 
           <div class="pg-grid">
@@ -335,7 +190,7 @@
                 </div>
                 <div class="pg-field-row" id="pgFieldTgInit">
                   <label for="pgTgInitData">X-Telegram-Init-Data (Auto-populated inside Telegram)</label>
-                  <input type="text" id="pgTgInitData" class="pg-input" placeholder="query_id=...&user=...&hash=...">
+                  <input type="text" id="pgTgInitData" class="pg-input" placeholder="query_id=...&amp;user=...&amp;hash=...">
                 </div>
               </div>
 
@@ -373,7 +228,7 @@
         </div>
       </section>
 
-      <!-- ══ 4. TARGETED PURCHASE API ═══════════════════════════════════════ -->
+      <!-- ══ 3. PURCHASE & NEXNUM INTEGRATION ═══════════════════════════════ -->
       <section class="doc-section" id="ep-purchase">
         <div class="section-kicker">Purchase &amp; NexNum Integration</div>
         <h2 class="sec-h2">Targeted Virtual Number Purchase</h2>
@@ -399,12 +254,42 @@
               <table class="doc-table">
                 <thead><tr><th>Field</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
                 <tbody>
-                  <tr><td><code>platform</code> <span class="req-pill">Required</span></td><td><code>string</code></td><td><code>"zomato"</code></td><td>Target checker slug: <code>zomato</code>, <code>flipkart</code>, <code>myntra</code>, <code>meesho</code>, <code>amazon</code>, <code>swiggy</code>, <code>bigbasket</code>, <code>zepto</code>.</td></tr>
-                  <tr><td><code>target_status</code> <span class="opt-pill">Optional</span></td><td><code>string</code></td><td><code>"NOT_REGISTERED"</code></td><td>Filter condition: <code>NOT_REGISTERED</code> (fresh) or <code>REGISTERED</code> (existing account).</td></tr>
-                  <tr><td><code>service_code</code> <span class="opt-pill">Optional</span></td><td><code>string</code></td><td>Platform map</td><td>NexNum service code override (defaults: zomato=<code>dy</code>, flipkart=<code>xt</code>, myntra=<code>nl</code>, bigbasket=<code>bb</code>, amazon=<code>am</code>, swiggy=<code>sw</code>, meesho=<code>me</code>, zepto=<code>zp</code>).</td></tr>
-                  <tr><td><code>country_code</code> <span class="opt-pill">Optional</span></td><td><code>string</code></td><td><code>"22"</code></td><td>NexNum numeric country code (<code>"22"</code> = India).</td></tr>
-                  <tr><td><code>max_attempts</code> <span class="opt-pill">Optional</span></td><td><code>integer</code></td><td><code>5</code></td><td>Maximum acquire-and-check cycles before aborting. Validated range: <code>1</code> to <code>20</code>.</td></tr>
-                  <tr><td><code>api_key</code> <span class="opt-pill">Cond.</span></td><td><code>string</code></td><td><code>null</code></td><td>Caller's NexNum API key. May alternatively be passed via <code>X-NexNum-Key</code> header (header takes precedence).</td></tr>
+                  <tr>
+                    <td><code>platform</code> <span class="req-pill">Required</span></td>
+                    <td><code>string</code></td>
+                    <td><code id="docDefaultPlatform">—</code></td>
+                    <td id="docPlatformListDesc">Active checker slug loaded dynamically from <code>/api/platforms</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>target_status</code> <span class="opt-pill">Optional</span></td>
+                    <td><code>string</code></td>
+                    <td><code>"NOT_REGISTERED"</code></td>
+                    <td>Filter condition: <code>NOT_REGISTERED</code> (fresh) or <code>REGISTERED</code> (existing account).</td>
+                  </tr>
+                  <tr>
+                    <td><code>service_code</code> <span class="opt-pill">Optional</span></td>
+                    <td><code>string</code></td>
+                    <td>Platform map</td>
+                    <td id="docServiceMapDesc">NexNum service code override resolved dynamically per platform.</td>
+                  </tr>
+                  <tr>
+                    <td><code>country_code</code> <span class="opt-pill">Optional</span></td>
+                    <td><code>string</code></td>
+                    <td><code>"22"</code></td>
+                    <td>NexNum numeric country code (<code>"22"</code> = India).</td>
+                  </tr>
+                  <tr>
+                    <td><code>max_attempts</code> <span class="opt-pill">Optional</span></td>
+                    <td><code>integer</code></td>
+                    <td><code>5</code></td>
+                    <td>Maximum acquire-and-check cycles before aborting. Validated range: <code>1</code> to <code>20</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>api_key</code> <span class="opt-pill">Cond.</span></td>
+                    <td><code>string</code></td>
+                    <td><code>null</code></td>
+                    <td>Caller's NexNum API key. May alternatively be passed via <code>X-NexNum-Key</code> header (header takes precedence).</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -427,7 +312,7 @@
   "order_id": "1791225496122425077082",
   "phone_number": "919876543210",
   "clean_mobile": "9876543210",
-  "platform": "zomato",
+  "platform": "flipkart",
   "status": "NOT_REGISTERED",
   "cost": 9.0,
   "attempts_taken": 2,
@@ -468,86 +353,13 @@
         </div>
       </section>
 
-      <!-- ══ 5. VERIFICATION CHECKERS ═══════════════════════════════════════ -->
-      <section class="doc-section" id="ep-check-phone">
-        <div class="section-kicker">Silent Registration Checkers</div>
-        <h2 class="sec-h2">Verification Endpoints &amp; Platform Matrix</h2>
-
-        <div class="endpoint-card">
-          <div class="endpoint-head">
-            <div class="endpoint-path-wrap">
-              <span class="http-badge post">POST</span>
-              <span class="endpoint-path">/api/checker/phone</span>
-              <span class="opt-pill">Alias: /api/check/phone</span>
-              <span class="auth-badge telegram">Telegram HMAC Auth</span>
-            </div>
-            <button class="try-btn" onclick="loadPlayground('check_phone')">Try in Playground ↗</button>
-          </div>
-          <div class="endpoint-body">
-            <p class="desc">
-              Checks a single 10-digit Indian mobile number on a specified platform (or <code>"all"</code> to query all 8 engines sequentially). Automatically strips leading <code>91</code>, records latency and stats to <code>universal_stats.json</code>, and saves the result to the caller's server history.
-            </p>
-            <div class="code-block">
-              <div class="code-head"><span>Request &amp; Response Schema</span><button class="copy-code-btn" data-copy-target="codeCheckPhone">Copy</button></div>
-              <pre id="codeCheckPhone">// Request
-{
-  "phone": "9876543210",          // or "target_phone"
-  "platform": "zomato",           // zomato|flipkart|meesho|myntra|swiggy|amazon|bigbasket|zepto|all
-  "checker_phone": null           // optional caller context
-}
-
-// Response (200 OK)
-{
-  "success": true,
-  "phone": "9876543210",
-  "platform": "zomato",
-  "registered": false,
-  "fresh": true,
-  "status": "NOT_REGISTERED",
-  "universal_total_checks": 112,
-  "platform_total_checks": 54
-}</pre>
-            </div>
-          </div>
-        </div>
-
-        <div class="endpoint-card" id="ep-check-batch">
-          <div class="endpoint-head">
-            <div class="endpoint-path-wrap">
-              <span class="http-badge post">POST</span>
-              <span class="endpoint-path">/api/checker/batch</span>
-              <span class="opt-pill">Alias: /api/check/batch</span>
-              <span class="auth-badge telegram">Telegram HMAC Auth</span>
-            </div>
-            <button class="try-btn" onclick="loadPlayground('check_batch')">Try in Playground ↗</button>
-          </div>
-          <div class="endpoint-body">
-            <p class="desc">
-              Runs concurrent checks on the backend via <code>asyncio.gather</code> for up to <code>50</code> mobile numbers on a single platform and persists each record to caller history.
-            </p>
-            <div class="code-block">
-              <div class="code-head"><span>Request &amp; Response Schema</span><button class="copy-code-btn" data-copy-target="codeCheckBatch">Copy</button></div>
-              <pre id="codeCheckBatch">// Request
-{
-  "phones": ["9876543210", "919876543211"],
-  "platform": "flipkart"
-}
-
-// Response (200 OK)
-{
-  "success": true,
-  "platform": "flipkart",
-  "total": 2,
-  "results": {
-    "9876543210": { "status": "NOT_REGISTERED", "registered": false, "fresh": true },
-    "9876543211": { "status": "REGISTERED", "registered": true, "fresh": false }
-  }
-}</pre>
-            </div>
-          </div>
-        </div>
-
-        <h3 class="sub-h3" id="engines-matrix">8 Platform Checker Engines (<code>checkers/</code>)</h3>
+      <!-- ══ 4. DYNAMIC PLATFORM CHECKER ENGINES ════════════════════════════ -->
+      <section class="doc-section" id="engines-matrix">
+        <div class="section-kicker">Checker Engines</div>
+        <h2 class="sec-h2">Platform Checker Engines (<code>checkers/</code>)</h2>
+        <p class="desc">
+          Live registry hydrated directly from <code>GET /api/platforms</code>. Only services marked <code>ACTIVE</code> accept checks and targeted purchases.
+        </p>
         <div class="table-wrap">
           <table class="doc-table">
             <thead>
@@ -556,216 +368,17 @@
                 <th>API Status</th>
                 <th>Service Code</th>
                 <th>Mechanism &amp; Module</th>
+                <th>Action</th>
               </tr>
             </thead>
-            <tbody>
-              <tr><td><strong>Zomato</strong></td><td><span class="auth-badge public">ACTIVE</span></td><td><code>dy</code></td><td><code>checkers/zomato_check.py</code> — NexZomato HTTP microservice (<code>ZOMATO_CHECKER_URL</code>) + contact-sync token fallback (<code>data/zomato_accounts</code>).</td></tr>
-              <tr><td><strong>Flipkart</strong></td><td><span class="auth-badge public">ACTIVE</span></td><td><code>xt</code></td><td><code>checkers/flipkart_check.py</code> — Direct HTTP POST to <code>rome.api.flipkart.com/api/6/user/signup/status</code> (<code>GUEST</code> / <code>VERIFIED</code>).</td></tr>
-              <tr><td><strong>Meesho</strong></td><td><span class="auth-badge public">ACTIVE</span></td><td><code>me</code></td><td><code>checkers/meesho_check.py</code> — PriceTrackerPro / Meesho Jamuni silent verification API.</td></tr>
-              <tr><td><strong>Myntra</strong></td><td><span class="auth-badge public">ACTIVE</span></td><td><code>nl</code></td><td><code>checkers/myntra_check.py</code> — Dual engine: ProMyntra HTTP API (<code>promyntra.eu.cc</code>) + Playwright persistent Chrome auto-heal fallback.</td></tr>
-              <tr><td><strong>Swiggy</strong></td><td><span class="auth-badge public">ACTIVE</span></td><td><code>sw</code></td><td><code>checkers/swiggy_check.py</code> — Playwright headless silent verification.</td></tr>
-              <tr><td><strong>Amazon</strong></td><td><span class="auth-badge public">ACTIVE</span></td><td><code>am</code></td><td><code>checkers/amazon_check.py</code> — Playwright headless silent verification.</td></tr>
-              <tr><td><strong>BigBasket</strong></td><td><span class="auth-badge webhook">DISABLED</span></td><td><code>bb</code></td><td><code>checkers/bigbasket_check.py</code> — Returns <code>DISABLED</code> in API &amp; Bot (Akamai protection / residential IP needed).</td></tr>
-              <tr><td><strong>Zepto</strong></td><td><span class="auth-badge webhook">DISABLED</span></td><td><code>zp</code></td><td><code>checkers/zepto_check.py</code> — Returns <code>DISABLED</code> in API (AWS WAF challenge).</td></tr>
+            <tbody id="enginesTableBody">
+              <tr><td colspan="5" style="color:var(--text-muted);">Loading live platform engines from /api/platforms...</td></tr>
             </tbody>
           </table>
         </div>
       </section>
 
-      <!-- ══ 6. SYSTEM & PLATFORMS ══════════════════════════════════════════ -->
-      <section class="doc-section" id="ep-health">
-        <div class="section-kicker">Telemetry &amp; Discovery</div>
-        <h2 class="sec-h2">System, Health &amp; Registry Endpoints</h2>
-
-        <div class="endpoint-card">
-          <div class="endpoint-head">
-            <div class="endpoint-path-wrap">
-              <span class="http-badge get">GET</span>
-              <span class="endpoint-path">/api/health</span>
-              <span class="opt-pill">Alias: /health</span>
-              <span class="auth-badge public">Public</span>
-            </div>
-            <button class="try-btn" onclick="loadPlayground('health')">Try in Playground ↗</button>
-          </div>
-          <div class="endpoint-body">
-            <p class="desc">Returns service health, persistent check counters from <code>universal_stats.json</code>, rolling 100-sample average latency (<code>avg_latency_ms</code>), and loaded engine flags.</p>
-          </div>
-        </div>
-
-        <div class="endpoint-card" id="ep-platforms">
-          <div class="endpoint-head">
-            <div class="endpoint-path-wrap">
-              <span class="http-badge get">GET</span>
-              <span class="endpoint-path">/api/platforms</span>
-              <span class="auth-badge public">Public</span>
-            </div>
-            <button class="try-btn" onclick="loadPlayground('platforms')">Try in Playground ↗</button>
-          </div>
-          <div class="endpoint-body">
-            <p class="desc">Lists all 8 platform definitions with <code>key</code>, <code>label</code>, <code>icon</code>, <code>status</code> (<code>"active"</code> or <code>"disabled"</code>), and <code>category</code>.</p>
-          </div>
-        </div>
-
-        <div class="endpoint-card" id="ep-admin-users">
-          <div class="endpoint-head">
-            <div class="endpoint-path-wrap">
-              <span class="http-badge get">GET</span>
-              <span class="endpoint-path">/api/admin/users</span>
-              <span class="auth-badge public">Public / Telemetry</span>
-            </div>
-            <button class="try-btn" onclick="loadPlayground('admin_users')">Try in Playground ↗</button>
-          </div>
-          <div class="endpoint-body">
-            <p class="desc">Returns aggregated platform usage statistics and per-user summary map from <code>data/server_history/users_index.json</code>.</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- ══ 7. AUTH & HISTORY ══════════════════════════════════════════════ -->
-      <section class="doc-section" id="ep-auth-verify">
-        <div class="section-kicker">Session &amp; Persistence</div>
-        <h2 class="sec-h2">Authentication &amp; History Endpoints</h2>
-
-        <div class="endpoint-card">
-          <div class="endpoint-head">
-            <div class="endpoint-path-wrap">
-              <span class="http-badge get">GET</span>
-              <span class="endpoint-path">/api/auth/verify</span>
-              <span class="auth-badge public">Public Verification</span>
-            </div>
-            <button class="try-btn" onclick="loadPlayground('auth_verify')">Try in Playground ↗</button>
-          </div>
-          <div class="endpoint-body">
-            <p class="desc">Validates Telegram WebApp <code>initData</code> passed via <code>X-Telegram-Init-Data</code> header or <code>?init_data=</code> query parameter. Returns <code>authenticated: true</code> + parsed <code>user</code> object when status is <code>OK</code>, or granular reason (<code>MISSING</code>, <code>EXPIRED</code>, <code>TAMPERED</code>, <code>MISSING_HASH</code>, <code>MISSING_DATE</code>, <code>INVALID_DATE</code>, <code>SERVER_TOKEN_MISSING</code>).</p>
-          </div>
-        </div>
-
-        <div class="endpoint-card" id="ep-auth-me">
-          <div class="endpoint-head">
-            <div class="endpoint-path-wrap">
-              <span class="http-badge get">GET</span>
-              <span class="endpoint-path">/api/auth/me</span>
-              <span class="auth-badge telegram">Telegram HMAC Auth</span>
-            </div>
-            <button class="try-btn" onclick="loadPlayground('auth_me')">Try in Playground ↗</button>
-          </div>
-          <div class="endpoint-body">
-            <p class="desc">Returns verified <code>UserIdentity</code> metadata (<code>user_id</code>, <code>auth_type</code>, <code>telegram_id</code>, <code>username</code>, <code>first_name</code>, <code>ip_address</code>).</p>
-          </div>
-        </div>
-
-        <div class="endpoint-card" id="ep-history-get">
-          <div class="endpoint-head">
-            <div class="endpoint-path-wrap">
-              <span class="http-badge get">GET</span>
-              <span class="endpoint-path">/api/history?limit=50</span>
-              <span class="auth-badge telegram">Telegram HMAC Auth</span>
-            </div>
-            <button class="try-btn" onclick="loadPlayground('history_get')">Try in Playground ↗</button>
-          </div>
-          <div class="endpoint-body">
-            <p class="desc">Fetches up to 100 latest per-user check records stored atomically in <code>data/server_history/users/{user_id}.json</code>.</p>
-          </div>
-        </div>
-
-        <div class="endpoint-card" id="ep-history-clear">
-          <div class="endpoint-head">
-            <div class="endpoint-path-wrap">
-              <span class="http-badge post">POST</span>
-              <span class="endpoint-path">/api/history/clear</span>
-              <span class="auth-badge telegram">Telegram HMAC Auth</span>
-            </div>
-            <button class="try-btn" onclick="loadPlayground('history_clear')">Try in Playground ↗</button>
-          </div>
-          <div class="endpoint-body">
-            <p class="desc">Clears all check records for the authenticated caller while preserving aggregate user profile statistics.</p>
-          </div>
-        </div>
-
-        <div class="endpoint-card" id="ep-history-del">
-          <div class="endpoint-head">
-            <div class="endpoint-path-wrap">
-              <span class="http-badge delete">DELETE</span>
-              <span class="endpoint-path">/api/history/{record_id}</span>
-              <span class="auth-badge public">Telegram / Guest Identity</span>
-            </div>
-          </div>
-          <div class="endpoint-body">
-            <p class="desc">Deletes a single check record (e.g., <code>chk_1795544405_a1b2c3</code>) using Telegram identity or <code>X-Guest-ID</code> fallback.</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- ══ 8. TELEGRAM BOT WEBHOOK ════════════════════════════════════════ -->
-      <section class="doc-section" id="ep-webhook">
-        <div class="section-kicker">Bot Integration</div>
-        <h2 class="sec-h2">Telegram Bot Webhook &amp; Static Serving</h2>
-
-        <div class="endpoint-card">
-          <div class="endpoint-head">
-            <div class="endpoint-path-wrap">
-              <span class="http-badge post">POST</span>
-              <span class="endpoint-path">/bot/webhook</span>
-              <span class="opt-pill">Alias: /api/bot/webhook</span>
-              <span class="auth-badge webhook">Webhook Secret Token</span>
-            </div>
-          </div>
-          <div class="endpoint-body">
-            <p class="desc">Receives Telegram Bot API JSON <code>Update</code> objects, validates <code>X-Telegram-Bot-Api-Secret-Token</code> against <code>WEBHOOK_SECRET</code> (returning <code>403</code> on mismatch), and dispatches to <code>NexBot.bot.process_new_updates([update])</code>.</p>
-          </div>
-        </div>
-
-        <div class="table-wrap">
-          <table class="doc-table">
-            <thead><tr><th>Method</th><th>Route</th><th>Handler Target</th></tr></thead>
-            <tbody>
-              <tr><td><code>GET, HEAD</code></td><td><code>/</code>, <code>/checker</code>, <code>/app</code></td><td>Serves [web/index.html](file:///d:/Nex-Projects/NexChecker/web/index.html) (Telegram Mini App UI).</td></tr>
-              <tr><td><code>GET, HEAD</code></td><td><code>/api-docs</code>, <code>/api-docs/</code></td><td>Serves <code>web/api-docs.html</code> (this documentation portal).</td></tr>
-              <tr><td><code>GET</code></td><td><code>/static/*</code></td><td>Static mount of <code>web/</code> directory (CSS, JS, brand logos).</td></tr>
-              <tr><td><code>GET</code></td><td><code>/docs</code>, <code>/redoc</code>, <code>/openapi.json</code></td><td>FastAPI auto-generated OpenAPI 3.1 schema &amp; Swagger UI.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- ══ 9. FRONTEND ARCHITECTURE ═══════════════════════════════════════ -->
-      <section class="doc-section" id="frontend-arch">
-        <div class="section-kicker">Client Architecture</div>
-        <h2 class="sec-h2">Frontend WebApp Architecture (<code>web/</code>)</h2>
-        <p class="desc">
-          Built with zero external JS framework dependencies for sub-second load inside Telegram WebView and desktop browsers.
-        </p>
-
-        <div class="table-wrap">
-          <table class="doc-table">
-            <thead><tr><th>File / Component</th><th>Responsibilities &amp; Mechanics</th></tr></thead>
-            <tbody>
-              <tr><td><code>web/index.html</code></td><td>App shell (max-width <code>520px</code>), <code>#securityGate</code> overlay for unauthenticated visitors, sticky header + 6 active platform carousel chips, single check card, radar animation, flip result card, batch scanner, pull-to-refresh history, and bottom navigation.</td></tr>
-              <tr><td><code>web/style.css</code></td><td>Dark-first CSS variables mutated dynamically via <code>&lt;html data-brand="..."&gt;</code> for 8 brand themes (<code>zomato</code>, <code>flipkart</code>, <code>meesho</code>, <code>bigbasket</code>, <code>myntra</code>, <code>swiggy</code>, <code>zepto</code>, <code>amazon</code>), spring animations, radar pulses, and responsive layout.</td></tr>
-              <tr><td><code>web/app.js</code></td><td>Initializes <code>Telegram.WebApp</code>, runs <code>enforceTelegramSecurity()</code> via <code>GET /api/auth/verify</code>, attaches headers in <code>apiFetch()</code>, handles URL params (<code>?phone=...&amp;platform=...</code>), sequentially executes batch checks (400ms delay, CSV export), and syncs history with <code>localStorage</code> + <code>/api/history</code>.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- ══ 10. NEXBOT & STORAGE ═══════════════════════════════════════════ -->
-      <section class="doc-section" id="nexbot-arch">
-        <div class="section-kicker">Bot Worker &amp; Persistence</div>
-        <h2 class="sec-h2">NexBot Core &amp; Hierarchical Storage</h2>
-        <div class="table-wrap">
-          <table class="doc-table">
-            <thead><tr><th>Module</th><th>Key Capabilities</th></tr></thead>
-            <tbody>
-              <tr><td><code>NexBot/core/nexnum_api.py</code></td><td>Async <code>NexNumClient</code> using <code>Accept: application/json</code> content negotiation + legacy plain-wire fallback parser (<code>ACCESS_NUMBER:...</code>), 3x backoff retries for <code>getBalance</code>, <code>getNumber</code>, <code>getStatus</code>, <code>setStatus</code>.</td></tr>
-              <tr><td><code>NexBot/core/sms_poller.py</code></td><td>Background OTP poller firing every <code>5s</code> up to <code>19 min</code>; deduplicates by SMS <code>id</code> (supports multi-OTP on same code); formats IST timestamps; native Telegram <code>CopyTextButton</code>; auto-cancels at <code>10 min</code> if no SMS arrives.</td></tr>
-              <tr><td><code>NexBot/core/user_store.py</code></td><td>Per-user async locks writing atomic files under <code>NexBot/data/users/{tg_id}/info.json</code> and <code>{order_id}.json</code> for collision-free concurrent multi-platform sessions.</td></tr>
-              <tr><td><code>api/history_manager.py</code></td><td>Server history isolated at <code>data/server_history/users/{user_id}.json</code> (retaining latest 100 entries) plus global aggregate registry <code>users_index.json</code>.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- ══ 11. ERROR REFERENCE ════════════════════════════════════════════ -->
+      <!-- ══ 5. DIAGNOSTICS & ERROR REFERENCE ═══════════════════════════════ -->
       <section class="doc-section" id="error-codes">
         <div class="section-kicker">Diagnostics</div>
         <h2 class="sec-h2">HTTP Status &amp; Error Code Reference</h2>
@@ -787,45 +400,11 @@
         </div>
       </section>
 
-      <!-- ══ 12. DEPLOYMENT & ENV ═══════════════════════════════════════════ -->
-      <section class="doc-section" id="deployment">
-        <div class="section-kicker">Operations</div>
-        <h2 class="sec-h2">Docker Compose, Nginx &amp; Environment Variables</h2>
-
-        <div class="table-wrap">
-          <table class="doc-table">
-            <thead><tr><th>Env Variable</th><th>Default</th><th>Description</th></tr></thead>
-            <tbody>
-              <tr><td><code>API_ACCESS_KEY</code></td><td><code>""</code></td><td>Dedicated API key guarding <code>/api/v1/purchase</code> and <code>/api/purchase</code> (also reads <code>NEXCHECKER_API_KEY</code>).</td></tr>
-              <tr><td><code>BOT_TOKEN</code></td><td>Required</td><td>Telegram bot token used by <code>NexBot</code> and HMAC verification in <code>api/auth.py</code>.</td></tr>
-              <tr><td><code>AUTH_MAX_AGE_SECONDS</code></td><td><code>86400</code></td><td>Maximum valid age of Telegram WebApp <code>initData</code> signatures.</td></tr>
-              <tr><td><code>NEXNUM_BASE_URL</code></td><td><code>https://nexnum.in/stubs/handler_api.php</code></td><td>Upstream NexNum API endpoint URL.</td></tr>
-              <tr><td><code>*_SERVICE_CODE</code></td><td><code>dy</code>, <code>xt</code>, <code>nl</code>, <code>bb</code></td><td>Service code overrides for Zomato, Flipkart, Myntra, BigBasket, Amazon, Swiggy, Meesho, Zepto.</td></tr>
-              <tr><td><code>ZOMATO_CHECKER_URL</code></td><td><code>http://127.0.0.1:3000/api/checker/phone</code></td><td>Primary HTTP microservice endpoint used by <code>zomato_check.py</code>.</td></tr>
-              <tr><td><code>WEBHOOK_SECRET</code></td><td><code>""</code></td><td>Optional secret verified against <code>X-Telegram-Bot-Api-Secret-Token</code> on <code>/bot/webhook</code>.</td></tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="code-block">
-          <div class="code-head"><span>Docker Compose Production Stack</span><button class="copy-code-btn" data-copy-target="codeDeployCmds">Copy</button></div>
-          <pre id="codeDeployCmds"># Start API + Bot containers (default stack)
-sudo docker compose up -d --build
-
-# Start full stack including Nginx SSL + Cloudflare Tunnel
-sudo docker compose --profile proxy up -d --build
-
-# Verify running containers &amp; health
-sudo docker compose ps
-curl -s http://localhost:8000/api/health</pre>
-        </div>
-      </section>
-
     </main>
   </div>
 
   <div class="toast" id="docsToast">Copied!</div>
 
-  <script src="/static/api-docs.js?v=1.0"></script>
+  <script src="/static/api-docs.js?v=2.0"></script>
 </body>
 </html>
