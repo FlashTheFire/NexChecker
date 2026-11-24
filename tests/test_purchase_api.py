@@ -115,6 +115,8 @@ class TestPurchaseAPI(unittest.IsolatedAsyncioTestCase):
                 self.assertIn("order_abc_123", data["nexnum_direct_usage"]["get_status_url"])
                 self.assertTrue(data["nexnum_direct_usage"]["get_status_url"].endswith("&format=json"))
                 self.assertTrue(data["nexnum_direct_usage"]["cancel_url"].endswith("&format=json"))
+                self.assertNotIn("api_key", data["nexnum_direct_usage"]["get_status_url"])
+                self.assertNotIn("api_key", data["nexnum_direct_usage"]["cancel_url"])
 
     def test_mismatch_discards_and_retries(self):
         with patch("api.purchase_service.nexnum_client.get_number", new_callable=AsyncMock) as mock_get:
