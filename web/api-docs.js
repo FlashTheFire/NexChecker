@@ -535,7 +535,7 @@ const data = await resp.json();`;
   function renderEnginesTable() {
     if (!el.enginesTableBody) return;
     if (!platformsList.length) {
-      el.enginesTableBody.innerHTML = '<tr><td colspan="4">No engines available.</td></tr>';
+      el.enginesTableBody.innerHTML = '<tr><td colspan="3">No engines available.</td></tr>';
       return;
     }
 
@@ -551,7 +551,6 @@ const data = await resp.json();`;
             <td><div class="engine-name-cell">${logoImg}<span>${escapeHtml(p.label)}</span></div></td>
             <td>${badge}</td>
             <td><code>${escapeHtml(p.service_code || '—')}</code></td>
-            <td><code>${escapeHtml(p.module || '')}</code> — ${escapeHtml(p.mechanism || '')}</td>
           </tr>`;
       })
       .join('');
@@ -598,7 +597,7 @@ const data = await resp.json();`;
     } catch (err) {
       if (el.cyclingServiceLabel) el.cyclingServiceLabel.textContent = 'API Reference';
       if (el.enginesTableBody) {
-        el.enginesTableBody.innerHTML = `<tr><td colspan="4" style="color:var(--red);">Failed to load /api/platforms: ${escapeHtml(err.message)}</td></tr>`;
+        el.enginesTableBody.innerHTML = `<tr><td colspan="3" style="color:var(--red);">Failed to load /api/platforms: ${escapeHtml(err.message)}</td></tr>`;
       }
     }
   }
