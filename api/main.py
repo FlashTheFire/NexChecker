@@ -77,11 +77,14 @@ except Exception:
     check_zepto = None
 
 from api.auth import (
+    enforce_api_access,
     enforce_authenticated_identity,
     get_request_identity,
     verify_telegram_init_data_detailed,
 )
+from api.cancel_queue import cancel_queue
 from api.history_manager import history_manager
+from api.purchase_service import PurchaseRequest, execute_targeted_purchase
 
 _PLATFORM_LABELS: Dict[str, str] = {
     "zomato": "Zomato",
@@ -123,7 +126,9 @@ async def lifespan(app: FastAPI):
     print("  NexChecker Unified API Starting Up...")
     print(f"  Project Root: {PROJECT_ROOT}")
     print("=" * 60)
+    cancel_queue.start()
     yield
+    await cancel_queue.stop()
     print("NexChecker API shutdown complete.")
 
 
@@ -474,6 +479,40 @@ async def check_batch_phones(req: BatchCheckRequest, request: Request):
         "total": len(phones),
         "results": formatted,
     }
+
+
+# ------------------------------------------------------------
+# Targeted Virtual Number Purchase Engine (NexNum Integration)
+# ------------------------------------------------------------
+@app.post("/api/v1/purchase")
+@app.post("/api/purchase")
+async def purchase_targeted_number(req: PurchaseRequest, request: Request):
+    """Purchase a virtual number from NexNum and verify registration status.
+
+    Only numbers matching target_status (REGISTERED or NOT_REGISTERED) are returned.
+    Discarded non-matching numbers are queued for deferred cancellation and refund.
+    """
+    # Enforce API Key authentication if configured (Question 4, Option A)
+    enforce_api_access(request)
+
+    # Resolve NexNum API Key from header or body (Question 1, Option A)
+    nexnum_key = (
+        request.headers.get("X-NexNum-Key")
+        or request.headers.get("x-nexnum-key")
+        or req.api_key
+        or ""
+    ).strip()
+
+    res = await execute_targeted_purchase(req, nexnum_key, _execute_check)
+    if not res.get("success"):
+        err = res.get("error", "UNKNOWN_ERROR")
+        if err in ("NEXNUM_KEY_REQUIRED", "INVALID_TARGET_STATUS", "BAD_KEY"):
+            raise HTTPException(status_code=400, detail=res)
+        if err in ("NO_BALANCE", "BANNED"):
+            raise HTTPException(status_code=402, detail=res)
+        raise HTTPException(status_code=422, detail=res)
+
+    return res
 
 
 # ------------------------------------------------------------
