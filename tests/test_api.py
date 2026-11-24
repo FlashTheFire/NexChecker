@@ -79,6 +79,7 @@ class TestNexCheckerAPI(unittest.TestCase):
             self.assertNotIn("copyBaseUrlBtn", resp.text)
             self.assertNotIn("liveHealthPill", resp.text)
             self.assertNotIn("heroServiceStack", resp.text)
+            self.assertNotIn("Module &amp; Mechanism", resp.text)
 
         css_resp = client.get("/static/api-docs.css")
         self.assertEqual(css_resp.status_code, 200)
@@ -99,6 +100,8 @@ class TestNexCheckerAPI(unittest.TestCase):
         self.assertIn("renderCodeLines", js_resp.text)
         self.assertIn("TRANSITIONS", js_resp.text)
         self.assertIn("el.cyclingServiceLabel.textContent = p.label;", js_resp.text)
+        self.assertNotIn("p.module", js_resp.text)
+        self.assertNotIn("p.mechanism", js_resp.text)
 
     def test_bot_webhook_endpoint(self):
         # Empty or mock update payload
