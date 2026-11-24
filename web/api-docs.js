@@ -35,11 +35,12 @@
   let selectedPlatformKey = '';
   let cycleIdx = 0;
   let cycleTimer = null;
+  let transitionIdx = 0;
   let transitionCleanupTimer = null;
   let labelSwapTimer = null;
   let activeLang = 'curl';
 
-  const TRANSITION_STYLE = 'cutaway';
+  const TRANSITIONS = ['wipe', 'dissolve', 'crosscut', 'spin', 'cutaway'];
 
   const el = {
     sidebar: document.getElementById('docsSidebar'),
@@ -51,6 +52,7 @@
     brandMark: document.querySelector('.brand-mark'),
     dynamicLogoImg: document.getElementById('dynamicLogoImg'),
     dynamicLogoImgStage: document.getElementById('dynamicLogoImgStage'),
+    logoDissolveFlash: document.getElementById('logoDissolveFlash'),
     dynamicLogoFallback: document.getElementById('dynamicLogoFallback'),
     cyclingServiceLabel: document.getElementById('cyclingServiceLabel'),
     toast: document.getElementById('docsToast'),
@@ -327,6 +329,10 @@
 
   const TR_CLASSES = [
     'is-front', 'is-stage',
+    'tr-wipe-out', 'tr-wipe-in',
+    'tr-dissolve-out', 'tr-dissolve-in',
+    'tr-crosscut-out', 'tr-crosscut-in',
+    'tr-spin-out', 'tr-spin-in',
     'tr-cutaway-out', 'tr-cutaway-in',
   ];
 
@@ -361,7 +367,7 @@
       return;
     }
 
-    // Dual-frame uniform cutaway punch-in zoom transition across all services
+    // Dual-frame editorial transition (Wipe / Additive Dissolve / Cross-Cut / Spin / Cutaway)
     if (transitionCleanupTimer) {
       clearTimeout(transitionCleanupTimer);
       if (!stage.classList.contains('is-hidden') && stage.src) {
@@ -372,6 +378,10 @@
     if (labelSwapTimer) clearTimeout(labelSwapTimer);
     clearTransitionClasses(front);
     clearTransitionClasses(stage);
+    el.logoDissolveFlash?.classList.remove('is-flashing');
+
+    const tr = TRANSITIONS[transitionIdx % TRANSITIONS.length];
+    transitionIdx++;
 
     // Prepare incoming image on stage layer
     if (p.logo) {
@@ -389,8 +399,12 @@
     // Reflow to restart keyframe animations reliably
     void stage.offsetWidth;
 
-    front.classList.add(`tr-${TRANSITION_STYLE}-out`);
-    stage.classList.add(`tr-${TRANSITION_STYLE}-in`);
+    front.classList.add(`tr-${tr}-out`);
+    stage.classList.add(`tr-${tr}-in`);
+    if (tr === 'dissolve' && el.logoDissolveFlash) {
+      void el.logoDissolveFlash.offsetWidth;
+      el.logoDissolveFlash.classList.add('is-flashing');
+    }
 
     // Kinetic vertical ticker on service label
     el.cyclingServiceLabel.classList.remove('label-in', 'label-out');
@@ -414,9 +428,10 @@
       clearTransitionClasses(stage);
       front.classList.add('is-front');
       stage.classList.add('is-hidden');
+      el.logoDissolveFlash?.classList.remove('is-flashing');
       el.cyclingServiceLabel.classList.remove('label-in', 'label-out');
       transitionCleanupTimer = null;
-    }, 400);
+    }, 430);
   }
 
   function startLogoCycler() {
