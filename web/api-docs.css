@@ -255,7 +255,71 @@ pre {
 .dynamic-logo-img.is-front  { z-index: 2; }
 .dynamic-logo-img.is-stage  { z-index: 3; }
 
-/* ── Uniform Cutaway Punch-In Zoom Transition ── */
+.logo-dissolve-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.9) 0%, var(--accent-glow) 60%, transparent 100%);
+  mix-blend-mode: screen;
+}
+.logo-dissolve-flash.is-flashing {
+  animation: dissolveFlash 400ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes dissolveFlash {
+  0%   { opacity: 0; transform: scale(0.75); }
+  40%  { opacity: 0.9; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(1.25); }
+}
+
+/* ── Editorial Film Transitions (Wipe, Additive Dissolve, Cross-Cut, Spin, Cutaway) ── */
+.tr-wipe-out { animation: trWipeOut 400ms ease forwards; }
+.tr-wipe-in  { animation: trWipeIn 400ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+@keyframes trWipeOut {
+  0%   { opacity: 1; transform: scale(1); }
+  100% { opacity: 0.45; transform: scale(0.9); }
+}
+@keyframes trWipeIn {
+  0%   { clip-path: polygon(0 0, 0 0, -28% 100%, -28% 100%); filter: brightness(1.35); }
+  100% { clip-path: polygon(0 0, 130% 0, 102% 100%, 0 100%); filter: brightness(1); }
+}
+
+.tr-dissolve-out { animation: trDissolveOut 400ms ease forwards; }
+.tr-dissolve-in  { animation: trDissolveIn 400ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+@keyframes trDissolveOut {
+  0%   { opacity: 1; filter: brightness(1) blur(0); transform: scale(1); }
+  50%  { opacity: 0.8; filter: brightness(2.5) blur(1.5px); transform: scale(1.07); }
+  100% { opacity: 0; filter: brightness(2.8) blur(3px); transform: scale(1.1); }
+}
+@keyframes trDissolveIn {
+  0%   { opacity: 0; filter: brightness(2.6) saturate(1.4); transform: scale(0.92); }
+  100% { opacity: 1; filter: brightness(1) saturate(1); transform: scale(1); }
+}
+
+.tr-crosscut-out { animation: trCrosscutOut 340ms cubic-bezier(0.55, 0, 1, 0.45) forwards; }
+.tr-crosscut-in  { animation: trCrosscutIn 340ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+@keyframes trCrosscutOut {
+  0%   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  100% { opacity: 0; transform: translate3d(-125%, 0, 0) scale(0.86); }
+}
+@keyframes trCrosscutIn {
+  0%   { opacity: 0; transform: translate3d(125%, 0, 0) scale(0.86); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+.tr-spin-out { animation: trSpinOut 420ms cubic-bezier(0.4, 0, 0.6, 1) forwards; }
+.tr-spin-in  { animation: trSpinIn 420ms cubic-bezier(0.34, 1.38, 0.64, 1) forwards; }
+@keyframes trSpinOut {
+  0%   { opacity: 1; transform: rotate(0deg) scale(1); }
+  100% { opacity: 0; transform: rotate(-180deg) scale(0.35); }
+}
+@keyframes trSpinIn {
+  0%   { opacity: 0; transform: rotate(180deg) scale(0.35); }
+  100% { opacity: 1; transform: rotate(0deg) scale(1); }
+}
+
 .tr-cutaway-out { animation: trCutawayOut 360ms cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 .tr-cutaway-in  { animation: trCutawayIn 360ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
 @keyframes trCutawayOut {
