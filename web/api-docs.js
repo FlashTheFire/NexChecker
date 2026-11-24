@@ -1,6 +1,6 @@
 /**
- * NexChecker — Dynamic API Reference Engine
- * Auto-cycling multi-service brand identity + live /api/platforms hydration
+ * NexChecker — Minimal Dynamic API Reference Engine
+ * Auto-cycles header brand logo across all live active platforms
  */
 (function () {
   'use strict';
@@ -20,14 +20,14 @@
   const ORIGIN = window.location.origin;
 
   const BRAND_ACCENTS = {
-    zomato:   { accent: '#E23744', soft: 'rgba(226,55,68,0.13)',  glow: 'rgba(226,55,68,0.28)' },
-    flipkart: { accent: '#3b82f6', soft: 'rgba(59,130,246,0.13)', glow: 'rgba(59,130,246,0.28)' },
-    meesho:   { accent: '#a855f7', soft: 'rgba(168,85,247,0.13)', glow: 'rgba(168,85,247,0.28)' },
-    myntra:   { accent: '#f43f5e', soft: 'rgba(244,63,94,0.13)',  glow: 'rgba(244,63,94,0.28)' },
-    amazon:   { accent: '#f59e0b', soft: 'rgba(245,158,11,0.13)', glow: 'rgba(245,158,11,0.28)' },
-    swiggy:   { accent: '#fb923c', soft: 'rgba(251,146,60,0.13)', glow: 'rgba(251,146,60,0.28)' },
-    bigbasket:{ accent: '#84cc16', soft: 'rgba(132,204,22,0.13)', glow: 'rgba(132,204,22,0.28)' },
-    zepto:    { accent: '#c084fc', soft: 'rgba(192,132,252,0.13)',glow: 'rgba(192,132,252,0.28)' },
+    zomato:    { accent: '#E23744', soft: 'rgba(226,55,68,0.13)',  glow: 'rgba(226,55,68,0.28)' },
+    flipkart:  { accent: '#3b82f6', soft: 'rgba(59,130,246,0.13)', glow: 'rgba(59,130,246,0.28)' },
+    meesho:    { accent: '#a855f7', soft: 'rgba(168,85,247,0.13)', glow: 'rgba(168,85,247,0.28)' },
+    myntra:    { accent: '#f43f5e', soft: 'rgba(244,63,94,0.13)',  glow: 'rgba(244,63,94,0.28)' },
+    amazon:    { accent: '#f59e0b', soft: 'rgba(245,158,11,0.13)', glow: 'rgba(245,158,11,0.28)' },
+    swiggy:    { accent: '#fb923c', soft: 'rgba(251,146,60,0.13)', glow: 'rgba(251,146,60,0.28)' },
+    bigbasket: { accent: '#84cc16', soft: 'rgba(132,204,22,0.13)', glow: 'rgba(132,204,22,0.28)' },
+    zepto:     { accent: '#c084fc', soft: 'rgba(192,132,252,0.13)',glow: 'rgba(192,132,252,0.28)' },
   };
 
   let platformsList = [];
@@ -43,16 +43,9 @@
     menuToggle: document.getElementById('menuToggle'),
     navLinks: document.querySelectorAll('#sidebarNav .nav-link'),
 
-    dynamicLogoFrame: document.getElementById('dynamicLogoFrame'),
     dynamicLogoImg: document.getElementById('dynamicLogoImg'),
     dynamicLogoFallback: document.getElementById('dynamicLogoFallback'),
     cyclingServiceLabel: document.getElementById('cyclingServiceLabel'),
-    heroServiceStack: document.getElementById('heroServiceStack'),
-
-    baseUrlText: document.getElementById('baseUrlText'),
-    copyBaseUrlBtn: document.getElementById('copyBaseUrlBtn'),
-    liveHealthPill: document.getElementById('liveHealthPill'),
-    liveHealthText: document.getElementById('liveHealthText'),
     toast: document.getElementById('docsToast'),
 
     codePurchaseReq: document.getElementById('codePurchaseReq'),
@@ -79,7 +72,7 @@
     el.toast.textContent = msg;
     el.toast.classList.add('show');
     clearTimeout(showToast._t);
-    showToast._t = setTimeout(() => el.toast.classList.remove('show'), 1800);
+    showToast._t = setTimeout(() => el.toast.classList.remove('show'), 1600);
   }
 
   function copyText(text, label = 'Copied!') {
@@ -101,9 +94,6 @@
     showToast(label);
   }
 
-  if (el.baseUrlText) el.baseUrlText.textContent = ORIGIN;
-  el.copyBaseUrlBtn?.addEventListener('click', () => copyText(ORIGIN, 'Base URL copied!'));
-
   // ── Sidebar Drawer & Scroll Spy ─────────────────────────────────────────────
   function toggleSidebar(forceOpen) {
     const open = typeof forceOpen === 'boolean' ? forceOpen : !el.sidebar.classList.contains('open');
@@ -115,14 +105,14 @@
   el.backdrop?.addEventListener('click', () => toggleSidebar(false));
   el.navLinks.forEach((link) => {
     link.addEventListener('click', () => {
-      if (window.innerWidth <= 960) toggleSidebar(false);
+      if (window.innerWidth <= 900) toggleSidebar(false);
     });
   });
 
   const sections = document.querySelectorAll('section.doc-section, h3[id]');
   window.addEventListener('scroll', () => {
     let currentId = 'auth';
-    const scrollPos = window.scrollY + 115;
+    const scrollPos = window.scrollY + 110;
     sections.forEach((sec) => {
       if (sec.offsetTop <= scrollPos && sec.id) currentId = sec.id;
     });
@@ -138,7 +128,7 @@
     });
   });
 
-  // ── Dynamic Accent & Auto-Cycling Multi-Service Main Logo ───────────────────
+  // ── Auto-Cycling Active Service Main Logo ───────────────────────────────────
   function applyBrandAccent(key) {
     const palette = BRAND_ACCENTS[key] || BRAND_ACCENTS.flipkart;
     const root = document.documentElement.style;
@@ -153,7 +143,7 @@
     const applyUpdate = () => {
       if (p.logo) {
         el.dynamicLogoImg.src = p.logo;
-        el.dynamicLogoImg.alt = p.label;
+        el.dynamicLogoImg.alt = '';
         el.dynamicLogoImg.classList.remove('is-hidden');
         if (el.dynamicLogoFallback) el.dynamicLogoFallback.style.display = 'none';
       } else {
@@ -180,7 +170,6 @@
     if (cycleTimer) clearInterval(cycleTimer);
     if (!activePlatforms.length) return;
 
-    // Preload active service icons so transitions never flicker
     activePlatforms.forEach((p) => {
       if (p.logo) { const img = new Image(); img.src = p.logo; }
     });
@@ -193,10 +182,10 @@
     cycleTimer = setInterval(() => {
       cycleIdx = (cycleIdx + 1) % activePlatforms.length;
       showLogoForPlatform(activePlatforms[cycleIdx], true);
-    }, 2200);
+    }, 2000);
   }
 
-  // ── Hero Active Engine Stack & Documentation Examples ───────────────────────
+  // ── Dynamic Purchase Examples & Engine Table ────────────────────────────────
   function getSelectedPlatform() {
     return (
       activePlatforms.find((p) => p.key === selectedPlatformKey) ||
@@ -204,33 +193,6 @@
       platformsList[0] ||
       { key: 'flipkart', label: 'Flipkart', service_code: 'xt' }
     );
-  }
-
-  function renderHeroStack() {
-    if (!el.heroServiceStack) return;
-    el.heroServiceStack.innerHTML = activePlatforms
-      .map((p) => {
-        const isCurrent = p.key === selectedPlatformKey;
-        const imgHtml = p.logo ? `<img src="${escapeHtml(p.logo)}" alt="${escapeHtml(p.label)}">` : '';
-        return `
-          <button type="button" class="stack-chip ${isCurrent ? 'is-current' : ''}" data-select-platform="${escapeHtml(p.key)}">
-            ${imgHtml}
-            <span>${escapeHtml(p.label)}</span>
-            <span class="chip-code">${escapeHtml(p.service_code || '')}</span>
-          </button>`;
-      })
-      .join('');
-
-    el.heroServiceStack.querySelectorAll('[data-select-platform]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const key = btn.dataset.selectPlatform;
-        selectedPlatformKey = key;
-        const found = activePlatforms.find((x) => x.key === key);
-        if (found) showLogoForPlatform(found, true);
-        renderHeroStack();
-        renderPurchaseDocs();
-      });
-    });
   }
 
   function renderPurchaseDocs() {
@@ -285,18 +247,15 @@ const data = await resp.json();`;
     if (el.docDefaultPlatform) el.docDefaultPlatform.textContent = `"${p.key}"`;
 
     if (el.docPlatformListDesc && platformsList.length) {
-      const activeNames = activePlatforms.map((x) => `<code>${escapeHtml(x.key)}</code>`).join(', ');
-      const disabledNames = platformsList.filter((x) => x.status !== 'active').map((x) => `<code>${escapeHtml(x.key)}</code>`).join(', ');
-      el.docPlatformListDesc.innerHTML =
-        `Active checker slug: ${activeNames}.` +
-        (disabledNames ? ` (Disabled: ${disabledNames}).` : '');
+      const activeCodes = activePlatforms.map((x) => `<code>${escapeHtml(x.key)}</code>`).join(', ');
+      el.docPlatformListDesc.innerHTML = `Active: ${activeCodes}.`;
     }
 
     if (el.docServiceMapDesc && platformsList.length) {
       const defaults = platformsList
         .map((x) => `${escapeHtml(x.key)}=<code>${escapeHtml(x.service_code || '—')}</code>`)
         .join(', ');
-      el.docServiceMapDesc.innerHTML = `NexNum service code override (defaults: ${defaults}).`;
+      el.docServiceMapDesc.innerHTML = defaults;
     }
 
     if (el.codePurchaseOk) {
@@ -328,7 +287,7 @@ const data = await resp.json();`;
   function renderEnginesTable() {
     if (!el.enginesTableBody) return;
     if (!platformsList.length) {
-      el.enginesTableBody.innerHTML = '<tr><td colspan="4">No engines returned by /api/platforms.</td></tr>';
+      el.enginesTableBody.innerHTML = '<tr><td colspan="4">No engines available.</td></tr>';
       return;
     }
 
@@ -338,9 +297,9 @@ const data = await resp.json();`;
         const badge = isActive
           ? '<span class="auth-badge active">ACTIVE</span>'
           : '<span class="auth-badge disabled">DISABLED</span>';
-        const logoImg = p.logo ? `<img src="${escapeHtml(p.logo)}" alt="${escapeHtml(p.label)}">` : '';
+        const logoImg = p.logo ? `<img src="${escapeHtml(p.logo)}" alt="">` : '';
         return `
-          <tr>
+          <tr ${isActive ? `data-engine-key="${escapeHtml(p.key)}" style="cursor:pointer;" title="Click to preview ${escapeHtml(p.label)} payload"` : ''}>
             <td><div class="engine-name-cell">${logoImg}<span>${escapeHtml(p.label)}</span></div></td>
             <td>${badge}</td>
             <td><code>${escapeHtml(p.service_code || '—')}</code></td>
@@ -348,6 +307,16 @@ const data = await resp.json();`;
           </tr>`;
       })
       .join('');
+
+    el.enginesTableBody.querySelectorAll('[data-engine-key]').forEach((row) => {
+      row.addEventListener('click', () => {
+        selectedPlatformKey = row.dataset.engineKey;
+        const found = activePlatforms.find((x) => x.key === selectedPlatformKey);
+        if (found) showLogoForPlatform(found, true);
+        renderPurchaseDocs();
+        showToast(`Switched example to ${selectedPlatformKey}`);
+      });
+    });
   }
 
   el.codeTabs.forEach((tab) => {
@@ -360,7 +329,7 @@ const data = await resp.json();`;
   });
 
   el.copyReqBtn?.addEventListener('click', () => {
-    if (el.codePurchaseReq) copyText(el.codePurchaseReq.textContent, 'Request snippet copied!');
+    if (el.codePurchaseReq) copyText(el.codePurchaseReq.textContent, 'Copied!');
   });
 
   async function hydrate() {
@@ -376,7 +345,6 @@ const data = await resp.json();`;
       }
 
       startLogoCycler();
-      renderHeroStack();
       renderPurchaseDocs();
       renderEnginesTable();
     } catch (err) {
@@ -384,17 +352,6 @@ const data = await resp.json();`;
       if (el.enginesTableBody) {
         el.enginesTableBody.innerHTML = `<tr><td colspan="4" style="color:var(--red);">Failed to load /api/platforms: ${escapeHtml(err.message)}</td></tr>`;
       }
-    }
-
-    try {
-      const res = await fetch('/api/health');
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      if (el.liveHealthPill) el.liveHealthPill.className = 'health-pill online';
-      if (el.liveHealthText) el.liveHealthText.textContent = 'LIVE v' + (data.version || '3.0.0');
-    } catch {
-      if (el.liveHealthPill) el.liveHealthPill.className = 'health-pill offline';
-      if (el.liveHealthText) el.liveHealthText.textContent = 'OFFLINE';
     }
   }
 
