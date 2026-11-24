@@ -493,7 +493,6 @@
         rawCode =
 `curl -X POST "${url}" \\
   -H "Content-Type: application/json" \\
-  -H "X-API-Key: YOUR_SERVER_API_KEY" \\
   -H "X-NexNum-Key: YOUR_NEXNUM_KEY" \\
   -d '${payloadPretty}'`;
       } else if (activeLang === 'python') {
@@ -503,7 +502,6 @@
 resp = requests.post(
     "${url}",
     headers={
-        "X-API-Key": "YOUR_SERVER_API_KEY",
         "X-NexNum-Key": "YOUR_NEXNUM_KEY",
     },
     json=${payloadPretty},
@@ -516,7 +514,6 @@ print(resp.status_code, resp.json())`;
   method: "POST",
   headers: {
     "Content-Type": "application/json",
-    "X-API-Key": "YOUR_SERVER_API_KEY",
     "X-NexNum-Key": "YOUR_NEXNUM_KEY",
   },
   body: JSON.stringify(${payloadPretty}),
