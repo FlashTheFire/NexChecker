@@ -11,7 +11,7 @@ load_dotenv(BASE_DIR / ".env")
 
 # ── Telegram & WebApp ─────────────────────────────────────────────────────────
 BOT_TOKEN: str = os.getenv("BOT_TOKEN", "")
-WEBAPP_URL: str = os.getenv("WEBAPP_URL", "https://51.21.87.49.sslip.io").rstrip("/")
+WEBAPP_URL: str = os.getenv("WEBAPP_URL", "https://nexchecker.duckdns.org").rstrip("/")
 
 # ── NexNum API ────────────────────────────────────────────────────────────────
 NEXNUM_BASE_URL: str  = "https://nexnum.in/stubs/handler_api.php"
