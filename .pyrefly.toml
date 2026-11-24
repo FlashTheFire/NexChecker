@@ -1,0 +1,12 @@
+# Pyrefly configuration for NexChecker
+project_root = "."
+
+# Include directories for analysis
+include = ["api", "checkers", "NexBot", "tests"]
+search_paths = [".", "NexBot", "checkers", "api"]
+
+# Ignore missing third-party packages installed in virtualenv/docker
+ignore_missing_imports = true
+
+[[error_codes]]
+disable = ["not-async", "missing-import"]

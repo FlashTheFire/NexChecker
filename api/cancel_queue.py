@@ -9,12 +9,25 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import sys
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from core.nexnum_api import NexNumStatus, nexnum_client
-from utils.config import CANCEL_MIN_AGE, CANCEL_POLL_SECS
+# Bootstrap path resolution
+_ROOT = Path(__file__).resolve().parent.parent
+_NEXBOT_ROOT = _ROOT / "NexBot"
+for _p in (str(_ROOT), str(_NEXBOT_ROOT)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+try:
+    from NexBot.core.nexnum_api import NexNumStatus, nexnum_client
+    from NexBot.utils.config import CANCEL_MIN_AGE, CANCEL_POLL_SECS
+except ImportError:
+    from core.nexnum_api import NexNumStatus, nexnum_client
+    from utils.config import CANCEL_MIN_AGE, CANCEL_POLL_SECS
 
 logger = logging.getLogger("NexChecker.CancelQueue")
 

@@ -1,0 +1,1 @@
+"""NexBot package root."""

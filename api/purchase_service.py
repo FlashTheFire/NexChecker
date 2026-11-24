@@ -12,18 +12,37 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import sys
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
+# Bootstrap path resolution
+_ROOT = Path(__file__).resolve().parent.parent
+_NEXBOT_ROOT = _ROOT / "NexBot"
+for _p in (str(_ROOT), str(_NEXBOT_ROOT)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
 from api.cancel_queue import cancel_queue
-from core.nexnum_api import NexNumStatus, nexnum_client
-from utils.config import (
-    BIGBASKET_SERVICE_CODE,
-    FLIPKART_SERVICE_CODE,
-    MYNTRA_SERVICE_CODE,
-    ZOMATO_SERVICE_CODE,
-)
+
+try:
+    from NexBot.core.nexnum_api import NexNumStatus, nexnum_client
+    from NexBot.utils.config import (
+        BIGBASKET_SERVICE_CODE,
+        FLIPKART_SERVICE_CODE,
+        MYNTRA_SERVICE_CODE,
+        ZOMATO_SERVICE_CODE,
+    )
+except ImportError:
+    from core.nexnum_api import NexNumStatus, nexnum_client
+    from utils.config import (
+        BIGBASKET_SERVICE_CODE,
+        FLIPKART_SERVICE_CODE,
+        MYNTRA_SERVICE_CODE,
+        ZOMATO_SERVICE_CODE,
+    )
 
 logger = logging.getLogger("NexChecker.PurchaseService")
 
