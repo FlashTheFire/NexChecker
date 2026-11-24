@@ -81,6 +81,8 @@ class TestNexCheckerAPI(unittest.TestCase):
 
         css_resp = client.get("/static/api-docs.css")
         self.assertEqual(css_resp.status_code, 200)
+        self.assertIn("color-scheme: dark", css_resp.text)
+        self.assertIn(".line-num", css_resp.text)
         self.assertIn(".tok-key", css_resp.text)
         self.assertIn("#9cdcfe", css_resp.text)
         self.assertIn("#ce9178", css_resp.text)
@@ -88,6 +90,7 @@ class TestNexCheckerAPI(unittest.TestCase):
         self.assertEqual(js_resp.status_code, 200)
         self.assertIn("highlightJSON", js_resp.text)
         self.assertIn("highlightCode", js_resp.text)
+        self.assertIn("renderCodeLines", js_resp.text)
         self.assertIn("el.cyclingServiceLabel.textContent = p.label;", js_resp.text)
 
     def test_bot_webhook_endpoint(self):
