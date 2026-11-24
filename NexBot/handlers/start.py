@@ -336,9 +336,9 @@ def _home_markup(has_key: bool) -> InlineKeyboardMarkup:
     """Build main menu. Dynamically shows WebApp button + one button per platform."""
     kb = InlineKeyboardMarkup(row_width=1)
     # Prominent WebApp button at top for 1-tap launch
-    kb.add(InlineKeyboardButton(f"🚀  {sc('Open NexChecker WebApp')}", web_app=WebAppInfo(url=WEBAPP_URL)))
 
     if has_key:
+        kb.add(InlineKeyboardButton(f"🚀  {sc('Open NexChecker WebApp')}", web_app=WebAppInfo(url=WEBAPP_URL)))
         try:
             from utils.platforms import get_platforms
             for p in get_platforms().values():
@@ -354,5 +354,14 @@ def _home_markup(has_key: bool) -> InlineKeyboardMarkup:
             InlineKeyboardButton(f"🗑  {sc('Del Key')}",   callback_data="nex:delkey_prompt:myntra"),
         )
     else:
-        kb.add(InlineKeyboardButton(f"🔑  {sc('Set Api Key')}", callback_data="nex:setkey_prompt:global"))
+        kb.add(
+            InlineKeyboardButton(
+               f"🚀 {sc('Open WebApp')}", 
+               web_app=WebAppInfo(url=WEBAPP_URL)
+            ),
+            InlineKeyboardButton(
+                f"🔑 {sc('Set Api Key')}", 
+                callback_data="nex:setkey_prompt:global"
+            )
+        )
     return kb
