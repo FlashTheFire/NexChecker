@@ -473,8 +473,8 @@ async def list_platforms():
     }
 
 
-@app.post("/api/checker/phone")
-@app.post("/api/check/phone")
+@app.post("/api/checker/phone", include_in_schema=False)
+@app.post("/api/check/phone", include_in_schema=False)
 async def check_single_phone(req: PhoneCheckRequest, request: Request):
     """Check a single mobile number on a target platform or all platforms."""
     # Enforce strict Telegram cryptographic authentication
@@ -526,8 +526,8 @@ async def check_single_phone(req: PhoneCheckRequest, request: Request):
     }
 
 
-@app.post("/api/checker/batch")
-@app.post("/api/check/batch")
+@app.post("/api/checker/batch", include_in_schema=False)
+@app.post("/api/check/batch", include_in_schema=False)
 async def check_batch_phones(req: BatchCheckRequest, request: Request):
     """Check a list of phone numbers concurrently."""
     # Enforce strict Telegram cryptographic authentication
@@ -577,7 +577,7 @@ async def check_batch_phones(req: BatchCheckRequest, request: Request):
 # ------------------------------------------------------------
 # Targeted Virtual Number Purchase Engine (NexNum Integration)
 # ------------------------------------------------------------
-@app.post("/api/v1/purchase")
+@app.post("/api/v1/purchase", include_in_schema=False)
 @app.post("/api/purchase")
 async def purchase_targeted_number(req: PurchaseRequest, request: Request):
     """Purchase a virtual number from NexNum and verify registration status.
@@ -611,7 +611,7 @@ async def purchase_targeted_number(req: PurchaseRequest, request: Request):
 # ------------------------------------------------------------
 # High-Class Server-Side History & User Tracking Endpoints
 # ------------------------------------------------------------
-@app.get("/api/auth/verify")
+@app.get("/api/auth/verify", include_in_schema=False)
 async def verify_auth_endpoint(request: Request):
     """Cryptographically verify the Telegram WebApp initData handshake."""
     init_data = (
@@ -651,7 +651,7 @@ async def verify_auth_endpoint(request: Request):
     }
 
 
-@app.get("/api/auth/me")
+@app.get("/api/auth/me", include_in_schema=False)
 async def get_current_user_profile(request: Request):
     """Retrieve verified authentication metadata for the active caller."""
     identity = enforce_authenticated_identity(request)
@@ -661,7 +661,7 @@ async def get_current_user_profile(request: Request):
     }
 
 
-@app.get("/api/history")
+@app.get("/api/history", include_in_schema=False)
 async def get_user_history_endpoint(request: Request, limit: int = 50):
     """Fetch persistent server-side check history for the authenticated user/guest."""
     identity = enforce_authenticated_identity(request)
@@ -674,7 +674,7 @@ async def get_user_history_endpoint(request: Request, limit: int = 50):
     }
 
 
-@app.post("/api/history/clear")
+@app.post("/api/history/clear", include_in_schema=False)
 async def clear_user_history_endpoint(request: Request):
     """Clear server-side history records for the authenticated user/guest."""
     identity = enforce_authenticated_identity(request)
@@ -686,7 +686,7 @@ async def clear_user_history_endpoint(request: Request):
     }
 
 
-@app.delete("/api/history/{record_id}")
+@app.delete("/api/history/{record_id}", include_in_schema=False)
 async def delete_user_history_item_endpoint(record_id: str, request: Request):
     """Delete a single specific history record from server storage."""
     identity = get_request_identity(request)
@@ -697,7 +697,7 @@ async def delete_user_history_item_endpoint(record_id: str, request: Request):
     }
 
 
-@app.get("/api/admin/users")
+@app.get("/api/admin/users", include_in_schema=False)
 async def get_all_users_stats_endpoint(request: Request):
     """Return aggregated platform usage analytics across all recorded users."""
     stats = await history_manager.get_stats()
@@ -713,8 +713,8 @@ async def get_all_users_stats_endpoint(request: Request):
 WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "")
 
 
-@app.post("/bot/webhook")
-@app.post("/api/bot/webhook")
+@app.post("/bot/webhook", include_in_schema=False)
+@app.post("/api/bot/webhook", include_in_schema=False)
 async def telegram_webhook(request: Request):
     """Receive Telegram webhook updates and dispatch to AsyncTeleBot."""
     secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
@@ -760,9 +760,9 @@ async def serve_api_docs():
     raise HTTPException(status_code=404, detail="API documentation page not found")
 
 
-@app.api_route("/", methods=["GET", "HEAD"])
-@app.api_route("/checker", methods=["GET", "HEAD"])
-@app.api_route("/app", methods=["GET", "HEAD"])
+@app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
+@app.api_route("/checker", methods=["GET", "HEAD"], include_in_schema=False)
+@app.api_route("/app", methods=["GET", "HEAD"], include_in_schema=False)
 async def serve_web_ui():
     """Serves the NexChecker multi-brand verification interface."""
     index_file = WEB_DIR / "index.html"
