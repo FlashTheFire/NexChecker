@@ -137,8 +137,8 @@ async def lifespan(app: FastAPI):
 # ------------------------------------------------------------
 app = FastAPI(
     title="NexChecker API",
-    description="Universal Multi-Platform Registration Checker API",
-    version="2.0.0",
+    description="Universal Multi-Platform Registration Checker & Targeted Purchase API",
+    version="3.0.0",
     lifespan=lifespan,
 )
 
@@ -657,6 +657,16 @@ async def favicon():
     return Response(status_code=204)
 
 
+@app.api_route("/api-docs", methods=["GET", "HEAD"])
+@app.api_route("/api-docs/", methods=["GET", "HEAD"], include_in_schema=False)
+async def serve_api_docs():
+    """Serves the NexChecker full-stack API & Architecture documentation portal."""
+    docs_file = WEB_DIR / "api-docs.html"
+    if docs_file.exists():
+        return FileResponse(str(docs_file))
+    raise HTTPException(status_code=404, detail="API documentation page not found")
+
+
 @app.api_route("/", methods=["GET", "HEAD"])
 @app.api_route("/checker", methods=["GET", "HEAD"])
 @app.api_route("/app", methods=["GET", "HEAD"])
@@ -671,4 +681,5 @@ async def serve_web_ui():
         "status": "online",
         "brands": ["zomato", "flipkart", "meesho", "bigbasket", "myntra", "swiggy", "zepto", "amazon"],
         "docs": "/docs",
+        "api_docs": "/api-docs",
     }
