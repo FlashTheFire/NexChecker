@@ -1,5 +1,5 @@
 /**
- * NexChecker — API Docs Interactive Engine & Live Playground
+ * NexChecker — Dynamic API Docs & Interactive Playground
  */
 (function () {
   'use strict';
@@ -18,16 +18,11 @@
 
   const ORIGIN = window.location.origin;
 
-  const BRAND_LOGOS = {
-    zomato: '/static/src/logos/zomato.png',
-    flipkart: '/static/src/logos/flipkart.png',
-    meesho: '/static/src/logos/meesho.png',
-    myntra: '/static/src/logos/myntra.png',
-    swiggy: '/static/src/logos/swiggy.png',
-    amazon: '/static/src/logos/amazon.png',
-  };
+  // Dynamic platform state populated from GET /api/platforms
+  let platformsList = [];
+  let activePlatforms = [];
+  let selectedPlatformKey = '';
 
-  // ── Presets for Interactive Playground ──────────────────────────────────────
   const PRESETS = {
     health: {
       method: 'GET',
@@ -48,33 +43,33 @@
       path: '/api/v1/purchase',
       needsBody: true,
       authHints: ['apiKey', 'nexnumKey'],
-      body: {
-        platform: 'zomato',
+      buildBody: (p) => ({
+        platform: p ? p.key : 'zomato',
         target_status: 'NOT_REGISTERED',
-        service_code: 'dy',
+        service_code: p ? p.service_code : 'dy',
         country_code: '22',
         max_attempts: 5,
-      },
+      }),
     },
     check_phone: {
       method: 'POST',
       path: '/api/checker/phone',
       needsBody: true,
       authHints: ['tgInit'],
-      body: {
+      buildBody: (p) => ({
         phone: '9876543210',
-        platform: 'zomato',
-      },
+        platform: p ? p.key : 'zomato',
+      }),
     },
     check_batch: {
       method: 'POST',
       path: '/api/checker/batch',
       needsBody: true,
       authHints: ['tgInit'],
-      body: {
+      buildBody: (p) => ({
         phones: ['9876543210', '9876543211'],
-        platform: 'flipkart',
-      },
+        platform: p ? p.key : 'flipkart',
+      }),
     },
     auth_verify: {
       method: 'GET',
@@ -118,22 +113,17 @@
     sidebar: document.getElementById('docsSidebar'),
     backdrop: document.getElementById('sidebarBackdrop'),
     menuToggle: document.getElementById('menuToggle'),
-    sidebarSearch: document.getElementById('sidebarSearch'),
+    sidebarActiveCount: document.getElementById('sidebarActiveCount'),
     navLinks: document.querySelectorAll('#sidebarNav .nav-link'),
-    navGroups: document.querySelectorAll('#sidebarNav .nav-group'),
 
     baseUrlText: document.getElementById('baseUrlText'),
     copyBaseUrlBtn: document.getElementById('copyBaseUrlBtn'),
     liveHealthPill: document.getElementById('liveHealthPill'),
     liveHealthText: document.getElementById('liveHealthText'),
-    statTotalChecks: document.getElementById('statTotalChecks'),
-    statBreakdown: document.getElementById('statBreakdown'),
-
-    brandThemeSelect: document.getElementById('brandThemeSelect'),
-    headerBrandLogo: document.getElementById('headerBrandLogo'),
     toast: document.getElementById('docsToast'),
 
     pgEndpointSelect: document.getElementById('pgEndpointSelect'),
+    pgServicesBar: document.getElementById('pgServicesBar'),
     pgSendBtn: document.getElementById('pgSendBtn'),
     pgResetBtn: document.getElementById('pgResetBtn'),
     pgApiKey: document.getElementById('pgApiKey'),
@@ -150,6 +140,12 @@
     pgSnippetPre: document.getElementById('pgSnippetPre'),
     pgCopySnippetBtn: document.getElementById('pgCopySnippetBtn'),
     snippetTabs: document.querySelectorAll('.code-tab'),
+
+    enginesTableBody: document.getElementById('enginesTableBody'),
+    docDefaultPlatform: document.getElementById('docDefaultPlatform'),
+    docPlatformListDesc: document.getElementById('docPlatformListDesc'),
+    docServiceMapDesc: document.getElementById('docServiceMapDesc'),
+    codePurchaseOk: document.getElementById('codePurchaseOk'),
   };
 
   let activeSnippetLang = 'curl';
@@ -163,7 +159,7 @@
     showToast._timer = setTimeout(() => el.toast.classList.remove('show'), 1800);
   }
 
-  function copyText(text, label = 'Copied to clipboard!') {
+  function copyText(text, label = 'Copied!') {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(() => showToast(label)).catch(() => fallbackCopy(text, label));
     } else {
@@ -188,21 +184,7 @@
     el.copyBaseUrlBtn.addEventListener('click', () => copyText(ORIGIN, 'Base URL copied!'));
   }
 
-  // ── Brand Theme Switcher ────────────────────────────────────────────────────
-  function applyBrandTheme(brand) {
-    const safeBrand = BRAND_LOGOS[brand] ? brand : 'zomato';
-    document.documentElement.setAttribute('data-brand', safeBrand);
-    if (el.headerBrandLogo) el.headerBrandLogo.src = BRAND_LOGOS[safeBrand];
-    if (el.brandThemeSelect) el.brandThemeSelect.value = safeBrand;
-    localStorage.setItem('nex_docs_brand', safeBrand);
-  }
-
-  if (el.brandThemeSelect) {
-    el.brandThemeSelect.addEventListener('change', (e) => applyBrandTheme(e.target.value));
-  }
-  applyBrandTheme(localStorage.getItem('nex_docs_brand') || 'zomato');
-
-  // ── Sidebar Mobile Drawer & Search ──────────────────────────────────────────
+  // ── Sidebar Drawer & Scroll Spy ─────────────────────────────────────────────
   function toggleSidebar(forceOpen) {
     const open = typeof forceOpen === 'boolean' ? forceOpen : !el.sidebar.classList.contains('open');
     el.sidebar.classList.toggle('open', open);
@@ -218,38 +200,12 @@
     });
   });
 
-  // Search filter
-  if (el.sidebarSearch) {
-    el.sidebarSearch.addEventListener('input', (e) => {
-      const q = e.target.value.trim().toLowerCase();
-      el.navGroups.forEach((grp) => {
-        let visibleCount = 0;
-        grp.querySelectorAll('.nav-link').forEach((lnk) => {
-          const match = !q || lnk.textContent.toLowerCase().includes(q) || (lnk.getAttribute('href') || '').toLowerCase().includes(q);
-          lnk.style.display = match ? 'flex' : 'none';
-          if (match) visibleCount++;
-        });
-        grp.style.display = visibleCount > 0 ? 'block' : 'none';
-      });
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-        e.preventDefault();
-        el.sidebarSearch.focus();
-      }
-    });
-  }
-
-  // Scroll spy
-  const sections = document.querySelectorAll('section.doc-section, h3[id], div[id^="ep-"]');
+  const sections = document.querySelectorAll('section.doc-section, h3[id]');
   function updateActiveNav() {
-    let currentId = 'overview';
+    let currentId = 'auth';
     const scrollPos = window.scrollY + 110;
     sections.forEach((sec) => {
-      if (sec.offsetTop <= scrollPos && sec.id) {
-        currentId = sec.id;
-      }
+      if (sec.offsetTop <= scrollPos && sec.id) currentId = sec.id;
     });
     el.navLinks.forEach((lnk) => {
       lnk.classList.toggle('active', lnk.getAttribute('href') === '#' + currentId);
@@ -257,7 +213,7 @@
   }
   window.addEventListener('scroll', updateActiveNav, { passive: true });
 
-  // ── Code Block Copy Buttons ─────────────────────────────────────────────────
+  // ── Static Copy Buttons ─────────────────────────────────────────────────────
   document.querySelectorAll('.copy-code-btn[data-copy-target]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const target = document.getElementById(btn.dataset.copyTarget);
@@ -265,26 +221,187 @@
     });
   });
 
-  // ── Live Health Poller ──────────────────────────────────────────────────────
-  async function refreshHealth() {
+  // ── Dynamic Platform Hydration from /api/platforms ──────────────────────────
+  function getActivePlatformObj() {
+    return (
+      activePlatforms.find((p) => p.key === selectedPlatformKey) ||
+      activePlatforms[0] ||
+      platformsList[0] ||
+      { key: 'zomato', label: 'Zomato', service_code: 'dy' }
+    );
+  }
+
+  function renderActiveServicePills() {
+    if (!el.pgServicesBar) return;
+    if (!activePlatforms.length) {
+      el.pgServicesBar.innerHTML = '<span class="pg-services-label">Active Services:</span><span style="font-size:12px;color:var(--text-muted);">None available</span>';
+      return;
+    }
+
+    const pillsHtml = activePlatforms
+      .map((p) => {
+        const isSelected = p.key === selectedPlatformKey;
+        const logoHtml = p.logo ? `<img src="${escapeHtml(p.logo)}" alt="${escapeHtml(p.label)}">` : '';
+        return `
+          <button type="button" class="pg-service-pill ${isSelected ? 'active' : ''}" data-platform-key="${escapeHtml(p.key)}">
+            ${logoHtml}
+            <span>${escapeHtml(p.label)}</span>
+            <span class="svc-code">${escapeHtml(p.service_code || '')}</span>
+          </button>`;
+      })
+      .join('');
+
+    el.pgServicesBar.innerHTML = `<span class="pg-services-label">Active Services:</span>${pillsHtml}`;
+
+    el.pgServicesBar.querySelectorAll('.pg-service-pill').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        selectPlatform(btn.dataset.platformKey);
+      });
+    });
+  }
+
+  function selectPlatform(platformKey) {
+    selectedPlatformKey = platformKey;
+    renderActiveServicePills();
+    updateDynamicPurchaseExample();
+
+    const presetKey = el.pgEndpointSelect?.value || 'purchase';
+    if (PRESETS[presetKey]?.buildBody) {
+      applyPreset(presetKey);
+    }
+  }
+
+  function updateDynamicPurchaseExample() {
+    const active = getActivePlatformObj();
+    if (el.docDefaultPlatform && active) {
+      el.docDefaultPlatform.textContent = `"${active.key}"`;
+    }
+    if (el.docPlatformListDesc && activePlatforms.length) {
+      const activeCodes = activePlatforms.map((p) => `<code>${escapeHtml(p.key)}</code>`).join(', ');
+      const disabledList = platformsList.filter((p) => p.status !== 'active').map((p) => `<code>${escapeHtml(p.key)}</code>`).join(', ');
+      el.docPlatformListDesc.innerHTML =
+        `Active checker slug: ${activeCodes}.` +
+        (disabledList ? ` (Currently disabled: ${disabledList}).` : '');
+    }
+    if (el.docServiceMapDesc && platformsList.length) {
+      const mapStr = platformsList
+        .map((p) => `${escapeHtml(p.key)}=<code>${escapeHtml(p.service_code || '—')}</code>`)
+        .join(', ');
+      el.docServiceMapDesc.innerHTML = `NexNum service code override (live defaults: ${mapStr}).`;
+    }
+    if (el.codePurchaseOk && active) {
+      const sampleJson = {
+        success: true,
+        order_id: '1791225496122425077082',
+        phone_number: '919876543210',
+        clean_mobile: '9876543210',
+        platform: active.key,
+        status: 'NOT_REGISTERED',
+        cost: 9.0,
+        attempts_taken: 2,
+        discarded_orders: [
+          {
+            order_id: '1791225496122425077081',
+            phone_number: '919876543211',
+            status: 'REGISTERED',
+            cancellation: 'QUEUED_DEFERRED',
+          },
+        ],
+        nexnum_direct_usage: {
+          get_status_url: 'https://nexnum.in/stubs/handler_api.php?action=getStatus&id=1791225496122425077082&api_key=YOUR_NEXNUM_KEY',
+          cancel_url: 'https://nexnum.in/stubs/handler_api.php?action=setStatus&id=1791225496122425077082&status=8&api_key=YOUR_NEXNUM_KEY',
+        },
+      };
+      el.codePurchaseOk.textContent = JSON.stringify(sampleJson, null, 2);
+    }
+  }
+
+  function renderEnginesTable() {
+    if (!el.enginesTableBody) return;
+    if (!platformsList.length) {
+      el.enginesTableBody.innerHTML = '<tr><td colspan="5">No platforms returned by /api/platforms.</td></tr>';
+      return;
+    }
+
+    el.enginesTableBody.innerHTML = platformsList
+      .map((p) => {
+        const isActive = p.status === 'active';
+        const statusBadge = isActive
+          ? '<span class="auth-badge active">ACTIVE</span>'
+          : '<span class="auth-badge disabled">DISABLED</span>';
+        const logoImg = p.logo ? `<img src="${escapeHtml(p.logo)}" alt="${escapeHtml(p.label)}">` : '';
+        const actionBtn = isActive
+          ? `<button type="button" class="try-btn" data-try-platform="${escapeHtml(p.key)}">Test ↗</button>`
+          : '<span style="color:var(--text-muted);font-size:11px;">Unavailable</span>';
+
+        return `
+          <tr>
+            <td><div class="engine-name-cell">${logoImg}<span>${escapeHtml(p.label)}</span></div></td>
+            <td>${statusBadge}</td>
+            <td><code>${escapeHtml(p.service_code || '—')}</code></td>
+            <td><code>${escapeHtml(p.module || '')}</code> — ${escapeHtml(p.mechanism || '')}</td>
+            <td>${actionBtn}</td>
+          </tr>`;
+      })
+      .join('');
+
+    el.enginesTableBody.querySelectorAll('[data-try-platform]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        selectPlatform(btn.dataset.tryPlatform);
+        window.loadPlayground('purchase');
+      });
+    });
+  }
+
+  async function hydrateDynamicData() {
+    // 1) Fetch /api/platforms
+    try {
+      const res = await fetch('/api/platforms');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      platformsList = Array.isArray(data.platforms) ? data.platforms : [];
+      activePlatforms = platformsList.filter((p) => p.status === 'active');
+
+      if (!selectedPlatformKey && activePlatforms.length) {
+        selectedPlatformKey = activePlatforms[0].key;
+      }
+
+      if (el.sidebarActiveCount) {
+        el.sidebarActiveCount.textContent = `${activePlatforms.length} / ${platformsList.length}`;
+      }
+
+      renderActiveServicePills();
+      renderEnginesTable();
+      updateDynamicPurchaseExample();
+      applyPreset(el.pgEndpointSelect?.value || 'purchase');
+    } catch (err) {
+      if (el.enginesTableBody) {
+        el.enginesTableBody.innerHTML = `<tr><td colspan="5" style="color:var(--red);">Failed to load /api/platforms: ${escapeHtml(err.message)}</td></tr>`;
+      }
+    }
+
+    // 2) Fetch /api/health
     try {
       const res = await fetch('/api/health');
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const data = await res.json();
       if (el.liveHealthPill) el.liveHealthPill.className = 'health-pill online';
       if (el.liveHealthText) el.liveHealthText.textContent = 'LIVE v' + (data.version || '3.0.0');
-      if (el.statTotalChecks) el.statTotalChecks.textContent = Number(data.total_checks || 0).toLocaleString();
-      if (el.statBreakdown) {
-        el.statBreakdown.textContent = `${data.registered_checks || 0} registered • ${data.fresh_checks || 0} fresh`;
-      }
     } catch {
       if (el.liveHealthPill) el.liveHealthPill.className = 'health-pill offline';
       if (el.liveHealthText) el.liveHealthText.textContent = 'OFFLINE';
     }
   }
-  refreshHealth();
 
-  // ── Playground State & Persistence ──────────────────────────────────────────
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ── Playground Controls ─────────────────────────────────────────────────────
   function restoreCredentials() {
     const savedApiKey = sessionStorage.getItem('nex_pg_api_key') || '';
     const savedNexKey = sessionStorage.getItem('nex_pg_nexnum_key') || '';
@@ -314,7 +431,7 @@
   }
 
   function renderCodeSnippet() {
-    const key = el.pgEndpointSelect?.value || 'health';
+    const key = el.pgEndpointSelect?.value || 'purchase';
     const preset = PRESETS[key];
     if (!preset || !el.pgSnippetPre) return;
 
@@ -324,12 +441,8 @@
 
     if (activeSnippetLang === 'curl') {
       const lines = [`curl -X ${preset.method} "${url}"`];
-      Object.entries(headers).forEach(([k, v]) => {
-        lines.push(`  -H "${k}: ${v}"`);
-      });
-      if (preset.needsBody) {
-        lines.push(`  -d '${bodyText.replace(/\n\s*/g, ' ')}'`);
-      }
+      Object.entries(headers).forEach(([k, v]) => lines.push(`  -H "${k}: ${v}"`));
+      if (preset.needsBody) lines.push(`  -d '${bodyText.replace(/\n\s*/g, ' ')}'`);
       el.pgSnippetPre.textContent = lines.join(' \\\n');
     } else if (activeSnippetLang === 'python') {
       const hdrStr = JSON.stringify(headers, null, 2);
@@ -371,11 +484,16 @@ console.log(resp.status, data);`;
   }
 
   function applyPreset(key) {
-    const preset = PRESETS[key] || PRESETS.health;
+    const preset = PRESETS[key] || PRESETS.purchase;
     if (el.pgEndpointSelect) el.pgEndpointSelect.value = key;
     if (el.pgBodyWrap) el.pgBodyWrap.style.display = preset.needsBody ? 'flex' : 'none';
+
+    const showServicesBar = Boolean(preset.buildBody);
+    if (el.pgServicesBar) el.pgServicesBar.style.display = showServicesBar ? 'flex' : 'none';
+
     if (el.pgBodyInput) {
-      el.pgBodyInput.value = preset.needsBody && preset.body ? JSON.stringify(preset.body, null, 2) : '';
+      const payload = preset.buildBody ? preset.buildBody(getActivePlatformObj()) : preset.body;
+      el.pgBodyInput.value = preset.needsBody && payload ? JSON.stringify(payload, null, 2) : '';
     }
 
     if (el.pgFieldApiKey) el.pgFieldApiKey.style.display = preset.authHints.includes('apiKey') ? 'flex' : 'none';
@@ -391,12 +509,8 @@ console.log(resp.status, data);`;
     if (pgSec) pgSec.scrollIntoView({ behavior: 'smooth' });
   };
 
-  if (el.pgEndpointSelect) {
-    el.pgEndpointSelect.addEventListener('change', (e) => applyPreset(e.target.value));
-  }
-  if (el.pgResetBtn) {
-    el.pgResetBtn.addEventListener('click', () => applyPreset(el.pgEndpointSelect.value));
-  }
+  if (el.pgEndpointSelect) el.pgEndpointSelect.addEventListener('change', (e) => applyPreset(e.target.value));
+  if (el.pgResetBtn) el.pgResetBtn.addEventListener('click', () => applyPreset(el.pgEndpointSelect.value));
 
   [el.pgApiKey, el.pgNexNumKey, el.pgTgInitData, el.pgBodyInput].forEach((input) => {
     if (!input) return;
@@ -421,7 +535,6 @@ console.log(resp.status, data);`;
     });
   }
 
-  // ── Execute Live HTTP Request ───────────────────────────────────────────────
   if (el.pgSendBtn) {
     el.pgSendBtn.addEventListener('click', async () => {
       const key = el.pgEndpointSelect.value;
@@ -454,9 +567,7 @@ console.log(resp.status, data);`;
         const elapsed = Math.round(performance.now() - t0);
         const text = await resp.text();
         let formatted = text;
-        try {
-          formatted = JSON.stringify(JSON.parse(text), null, 2);
-        } catch (_) {}
+        try { formatted = JSON.stringify(JSON.parse(text), null, 2); } catch (_) {}
 
         el.pgStatusChip.style.display = 'inline-block';
         el.pgStatusChip.className = 'status-chip ' + (resp.status < 300 ? 's2xx' : resp.status < 500 ? 's4xx' : 's5xx');
@@ -476,7 +587,8 @@ console.log(resp.status, data);`;
     });
   }
 
-  // Initialize Playground
+  // Boot
   restoreCredentials();
   applyPreset('purchase');
+  hydrateDynamicData();
 })();
