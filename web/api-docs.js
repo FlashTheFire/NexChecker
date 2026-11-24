@@ -35,22 +35,22 @@
   let selectedPlatformKey = '';
   let cycleIdx = 0;
   let cycleTimer = null;
-  let transitionIdx = 0;
   let transitionCleanupTimer = null;
+  let labelSwapTimer = null;
   let activeLang = 'curl';
 
-  const TRANSITIONS = ['wipe', 'dissolve', 'crosscut', 'spin', 'cutaway'];
+  const TRANSITION_STYLE = 'cutaway';
 
   const el = {
     sidebar: document.getElementById('docsSidebar'),
     backdrop: document.getElementById('sidebarBackdrop'),
     menuToggle: document.getElementById('menuToggle'),
-    navLinks: document.querySelectorAll('#sidebarNav .nav-link'),
+    drawerCloseBtn: document.getElementById('drawerCloseBtn'),
+    navLinks: document.querySelectorAll('#topNav .nav-link, #sidebarNav .nav-link'),
 
     brandMark: document.querySelector('.brand-mark'),
     dynamicLogoImg: document.getElementById('dynamicLogoImg'),
     dynamicLogoImgStage: document.getElementById('dynamicLogoImgStage'),
-    logoDissolveFlash: document.getElementById('logoDissolveFlash'),
     dynamicLogoFallback: document.getElementById('dynamicLogoFallback'),
     cyclingServiceLabel: document.getElementById('cyclingServiceLabel'),
     toast: document.getElementById('docsToast'),
@@ -259,28 +259,51 @@
     showToast(label);
   }
 
-  // ── Sidebar Drawer & Scroll Spy ─────────────────────────────────────────────
+  // ── Fixed Responsive Hamburger Drawer & Header Scroll Spy ──────────────────
   function toggleSidebar(forceOpen) {
+    if (!el.sidebar) return;
     const open = typeof forceOpen === 'boolean' ? forceOpen : !el.sidebar.classList.contains('open');
-    el.sidebar?.classList.toggle('open', open);
+    el.sidebar.classList.toggle('open', open);
     el.backdrop?.classList.toggle('open', open);
+    el.backdrop?.setAttribute('aria-hidden', String(!open));
+    el.menuToggle?.classList.toggle('is-open', open);
+    el.menuToggle?.setAttribute('aria-expanded', String(open));
+    document.body.classList.toggle('drawer-open', open);
   }
 
   el.menuToggle?.addEventListener('click', () => toggleSidebar());
+  el.drawerCloseBtn?.addEventListener('click', () => toggleSidebar(false));
   el.backdrop?.addEventListener('click', () => toggleSidebar(false));
   el.navLinks.forEach((link) => {
     link.addEventListener('click', () => {
-      if (window.innerWidth <= 900) toggleSidebar(false);
+      if (window.innerWidth <= 960) toggleSidebar(false);
     });
   });
 
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && el.sidebar?.classList.contains('open')) {
+      toggleSidebar(false);
+      el.menuToggle?.focus();
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 960 && el.sidebar?.classList.contains('open')) {
+      toggleSidebar(false);
+    }
+  }, { passive: true });
+
   const sections = document.querySelectorAll('section.doc-section, h3[id]');
   window.addEventListener('scroll', () => {
-    let currentId = 'auth';
-    const scrollPos = window.scrollY + 110;
+    let currentId = 'ep-purchase';
+    const scrollPos = window.scrollY + 120;
     sections.forEach((sec) => {
       if (sec.offsetTop <= scrollPos && sec.id) currentId = sec.id;
     });
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 24 && sections.length) {
+      const last = sections[sections.length - 1];
+      if (last.id) currentId = last.id;
+    }
     el.navLinks.forEach((lnk) => {
       lnk.classList.toggle('active', lnk.getAttribute('href') === '#' + currentId);
     });
@@ -304,10 +327,6 @@
 
   const TR_CLASSES = [
     'is-front', 'is-stage',
-    'tr-wipe-out', 'tr-wipe-in',
-    'tr-dissolve-out', 'tr-dissolve-in',
-    'tr-crosscut-out', 'tr-crosscut-in',
-    'tr-spin-out', 'tr-spin-in',
     'tr-cutaway-out', 'tr-cutaway-in',
   ];
 
@@ -322,6 +341,8 @@
     const stage = el.dynamicLogoImgStage;
 
     if (!animate || !stage || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      if (transitionCleanupTimer) clearTimeout(transitionCleanupTimer);
+      if (labelSwapTimer) clearTimeout(labelSwapTimer);
       clearTransitionClasses(front);
       clearTransitionClasses(stage);
       if (stage) stage.classList.add('is-hidden');
@@ -340,14 +361,17 @@
       return;
     }
 
-    // Dual-frame editorial transition (Wipe / Additive Dissolve / Cross-Cut / Spin / Cutaway)
-    if (transitionCleanupTimer) clearTimeout(transitionCleanupTimer);
+    // Dual-frame uniform cutaway punch-in zoom transition across all services
+    if (transitionCleanupTimer) {
+      clearTimeout(transitionCleanupTimer);
+      if (!stage.classList.contains('is-hidden') && stage.src) {
+        front.src = stage.src;
+        front.classList.remove('is-hidden');
+      }
+    }
+    if (labelSwapTimer) clearTimeout(labelSwapTimer);
     clearTransitionClasses(front);
     clearTransitionClasses(stage);
-    el.logoDissolveFlash?.classList.remove('is-flashing');
-
-    const tr = TRANSITIONS[transitionIdx % TRANSITIONS.length];
-    transitionIdx++;
 
     // Prepare incoming image on stage layer
     if (p.logo) {
@@ -365,19 +389,15 @@
     // Reflow to restart keyframe animations reliably
     void stage.offsetWidth;
 
-    front.classList.add(`tr-${tr}-out`);
-    stage.classList.add(`tr-${tr}-in`);
-    if (tr === 'dissolve' && el.logoDissolveFlash) {
-      void el.logoDissolveFlash.offsetWidth;
-      el.logoDissolveFlash.classList.add('is-flashing');
-    }
+    front.classList.add(`tr-${TRANSITION_STYLE}-out`);
+    stage.classList.add(`tr-${TRANSITION_STYLE}-in`);
 
     // Kinetic vertical ticker on service label
     el.cyclingServiceLabel.classList.remove('label-in', 'label-out');
     void el.cyclingServiceLabel.offsetWidth;
     el.cyclingServiceLabel.classList.add('label-out');
 
-    setTimeout(() => {
+    labelSwapTimer = setTimeout(() => {
       el.cyclingServiceLabel.textContent = p.label;
       el.cyclingServiceLabel.classList.remove('label-out');
       el.cyclingServiceLabel.classList.add('label-in');
@@ -394,9 +414,9 @@
       clearTransitionClasses(stage);
       front.classList.add('is-front');
       stage.classList.add('is-hidden');
-      el.logoDissolveFlash?.classList.remove('is-flashing');
       el.cyclingServiceLabel.classList.remove('label-in', 'label-out');
-    }, 430);
+      transitionCleanupTimer = null;
+    }, 400);
   }
 
   function startLogoCycler() {
