@@ -117,6 +117,7 @@ class TestNexCheckerAPI(unittest.TestCase):
         self.assertNotIn("p.mechanism", js_resp.text)
         self.assertNotIn("YOUR_SERVER_API_KEY", js_resp.text)
         self.assertIn("YOUR_NEXNUM_KEY", js_resp.text)
+        self.assertIn("&format=json", js_resp.text)
 
     def test_bot_webhook_endpoint(self):
         # Empty or mock update payload
