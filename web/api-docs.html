@@ -12,7 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="/static/api-docs.css?v=4.3">
+  <link rel="stylesheet" href="/static/api-docs.css?v=4.4">
 </head>
 <body>
 
@@ -28,13 +28,17 @@
       <a href="/api-docs" class="brand-mark" aria-label="NexChecker API Docs">
         <div class="dynamic-logo-frame" id="dynamicLogoFrame">
           <img src="" alt="" id="dynamicLogoImg" class="dynamic-logo-img is-hidden">
+          <img src="" alt="" id="dynamicLogoImgStage" class="dynamic-logo-img is-hidden" aria-hidden="true">
+          <span class="logo-dissolve-flash" id="logoDissolveFlash" aria-hidden="true"></span>
           <svg id="dynamicLogoFallback" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
           </svg>
         </div>
         <div class="brand-copy">
           <span class="brand-title">NexChecker</span>
-          <span class="brand-live-service" id="cyclingServiceLabel">Multi-Service</span>
+          <span class="brand-label-slot">
+            <span class="brand-live-service" id="cyclingServiceLabel">Multi-Service</span>
+          </span>
         </div>
       </a>
     </div>
@@ -255,6 +259,6 @@
 
   <div class="toast" id="docsToast">Copied!</div>
 
-  <script src="/static/api-docs.js?v=4.3"></script>
+  <script src="/static/api-docs.js?v=4.4"></script>
 </body>
 </html>
