@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#09090b">
-  <meta name="description" content="NexChecker API Docs — Authentication, Interactive Playground, Targeted Purchase API, Dynamic Checker Engines & Error Diagnostics.">
+  <meta name="theme-color" content="#070709">
+  <meta name="description" content="NexChecker API Reference — Security Layer, Targeted Purchase Engine, Deferred Cancel Queue, Dynamic Checker Engines & Diagnostics.">
   <title>NexChecker — API Documentation</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,7 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="/static/api-docs.css?v=2.0">
+  <link rel="stylesheet" href="/static/api-docs.css?v=3.0">
 </head>
 <body>
 
@@ -20,30 +20,35 @@
   <header class="docs-header">
     <div class="header-left">
       <button class="menu-toggle" id="menuToggle" aria-label="Toggle Navigation">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/>
         </svg>
       </button>
-      <a href="/api-docs" class="brand-mark">
-        <div class="brand-icon-box" aria-hidden="true">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+
+      <a href="/api-docs" class="brand-mark" aria-label="NexChecker API Docs">
+        <div class="dynamic-logo-frame" id="dynamicLogoFrame">
+          <img src="" alt="Active Service Logo" id="dynamicLogoImg" class="dynamic-logo-img is-hidden">
+          <svg id="dynamicLogoFallback" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
           </svg>
         </div>
-        <span class="brand-title">
-          NexChecker API
-          <span class="version-badge">v3.0.0</span>
-        </span>
+        <div class="brand-copy">
+          <span class="brand-title">
+            NexChecker
+            <span class="version-badge">v3.0</span>
+          </span>
+          <span class="brand-live-service" id="cyclingServiceLabel">Loading engines...</span>
+        </div>
       </a>
     </div>
 
     <div class="header-right">
-      <button class="base-url-pill" id="copyBaseUrlBtn" title="Click to copy Base URL">
+      <button class="base-url-pill" id="copyBaseUrlBtn" type="button" title="Copy Base URL">
         <span id="baseUrlText">http://127.0.0.1:8000</span>
         <span>📋</span>
       </button>
 
-      <div class="health-pill" id="liveHealthPill" title="Live backend status from GET /api/health">
+      <div class="health-pill" id="liveHealthPill" title="Live status from GET /api/health">
         <span class="health-dot"></span>
         <span class="health-label" id="liveHealthText">CHECKING</span>
       </div>
@@ -56,31 +61,32 @@
   <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
   <div class="docs-shell">
-    <!-- Compact Sidebar -->
+    <!-- Minimal Sidebar -->
     <aside class="docs-sidebar" id="docsSidebar">
-      <div class="sidebar-active-box">
-        <span class="sidebar-active-label">Active Services</span>
-        <span class="sidebar-active-count" id="sidebarActiveCount">—</span>
-      </div>
-
-      <nav id="sidebarNav">
-        <div class="nav-group">
-          <div class="nav-group-title">Documentation</div>
-          <a href="#auth" class="nav-link active">Security Layer</a>
-          <a href="#playground" class="nav-link">Interactive Playground</a>
-          <a href="#ep-purchase" class="nav-link">
-            <span>Targeted Purchase</span>
-            <span class="method-tag post">POST</span>
-          </a>
-          <a href="#cancel-queue" class="nav-link">Deferred Cancel Queue</a>
-          <a href="#engines-matrix" class="nav-link">Platform Checkers</a>
-          <a href="#error-codes" class="nav-link">Error Reference</a>
-        </div>
+      <nav id="sidebarNav" aria-label="API Documentation Sections">
+        <div class="nav-group-title">Reference</div>
+        <a href="#auth" class="nav-link active">Security Layer</a>
+        <a href="#ep-purchase" class="nav-link">
+          <span>Targeted Purchase</span>
+          <span class="method-tag post">POST</span>
+        </a>
+        <a href="#cancel-queue" class="nav-link">Deferred Cancel Queue</a>
+        <a href="#engines-matrix" class="nav-link">Platform Checkers</a>
+        <a href="#error-codes" class="nav-link">Error Reference</a>
       </nav>
     </aside>
 
-    <!-- Streamlined Documentation Content -->
+    <!-- Main Documentation Content -->
     <main class="docs-main">
+
+      <!-- Dynamic Active Engines Showcase Strip -->
+      <div class="hero-strip">
+        <div>
+          <div class="hero-strip-title">NexChecker API Documentation</div>
+          <div class="hero-strip-sub">Click any active service to preview its payload &amp; service code across examples.</div>
+        </div>
+        <div class="avatar-stack" id="heroServiceStack" aria-label="Active Platform Engines"></div>
+      </div>
 
       <!-- ══ 1. SECURITY LAYER ══════════════════════════════════════════════ -->
       <section class="doc-section" id="auth">
@@ -141,94 +147,7 @@
         </div>
       </section>
 
-      <!-- ══ 2. INTERACTIVE API PLAYGROUND ══════════════════════════════════ -->
-      <section class="doc-section" id="playground">
-        <div class="section-kicker">Live Runner</div>
-        <h2 class="sec-h2">Interactive API Playground</h2>
-        <p class="desc">
-          Select any endpoint, pick an active platform dynamically, configure headers and JSON payload, execute live HTTP requests against this server, and copy auto-generated client snippets.
-        </p>
-
-        <div class="playground-card">
-          <div class="pg-toolbar">
-            <select class="pg-select" id="pgEndpointSelect" aria-label="Select Endpoint">
-              <option value="health">GET  /api/health — System Health &amp; Stats</option>
-              <option value="platforms">GET  /api/platforms — Platform Registry</option>
-              <option value="purchase" selected>POST /api/v1/purchase — Targeted Number Purchase</option>
-              <option value="check_phone">POST /api/checker/phone — Single Phone Check</option>
-              <option value="check_batch">POST /api/checker/batch — Concurrent Batch Check</option>
-              <option value="auth_verify">GET  /api/auth/verify — Verify Telegram initData</option>
-              <option value="auth_me">GET  /api/auth/me — Current User Profile</option>
-              <option value="history_get">GET  /api/history?limit=20 — Fetch User History</option>
-              <option value="history_clear">POST /api/history/clear — Clear User History</option>
-              <option value="admin_users">GET  /api/admin/users — Aggregate User Stats</option>
-            </select>
-            <button class="pg-send-btn" id="pgSendBtn">▶ Send Request</button>
-          </div>
-
-          <!-- Dynamic Active Platform Switcher -->
-          <div class="pg-services-bar" id="pgServicesBar">
-            <span class="pg-services-label">Active Services:</span>
-            <span style="font-size:12px; color:var(--text-muted);">Loading platforms...</span>
-          </div>
-
-          <div class="pg-grid">
-            <div class="pg-pane">
-              <div class="pg-label">
-                <span>Request Headers &amp; Payload</span>
-                <button class="copy-code-btn" id="pgResetBtn" type="button">Reset Preset</button>
-              </div>
-
-              <div class="pg-headers-grid">
-                <div class="pg-field-row" id="pgFieldApiKey">
-                  <label for="pgApiKey">X-API-Key (Server Access Key, if enabled)</label>
-                  <input type="text" id="pgApiKey" class="pg-input" placeholder="Optional unless API_ACCESS_KEY is set">
-                </div>
-                <div class="pg-field-row" id="pgFieldNexNumKey">
-                  <label for="pgNexNumKey">X-NexNum-Key (Caller's NexNum API Key)</label>
-                  <input type="text" id="pgNexNumKey" class="pg-input" placeholder="nxn_... (or set inside JSON body)">
-                </div>
-                <div class="pg-field-row" id="pgFieldTgInit">
-                  <label for="pgTgInitData">X-Telegram-Init-Data (Auto-populated inside Telegram)</label>
-                  <input type="text" id="pgTgInitData" class="pg-input" placeholder="query_id=...&amp;user=...&amp;hash=...">
-                </div>
-              </div>
-
-              <div class="pg-field-row" id="pgBodyWrap">
-                <label for="pgBodyInput">JSON Request Body</label>
-                <textarea id="pgBodyInput" class="pg-textarea" spellcheck="false"></textarea>
-              </div>
-            </div>
-
-            <div class="pg-pane">
-              <div class="pg-label">
-                <span>Live Response</span>
-                <div class="pg-response-meta">
-                  <span class="status-chip" id="pgStatusChip" style="display:none;">200 OK</span>
-                  <span id="pgLatencyLabel" style="color:var(--text-muted); font-family:var(--font-mono); font-size:11px;"></span>
-                </div>
-              </div>
-              <pre class="pg-output" id="pgOutput">// Click "Send Request" to test live against the backend...</pre>
-            </div>
-          </div>
-
-          <div class="pg-snippets">
-            <div class="code-block" style="margin:0;">
-              <div class="code-head">
-                <div class="code-tabs">
-                  <button class="code-tab active" data-lang="curl">cURL</button>
-                  <button class="code-tab" data-lang="python">Python (requests)</button>
-                  <button class="code-tab" data-lang="js">JavaScript (fetch)</button>
-                </div>
-                <button class="copy-code-btn" id="pgCopySnippetBtn">Copy Snippet</button>
-              </div>
-              <pre id="pgSnippetPre"></pre>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ══ 3. PURCHASE & NEXNUM INTEGRATION ═══════════════════════════════ -->
+      <!-- ══ 2. PURCHASE & NEXNUM INTEGRATION ═══════════════════════════════ -->
       <section class="doc-section" id="ep-purchase">
         <div class="section-kicker">Purchase &amp; NexNum Integration</div>
         <h2 class="sec-h2">Targeted Virtual Number Purchase</h2>
@@ -241,13 +160,25 @@
               <span class="opt-pill">Alias: /api/purchase</span>
               <span class="auth-badge apikey">X-API-Key + X-NexNum-Key</span>
             </div>
-            <button class="try-btn" onclick="loadPlayground('purchase')">Try in Playground ↗</button>
           </div>
 
           <div class="endpoint-body">
             <p class="desc">
               Acquires virtual numbers from NexNum on the caller's own NexNum balance, verifies each acquired number silently against the target platform, automatically queues non-matching numbers for deferred cancellation/refund, and returns the exact NexNum <code>order_id</code> upon matching <code>target_status</code>.
             </p>
+
+            <h3 class="sub-h3">Request Example</h3>
+            <div class="code-block">
+              <div class="code-head">
+                <div class="code-tabs">
+                  <button type="button" class="code-tab active" data-lang="curl">cURL</button>
+                  <button type="button" class="code-tab" data-lang="python">Python (requests)</button>
+                  <button type="button" class="code-tab" data-lang="js">JavaScript (fetch)</button>
+                </div>
+                <button type="button" class="copy-code-btn" id="copyReqBtn">Copy</button>
+              </div>
+              <pre id="codePurchaseReq"></pre>
+            </div>
 
             <h3 class="sub-h3">Request Parameters</h3>
             <div class="table-wrap">
@@ -305,30 +236,9 @@
             <div class="code-block">
               <div class="code-head">
                 <span>JSON Response (200 OK)</span>
-                <button class="copy-code-btn" data-copy-target="codePurchaseOk">Copy</button>
+                <button type="button" class="copy-code-btn" data-copy-target="codePurchaseOk">Copy</button>
               </div>
-              <pre id="codePurchaseOk">{
-  "success": true,
-  "order_id": "1791225496122425077082",
-  "phone_number": "919876543210",
-  "clean_mobile": "9876543210",
-  "platform": "flipkart",
-  "status": "NOT_REGISTERED",
-  "cost": 9.0,
-  "attempts_taken": 2,
-  "discarded_orders": [
-    {
-      "order_id": "1791225496122425077081",
-      "phone_number": "919876543211",
-      "status": "REGISTERED",
-      "cancellation": "QUEUED_DEFERRED"
-    }
-  ],
-  "nexnum_direct_usage": {
-    "get_status_url": "https://nexnum.in/stubs/handler_api.php?action=getStatus&amp;id=1791225496122425077082&amp;api_key=YOUR_NEXNUM_KEY",
-    "cancel_url": "https://nexnum.in/stubs/handler_api.php?action=setStatus&amp;id=1791225496122425077082&amp;status=8&amp;api_key=YOUR_NEXNUM_KEY"
-  }
-}</pre>
+              <pre id="codePurchaseOk"></pre>
             </div>
             <p class="desc">
               Use the returned <code>order_id</code> directly with <a href="https://nexnum.in/en/api-docs" target="_blank" rel="noopener">NexNum Official API Docs</a> to poll incoming OTPs (<code>action=getStatus</code>) or finalize activation (<code>action=setStatus&amp;status=6</code>).
@@ -353,13 +263,10 @@
         </div>
       </section>
 
-      <!-- ══ 4. DYNAMIC PLATFORM CHECKER ENGINES ════════════════════════════ -->
+      <!-- ══ 3. DYNAMIC PLATFORM CHECKER ENGINES ════════════════════════════ -->
       <section class="doc-section" id="engines-matrix">
         <div class="section-kicker">Checker Engines</div>
         <h2 class="sec-h2">Platform Checker Engines (<code>checkers/</code>)</h2>
-        <p class="desc">
-          Live registry hydrated directly from <code>GET /api/platforms</code>. Only services marked <code>ACTIVE</code> accept checks and targeted purchases.
-        </p>
         <div class="table-wrap">
           <table class="doc-table">
             <thead>
@@ -368,17 +275,16 @@
                 <th>API Status</th>
                 <th>Service Code</th>
                 <th>Mechanism &amp; Module</th>
-                <th>Action</th>
               </tr>
             </thead>
             <tbody id="enginesTableBody">
-              <tr><td colspan="5" style="color:var(--text-muted);">Loading live platform engines from /api/platforms...</td></tr>
+              <tr><td colspan="4" style="color:var(--text-muted);">Hydrating engines from /api/platforms...</td></tr>
             </tbody>
           </table>
         </div>
       </section>
 
-      <!-- ══ 5. DIAGNOSTICS & ERROR REFERENCE ═══════════════════════════════ -->
+      <!-- ══ 4. DIAGNOSTICS & ERROR REFERENCE ═══════════════════════════════ -->
       <section class="doc-section" id="error-codes">
         <div class="section-kicker">Diagnostics</div>
         <h2 class="sec-h2">HTTP Status &amp; Error Code Reference</h2>
@@ -405,6 +311,6 @@
 
   <div class="toast" id="docsToast">Copied!</div>
 
-  <script src="/static/api-docs.js?v=2.0"></script>
+  <script src="/static/api-docs.js?v=3.0"></script>
 </body>
 </html>
