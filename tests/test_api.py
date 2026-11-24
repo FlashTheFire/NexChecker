@@ -78,8 +78,13 @@ class TestNexCheckerAPI(unittest.TestCase):
 
         css_resp = client.get("/static/api-docs.css")
         self.assertEqual(css_resp.status_code, 200)
+        self.assertIn(".tok-key", css_resp.text)
+        self.assertIn("#9cdcfe", css_resp.text)
+        self.assertIn("#ce9178", css_resp.text)
         js_resp = client.get("/static/api-docs.js")
         self.assertEqual(js_resp.status_code, 200)
+        self.assertIn("highlightJSON", js_resp.text)
+        self.assertIn("highlightCode", js_resp.text)
 
     def test_bot_webhook_endpoint(self):
         # Empty or mock update payload
