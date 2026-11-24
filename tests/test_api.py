@@ -36,11 +36,16 @@ class TestNexCheckerAPI(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         data = resp.json()
         self.assertIn("platforms", data)
+        self.assertIn("active_count", data)
         keys = [p["key"] for p in data["platforms"]]
         self.assertIn("zomato", keys)
         self.assertIn("flipkart", keys)
         self.assertIn("bigbasket", keys)
         self.assertIn("meesho", keys)
+        for p in data["platforms"]:
+            self.assertIn("service_code", p)
+            self.assertIn("module", p)
+            self.assertIn("mechanism", p)
 
     def test_invalid_phone_check(self):
         resp = client.post("/api/checker/phone", json={"target_phone": "123", "platform": "meesho"})
@@ -60,6 +65,11 @@ class TestNexCheckerAPI(unittest.TestCase):
             self.assertIn("text/html", resp.headers.get("content-type", ""))
             self.assertIn("NexChecker API", resp.text)
             self.assertIn("/api/v1/purchase", resp.text)
+            self.assertIn("Security Layer", resp.text)
+            self.assertIn("Interactive API Playground", resp.text)
+            self.assertIn("Platform Checker Engines", resp.text)
+            self.assertIn("HTTP Status &amp; Error Code Reference", resp.text)
+            self.assertNotIn("brandThemeSelect", resp.text)
 
         css_resp = client.get("/static/api-docs.css")
         self.assertEqual(css_resp.status_code, 200)
