@@ -51,6 +51,20 @@ class TestNexCheckerAPI(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertIn("text/html", resp.headers.get("content-type", ""))
         self.assertIn("zomato", resp.text.lower())
+        self.assertIn("/api-docs", resp.text)
+
+    def test_api_docs_serving(self):
+        for route in ("/api-docs", "/api-docs/"):
+            resp = client.get(route)
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("text/html", resp.headers.get("content-type", ""))
+            self.assertIn("NexChecker API", resp.text)
+            self.assertIn("/api/v1/purchase", resp.text)
+
+        css_resp = client.get("/static/api-docs.css")
+        self.assertEqual(css_resp.status_code, 200)
+        js_resp = client.get("/static/api-docs.js")
+        self.assertEqual(js_resp.status_code, 200)
 
     def test_bot_webhook_endpoint(self):
         # Empty or mock update payload
