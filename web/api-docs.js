@@ -556,8 +556,8 @@ const data = await resp.json();`;
           },
         ],
         nexnum_direct_usage: {
-          get_status_url: 'https://nexnum.in/stubs/handler_api.php?action=getStatus&id=1791225496122425077082&api_key=YOUR_NEXNUM_KEY&format=json',
-          cancel_url: 'https://nexnum.in/stubs/handler_api.php?action=setStatus&id=1791225496122425077082&status=8&api_key=YOUR_NEXNUM_KEY&format=json',
+          get_status_url: 'https://nexnum.in/stubs/handler_api.php?action=getStatus&id=1791225496122425077082&format=json',
+          cancel_url: 'https://nexnum.in/stubs/handler_api.php?action=setStatus&id=1791225496122425077082&status=8&format=json',
         },
       }, null, 2);
       renderCodeLines(el.codePurchaseOk, highlightJSON(jsonStr), jsonStr);
