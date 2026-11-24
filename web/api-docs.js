@@ -285,7 +285,7 @@
         el.dynamicLogoImg.classList.add('is-hidden');
         if (el.dynamicLogoFallback) el.dynamicLogoFallback.style.display = 'block';
       }
-      el.cyclingServiceLabel.textContent = `${p.label} • ${p.service_code || p.key}`;
+      el.cyclingServiceLabel.textContent = p.label;
       applyBrandAccent(p.key);
       el.dynamicLogoImg.classList.remove('is-switching');
       el.cyclingServiceLabel.classList.remove('is-switching');
