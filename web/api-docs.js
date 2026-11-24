@@ -35,7 +35,11 @@
   let selectedPlatformKey = '';
   let cycleIdx = 0;
   let cycleTimer = null;
+  let transitionIdx = 0;
+  let transitionCleanupTimer = null;
   let activeLang = 'curl';
+
+  const TRANSITIONS = ['wipe', 'dissolve', 'crosscut', 'spin', 'cutaway'];
 
   const el = {
     sidebar: document.getElementById('docsSidebar'),
@@ -43,7 +47,10 @@
     menuToggle: document.getElementById('menuToggle'),
     navLinks: document.querySelectorAll('#sidebarNav .nav-link'),
 
+    brandMark: document.querySelector('.brand-mark'),
     dynamicLogoImg: document.getElementById('dynamicLogoImg'),
+    dynamicLogoImgStage: document.getElementById('dynamicLogoImgStage'),
+    logoDissolveFlash: document.getElementById('logoDissolveFlash'),
     dynamicLogoFallback: document.getElementById('dynamicLogoFallback'),
     cyclingServiceLabel: document.getElementById('cyclingServiceLabel'),
     toast: document.getElementById('docsToast'),
@@ -295,33 +302,101 @@
     root.setProperty('--accent-glow', palette.glow);
   }
 
+  const TR_CLASSES = [
+    'is-front', 'is-stage',
+    'tr-wipe-out', 'tr-wipe-in',
+    'tr-dissolve-out', 'tr-dissolve-in',
+    'tr-crosscut-out', 'tr-crosscut-in',
+    'tr-spin-out', 'tr-spin-in',
+    'tr-cutaway-out', 'tr-cutaway-in',
+  ];
+
+  function clearTransitionClasses(imgEl) {
+    if (imgEl) imgEl.classList.remove(...TR_CLASSES);
+  }
+
   function showLogoForPlatform(p, animate = true) {
     if (!p || !el.dynamicLogoImg || !el.cyclingServiceLabel) return;
 
-    const applyUpdate = () => {
+    const front = el.dynamicLogoImg;
+    const stage = el.dynamicLogoImgStage;
+
+    if (!animate || !stage || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      clearTransitionClasses(front);
+      clearTransitionClasses(stage);
+      if (stage) stage.classList.add('is-hidden');
       if (p.logo) {
-        el.dynamicLogoImg.src = p.logo;
-        el.dynamicLogoImg.alt = '';
-        el.dynamicLogoImg.classList.remove('is-hidden');
+        front.src = p.logo;
+        front.alt = '';
+        front.classList.remove('is-hidden');
+        front.classList.add('is-front');
         if (el.dynamicLogoFallback) el.dynamicLogoFallback.style.display = 'none';
       } else {
-        el.dynamicLogoImg.classList.add('is-hidden');
+        front.classList.add('is-hidden');
         if (el.dynamicLogoFallback) el.dynamicLogoFallback.style.display = 'block';
       }
       el.cyclingServiceLabel.textContent = p.label;
       applyBrandAccent(p.key);
-      el.dynamicLogoImg.classList.remove('is-switching');
-      el.cyclingServiceLabel.classList.remove('is-switching');
-    };
-
-    if (!animate) {
-      applyUpdate();
       return;
     }
 
-    el.dynamicLogoImg.classList.add('is-switching');
-    el.cyclingServiceLabel.classList.add('is-switching');
-    setTimeout(applyUpdate, 160);
+    // Dual-frame editorial transition (Wipe / Additive Dissolve / Cross-Cut / Spin / Cutaway)
+    if (transitionCleanupTimer) clearTimeout(transitionCleanupTimer);
+    clearTransitionClasses(front);
+    clearTransitionClasses(stage);
+    el.logoDissolveFlash?.classList.remove('is-flashing');
+
+    const tr = TRANSITIONS[transitionIdx % TRANSITIONS.length];
+    transitionIdx++;
+
+    // Prepare incoming image on stage layer
+    if (p.logo) {
+      stage.src = p.logo;
+      stage.alt = '';
+      stage.classList.remove('is-hidden');
+      if (el.dynamicLogoFallback) el.dynamicLogoFallback.style.display = 'none';
+    } else {
+      stage.classList.add('is-hidden');
+    }
+
+    front.classList.add('is-front');
+    stage.classList.add('is-stage');
+
+    // Reflow to restart keyframe animations reliably
+    void stage.offsetWidth;
+
+    front.classList.add(`tr-${tr}-out`);
+    stage.classList.add(`tr-${tr}-in`);
+    if (tr === 'dissolve' && el.logoDissolveFlash) {
+      void el.logoDissolveFlash.offsetWidth;
+      el.logoDissolveFlash.classList.add('is-flashing');
+    }
+
+    // Kinetic vertical ticker on service label
+    el.cyclingServiceLabel.classList.remove('label-in', 'label-out');
+    void el.cyclingServiceLabel.offsetWidth;
+    el.cyclingServiceLabel.classList.add('label-out');
+
+    setTimeout(() => {
+      el.cyclingServiceLabel.textContent = p.label;
+      el.cyclingServiceLabel.classList.remove('label-out');
+      el.cyclingServiceLabel.classList.add('label-in');
+    }, 150);
+
+    applyBrandAccent(p.key);
+
+    transitionCleanupTimer = setTimeout(() => {
+      if (p.logo) {
+        front.src = p.logo;
+        front.classList.remove('is-hidden');
+      }
+      clearTransitionClasses(front);
+      clearTransitionClasses(stage);
+      front.classList.add('is-front');
+      stage.classList.add('is-hidden');
+      el.logoDissolveFlash?.classList.remove('is-flashing');
+      el.cyclingServiceLabel.classList.remove('label-in', 'label-out');
+    }, 430);
   }
 
   function startLogoCycler() {
@@ -337,10 +412,22 @@
     if (activePlatforms.length <= 1) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-    cycleTimer = setInterval(() => {
-      cycleIdx = (cycleIdx + 1) % activePlatforms.length;
-      showLogoForPlatform(activePlatforms[cycleIdx], true);
-    }, 2000);
+    const scheduleNext = () => {
+      if (cycleTimer) clearInterval(cycleTimer);
+      cycleTimer = setInterval(() => {
+        if (document.hidden) return;
+        cycleIdx = (cycleIdx + 1) % activePlatforms.length;
+        showLogoForPlatform(activePlatforms[cycleIdx], true);
+      }, 2300);
+    };
+
+    scheduleNext();
+
+    // Pause cleanly on hover for inspection
+    el.brandMark?.addEventListener('mouseenter', () => {
+      if (cycleTimer) clearInterval(cycleTimer);
+    });
+    el.brandMark?.addEventListener('mouseleave', scheduleNext);
   }
 
   // ── Dynamic Purchase Examples & Engine Table ────────────────────────────────
