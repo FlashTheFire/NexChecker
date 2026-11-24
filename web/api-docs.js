@@ -67,6 +67,141 @@
       .replace(/"/g, '&quot;');
   }
 
+  function tok(cls, text) {
+    return `<span class="${cls}">${escapeHtml(text)}</span>`;
+  }
+
+  // Single-pass VS Code Dark+ JSON highlighter
+  function highlightJSON(jsonText) {
+    const tokenRe = /("(?:\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(?:\s*:)?|\b(?:true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?|[{}\[\],:])/g;
+    let out = '';
+    let lastIdx = 0;
+
+    for (const m of jsonText.matchAll(tokenRe)) {
+      if (m.index > lastIdx) out += escapeHtml(jsonText.slice(lastIdx, m.index));
+      const t = m[0];
+
+      if (t.startsWith('"')) {
+        if (t.endsWith(':')) {
+          const colonIdx = t.lastIndexOf(':');
+          out += tok('tok-key', t.slice(0, colonIdx)) + tok('tok-punc', t.slice(colonIdx));
+        } else {
+          out += tok('tok-str', t);
+        }
+      } else if (t === 'true' || t === 'false' || t === 'null') {
+        out += tok('tok-bool', t);
+      } else if (t === '{' || t === '}') {
+        out += tok('tok-brk1', t);
+      } else if (t === '[' || t === ']') {
+        out += tok('tok-brk2', t);
+      } else if (t === ',' || t === ':') {
+        out += tok('tok-punc', t);
+      } else {
+        out += tok('tok-num', t);
+      }
+      lastIdx = m.index + t.length;
+    }
+
+    if (lastIdx < jsonText.length) out += escapeHtml(jsonText.slice(lastIdx));
+    return out;
+  }
+
+  // Single-pass VS Code Dark+ Code highlighter (cURL, Python, JS)
+  function highlightCode(codeText, lang) {
+    if (lang === 'curl') {
+      const re = /('(?:\\'|[^'])*')|("(?:\\"|[^"])*")|\b(curl)\b|\b(GET|POST|PUT|DELETE|PATCH)\b|(\s-[A-Za-z-]+)|(\\$)/gm;
+      let out = '';
+      let lastIdx = 0;
+      for (const m of codeText.matchAll(re)) {
+        if (m.index > lastIdx) out += escapeHtml(codeText.slice(lastIdx, m.index));
+        const [full, sq, dq, cmd, verb, flag, cont] = m;
+        if (sq) {
+          const inner = sq.slice(1, -1);
+          const highlightedInner = inner.trim().startsWith('{') ? highlightJSON(inner) : escapeHtml(inner);
+          out += tok('tok-str', "'") + highlightedInner + tok('tok-str', "'");
+        } else if (dq) {
+          out += tok('tok-str', dq);
+        } else if (cmd) {
+          out += tok('tok-fn', cmd);
+        } else if (verb) {
+          out += tok('tok-type', verb);
+        } else if (flag) {
+          out += tok('tok-kw', flag);
+        } else if (cont) {
+          out += tok('tok-punc', cont);
+        } else {
+          out += escapeHtml(full);
+        }
+        lastIdx = m.index + full.length;
+      }
+      if (lastIdx < codeText.length) out += escapeHtml(codeText.slice(lastIdx));
+      return out;
+    }
+
+    if (lang === 'python') {
+      const re = /(#.*$)|("(?:\\"|[^"])*"(?:\s*:)?|'(?:\\'|[^'])*'(?:\s*:)?)|\b(import|from|as|return|if|else|await|async)\b|\b(True|False|None|def|class)\b|(\b[a-z_][a-zA-Z0-9_]*(?=\s*=[^=]))|\b(requests|json)\b|\b(post|get|print)\b|(\b\d+(?:\.\d+)?\b)|([{}()\[\],:])/gm;
+      let out = '';
+      let lastIdx = 0;
+      for (const m of codeText.matchAll(re)) {
+        if (m.index > lastIdx) out += escapeHtml(codeText.slice(lastIdx, m.index));
+        const [full, comm, str, ctrl, kw, ident, mod, fn, num, punc] = m;
+        if (comm) out += tok('tok-comm', comm);
+        else if (str) {
+          if (str.endsWith(':')) {
+            const cIdx = str.lastIndexOf(':');
+            out += tok('tok-key', str.slice(0, cIdx)) + tok('tok-punc', str.slice(cIdx));
+          } else {
+            out += tok('tok-str', str);
+          }
+        }
+        else if (ctrl) out += tok('tok-ctrl', ctrl);
+        else if (kw) out += tok('tok-kw', kw);
+        else if (ident) out += tok('tok-var', ident);
+        else if (mod) out += tok('tok-type', mod);
+        else if (fn) out += tok('tok-fn', fn);
+        else if (num) out += tok('tok-num', num);
+        else if (punc === '{' || punc === '}') out += tok('tok-brk1', punc);
+        else if (punc === '[' || punc === ']') out += tok('tok-brk2', punc);
+        else if (punc) out += tok('tok-punc', punc);
+        else out += escapeHtml(full);
+        lastIdx = m.index + full.length;
+      }
+      if (lastIdx < codeText.length) out += escapeHtml(codeText.slice(lastIdx));
+      return out;
+    }
+
+    // JavaScript
+    const re = /(\/\/.*$)|("(?:\\"|[^"])*"(?:\s*:)?|'(?:\\'|[^'])*'(?:\s*:)?|`(?:\\`|[^`])*`)|\b(await|return|import|from|export|if|else)\b|\b(const|let|var|async|function|true|false|null)\b|\b(JSON|console|Response)\b|\b(fetch|stringify|json|log)\b|(\b[a-zA-Z_][a-zA-Z0-9_]*(?=\s*:))|(\b\d+(?:\.\d+)?\b)|([{}()\[\],;:])/gm;
+    let out = '';
+    let lastIdx = 0;
+    for (const m of codeText.matchAll(re)) {
+      if (m.index > lastIdx) out += escapeHtml(codeText.slice(lastIdx, m.index));
+      const [full, comm, str, ctrl, kw, cls, fn, prop, num, punc] = m;
+      if (comm) out += tok('tok-comm', comm);
+      else if (str) {
+        if (str.endsWith(':')) {
+          const cIdx = str.lastIndexOf(':');
+          out += tok('tok-key', str.slice(0, cIdx)) + tok('tok-punc', str.slice(cIdx));
+        } else {
+          out += tok('tok-str', str);
+        }
+      }
+      else if (ctrl) out += tok('tok-ctrl', ctrl);
+      else if (kw) out += tok('tok-kw', kw);
+      else if (cls) out += tok('tok-type', cls);
+      else if (fn) out += tok('tok-fn', fn);
+      else if (prop) out += tok('tok-var', prop);
+      else if (num) out += tok('tok-num', num);
+      else if (punc === '{' || punc === '}') out += tok('tok-brk1', punc);
+      else if (punc === '[' || punc === ']') out += tok('tok-brk2', punc);
+      else if (punc) out += tok('tok-punc', punc);
+      else out += escapeHtml(full);
+      lastIdx = m.index + full.length;
+    }
+    if (lastIdx < codeText.length) out += escapeHtml(codeText.slice(lastIdx));
+    return out;
+  }
+
   function showToast(msg) {
     if (!el.toast) return;
     el.toast.textContent = msg;
@@ -208,15 +343,16 @@
     const url = `${ORIGIN}/api/v1/purchase`;
 
     if (el.codePurchaseReq) {
+      let rawCode = '';
       if (activeLang === 'curl') {
-        el.codePurchaseReq.textContent =
+        rawCode =
 `curl -X POST "${url}" \\
   -H "Content-Type: application/json" \\
   -H "X-API-Key: YOUR_SERVER_API_KEY" \\
   -H "X-NexNum-Key: YOUR_NEXNUM_KEY" \\
   -d '${JSON.stringify(payloadObj)}'`;
       } else if (activeLang === 'python') {
-        el.codePurchaseReq.textContent =
+        rawCode =
 `import requests
 
 resp = requests.post(
@@ -230,7 +366,7 @@ resp = requests.post(
 )
 print(resp.status_code, resp.json())`;
       } else {
-        el.codePurchaseReq.textContent =
+        rawCode =
 `const resp = await fetch("${url}", {
   method: "POST",
   headers: {
@@ -242,6 +378,7 @@ print(resp.status_code, resp.json())`;
 });
 const data = await resp.json();`;
       }
+      el.codePurchaseReq.innerHTML = highlightCode(rawCode, activeLang);
     }
 
     if (el.docDefaultPlatform) el.docDefaultPlatform.textContent = `"${p.key}"`;
@@ -259,7 +396,7 @@ const data = await resp.json();`;
     }
 
     if (el.codePurchaseOk) {
-      el.codePurchaseOk.textContent = JSON.stringify({
+      const jsonStr = JSON.stringify({
         success: true,
         order_id: '1791225496122425077082',
         phone_number: '919876543210',
@@ -281,6 +418,7 @@ const data = await resp.json();`;
           cancel_url: 'https://nexnum.in/stubs/handler_api.php?action=setStatus&id=1791225496122425077082&status=8&api_key=YOUR_NEXNUM_KEY',
         },
       }, null, 2);
+      el.codePurchaseOk.innerHTML = highlightJSON(jsonStr);
     }
   }
 
