@@ -85,6 +85,7 @@ class TestNexCheckerAPI(unittest.TestCase):
             self.assertNotIn("liveHealthPill", resp.text)
             self.assertNotIn("heroServiceStack", resp.text)
             self.assertNotIn("Module &amp; Mechanism", resp.text)
+            self.assertNotIn("X-API-Key", resp.text)
 
         css_resp = client.get("/static/api-docs.css")
         self.assertEqual(css_resp.status_code, 200)
@@ -114,6 +115,8 @@ class TestNexCheckerAPI(unittest.TestCase):
         self.assertIn("currentId = 'ep-purchase'", js_resp.text)
         self.assertNotIn("p.module", js_resp.text)
         self.assertNotIn("p.mechanism", js_resp.text)
+        self.assertNotIn("YOUR_SERVER_API_KEY", js_resp.text)
+        self.assertIn("YOUR_NEXNUM_KEY", js_resp.text)
 
     def test_bot_webhook_endpoint(self):
         # Empty or mock update payload
