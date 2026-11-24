@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#070709">
-  <meta name="description" content="NexChecker API Reference — Authentication, Targeted Purchase API, Checker Engines &amp; Rules.">
+  <meta name="description" content="NexChecker API Reference — Targeted Purchase API, Cancel Queue, Checker Engines &amp; Rules.">
   <title>NexChecker — API Docs</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,24 +12,25 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="/static/api-docs.css?v=4.4">
+  <link rel="stylesheet" href="/static/api-docs.css?v=4.7">
 </head>
 <body>
 
-  <!-- Minimal Header with Dynamic Cycling Service Logo -->
+  <!-- Full-Width Fixed Header with Navigation & Dynamic Service Logo -->
   <header class="docs-header">
     <div class="header-left">
-      <button class="menu-toggle" id="menuToggle" aria-label="Toggle Navigation">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/>
-        </svg>
+      <button type="button" class="menu-toggle" id="menuToggle" aria-label="Toggle Navigation" aria-controls="docsSidebar" aria-expanded="false">
+        <span class="hamburger-box" aria-hidden="true">
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+        </span>
       </button>
 
       <a href="/api-docs" class="brand-mark" aria-label="NexChecker API Docs">
         <div class="dynamic-logo-frame" id="dynamicLogoFrame">
           <img src="" alt="" id="dynamicLogoImg" class="dynamic-logo-img is-hidden">
           <img src="" alt="" id="dynamicLogoImgStage" class="dynamic-logo-img is-hidden" aria-hidden="true">
-          <span class="logo-dissolve-flash" id="logoDissolveFlash" aria-hidden="true"></span>
           <svg id="dynamicLogoFallback" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
           </svg>
@@ -43,82 +44,56 @@
       </a>
     </div>
 
+    <nav class="top-nav" id="topNav" aria-label="API Sections">
+      <a href="#ep-purchase" class="nav-link active">
+        <span>Purchase API</span>
+        <span class="method-tag">POST</span>
+      </a>
+      <a href="#cancel-queue" class="nav-link">Cancel Queue</a>
+      <a href="#engines-matrix" class="nav-link">Checker Engines</a>
+      <a href="#rules" class="nav-link">Rules &amp; Notes</a>
+    </nav>
+
     <div class="header-right">
       <a href="/docs" class="nav-btn" target="_blank" rel="noopener">OpenAPI</a>
       <a href="/" class="nav-btn primary" id="backToAppBtn">← WebApp</a>
     </div>
   </header>
 
-  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+  <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
+
+  <!-- Fixed Responsive Hamburger Drawer -->
+  <aside class="docs-sidebar" id="docsSidebar" aria-label="Navigation Drawer">
+    <div class="drawer-head">
+      <span class="drawer-kicker">API Sections</span>
+      <button type="button" class="drawer-close" id="drawerCloseBtn" aria-label="Close Navigation">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <nav id="sidebarNav" aria-label="API Sections">
+      <a href="#ep-purchase" class="nav-link active">
+        <span>Purchase API</span>
+        <span class="method-tag">POST</span>
+      </a>
+      <a href="#cancel-queue" class="nav-link">Cancel Queue</a>
+      <a href="#engines-matrix" class="nav-link">Checker Engines</a>
+      <a href="#rules" class="nav-link">Rules &amp; Notes</a>
+    </nav>
+
+    <div class="drawer-footer">
+      <a href="/docs" class="nav-btn" target="_blank" rel="noopener">OpenAPI</a>
+      <a href="/" class="nav-btn primary">← WebApp</a>
+    </div>
+  </aside>
 
   <div class="docs-shell">
-    <!-- Minimal Sidebar -->
-    <aside class="docs-sidebar" id="docsSidebar">
-      <nav id="sidebarNav" aria-label="API Sections">
-        <a href="#auth" class="nav-link active">Security Layer</a>
-        <a href="#ep-purchase" class="nav-link">
-          <span>Purchase API</span>
-          <span class="method-tag">POST</span>
-        </a>
-        <a href="#cancel-queue" class="nav-link">Cancel Queue</a>
-        <a href="#engines-matrix" class="nav-link">Checker Engines</a>
-        <a href="#rules" class="nav-link">Rules &amp; Notes</a>
-      </nav>
-    </aside>
-
     <!-- Focused API Reference -->
     <main class="docs-main">
 
-      <!-- ══ 1. SECURITY LAYER ══════════════════════════════════════════════ -->
-      <section class="doc-section" id="auth">
-        <h2 class="sec-h2">Security Layer (<code>api/auth.py</code>)</h2>
-        <div class="table-wrap">
-          <table class="doc-table">
-            <thead>
-              <tr>
-                <th>Mechanism</th>
-                <th>Header / Param</th>
-                <th>Used By</th>
-                <th>Validation Rule</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>Dedicated API Key</strong></td>
-                <td><code>X-API-Key</code> or <code>Bearer &lt;key&gt;</code></td>
-                <td><code>/api/v1/purchase</code>, <code>/api/purchase</code></td>
-                <td><code>hmac.compare_digest</code> vs <code>API_ACCESS_KEY</code> / <code>NEXCHECKER_API_KEY</code> (open if unset).</td>
-              </tr>
-              <tr>
-                <td><strong>NexNum Account Key</strong></td>
-                <td><code>X-NexNum-Key</code> or body <code>api_key</code></td>
-                <td><code>/api/v1/purchase</code>, <code>/api/purchase</code></td>
-                <td>Forwarded to NexNum API; billing &amp; refunds use caller's balance.</td>
-              </tr>
-              <tr>
-                <td><strong>Telegram HMAC</strong></td>
-                <td><code>X-Telegram-Init-Data</code> / <code>?init_data=</code></td>
-                <td><code>/api/checker/*</code>, <code>/api/auth/me</code>, <code>/api/history*</code></td>
-                <td><code>HMAC-SHA256</code> via <code>BOT_TOKEN</code>; max age <code>86400s</code> (<code>-120s</code> skew).</td>
-              </tr>
-              <tr>
-                <td><strong>Guest Identity</strong></td>
-                <td><code>X-Guest-ID</code> / cookie <code>nex_guest_id</code></td>
-                <td><code>DELETE /api/history/{record_id}</code></td>
-                <td>Sanitized <code>[a-zA-Z0-9_-]</code> fallback to client IP.</td>
-              </tr>
-              <tr>
-                <td><strong>Webhook Secret</strong></td>
-                <td><code>X-Telegram-Bot-Api-Secret-Token</code></td>
-                <td><code>/bot/webhook</code>, <code>/api/bot/webhook</code></td>
-                <td>Matches <code>WEBHOOK_SECRET</code> env var if configured.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- ══ 2. PURCHASE & NEXNUM INTEGRATION ═══════════════════════════════ -->
+      <!-- ══ 1. PURCHASE & NEXNUM INTEGRATION ═══════════════════════════════ -->
       <section class="doc-section" id="ep-purchase">
         <h2 class="sec-h2">Targeted Virtual Number Purchase</h2>
 
@@ -258,6 +233,6 @@
 
   <div class="toast" id="docsToast">Copied!</div>
 
-  <script src="/static/api-docs.js?v=4.5"></script>
+  <script src="/static/api-docs.js?v=4.7"></script>
 </body>
 </html>
