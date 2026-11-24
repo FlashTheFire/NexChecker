@@ -202,6 +202,29 @@
     return out;
   }
 
+  function renderCodeLines(preEl, highlightedHtml, rawCode) {
+    if (!preEl) return;
+    preEl.dataset.rawCode = rawCode;
+    const rawLines = highlightedHtml.split('\n');
+    const openTags = [];
+
+    const htmlLines = rawLines.map((lineHtml, idx) => {
+      const prefix = openTags.join('');
+      const tagRe = /<\/?span(?:\s+class="[^"]*")?>/g;
+      for (const m of lineHtml.matchAll(tagRe)) {
+        if (m[0] === '</span>') {
+          openTags.pop();
+        } else {
+          openTags.push(m[0]);
+        }
+      }
+      const suffix = '</span>'.repeat(openTags.length);
+      return `<div class="code-line"><span class="line-num" aria-hidden="true">${idx + 1}</span><span class="line-code">${prefix}${lineHtml}${suffix}</span></div>`;
+    });
+
+    preEl.innerHTML = htmlLines.join('');
+  }
+
   function showToast(msg) {
     if (!el.toast) return;
     el.toast.textContent = msg;
@@ -259,7 +282,7 @@
   document.querySelectorAll('.copy-code-btn[data-copy-target]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const target = document.getElementById(btn.dataset.copyTarget);
-      if (target) copyText(target.textContent, 'Copied!');
+      if (target) copyText(target.dataset.rawCode || target.textContent, 'Copied!');
     });
   });
 
@@ -350,7 +373,7 @@
   -H "Content-Type: application/json" \\
   -H "X-API-Key: YOUR_SERVER_API_KEY" \\
   -H "X-NexNum-Key: YOUR_NEXNUM_KEY" \\
-  -d '${JSON.stringify(payloadObj)}'`;
+  -d '${payloadPretty}'`;
       } else if (activeLang === 'python') {
         rawCode =
 `import requests
@@ -378,7 +401,7 @@ print(resp.status_code, resp.json())`;
 });
 const data = await resp.json();`;
       }
-      el.codePurchaseReq.innerHTML = highlightCode(rawCode, activeLang);
+      renderCodeLines(el.codePurchaseReq, highlightCode(rawCode, activeLang), rawCode);
     }
 
     if (el.docDefaultPlatform) el.docDefaultPlatform.textContent = `"${p.key}"`;
@@ -418,7 +441,7 @@ const data = await resp.json();`;
           cancel_url: 'https://nexnum.in/stubs/handler_api.php?action=setStatus&id=1791225496122425077082&status=8&api_key=YOUR_NEXNUM_KEY',
         },
       }, null, 2);
-      el.codePurchaseOk.innerHTML = highlightJSON(jsonStr);
+      renderCodeLines(el.codePurchaseOk, highlightJSON(jsonStr), jsonStr);
     }
   }
 
@@ -467,7 +490,7 @@ const data = await resp.json();`;
   });
 
   el.copyReqBtn?.addEventListener('click', () => {
-    if (el.codePurchaseReq) copyText(el.codePurchaseReq.textContent, 'Copied!');
+    if (el.codePurchaseReq) copyText(el.codePurchaseReq.dataset.rawCode || el.codePurchaseReq.textContent, 'Copied!');
   });
 
   async function hydrate() {
