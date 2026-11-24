@@ -1,0 +1,7 @@
+project-root = ".."
+search-path = [".", "..", "../api", "../checkers"]
+
+[errors]
+missing-import = false
+unnecessary-type-conversion = false
+not-async = false

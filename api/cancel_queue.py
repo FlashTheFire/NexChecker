@@ -26,8 +26,8 @@ try:
     from NexBot.core.nexnum_api import NexNumStatus, nexnum_client
     from NexBot.utils.config import CANCEL_MIN_AGE, CANCEL_POLL_SECS
 except ImportError:
-    from core.nexnum_api import NexNumStatus, nexnum_client
-    from utils.config import CANCEL_MIN_AGE, CANCEL_POLL_SECS
+    from core.nexnum_api import NexNumStatus, nexnum_client  # type: ignore
+    from utils.config import CANCEL_MIN_AGE, CANCEL_POLL_SECS  # type: ignore
 
 logger = logging.getLogger("NexChecker.CancelQueue")
 

@@ -36,8 +36,8 @@ try:
         ZOMATO_SERVICE_CODE,
     )
 except ImportError:
-    from core.nexnum_api import NexNumStatus, nexnum_client
-    from utils.config import (
+    from core.nexnum_api import NexNumStatus, nexnum_client  # type: ignore
+    from utils.config import (  # type: ignore
         BIGBASKET_SERVICE_CODE,
         FLIPKART_SERVICE_CODE,
         MYNTRA_SERVICE_CODE,
@@ -72,7 +72,7 @@ class PurchaseRequest(BaseModel):
 
 def extract_10(phone: str) -> str:
     """Extract clean 10-digit Indian mobile number."""
-    digits = "".join(c for c in str(phone) if c.isdigit())
+    digits = "".join(c for c in phone if c.isdigit())
     if digits.startswith("91") and len(digits) >= 12:
         digits = digits[2:]
     return digits[-10:] if len(digits) >= 10 else digits

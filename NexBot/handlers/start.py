@@ -13,17 +13,34 @@ from __future__ import annotations
 import logging
 import re
 
+import sys
+from pathlib import Path
+
+_NEXBOT_ROOT = Path(__file__).resolve().parent.parent
+_ROOT = _NEXBOT_ROOT.parent
+for _p in (str(_NEXBOT_ROOT), str(_ROOT)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
 from telebot.async_telebot import AsyncTeleBot
 from telebot.types import (
     InlineKeyboardButton, InlineKeyboardMarkup, Message, WebAppInfo
 )
 
-from utils.config import WEBAPP_URL
-from core.nexnum_api import nexnum_client
-from core import user_store
-from utils.formatting import (
-    sc, build_welcome_msg, build_stats_msg, format_balance
-)
+try:
+    from NexBot.utils.config import WEBAPP_URL
+    from NexBot.core.nexnum_api import nexnum_client
+    from NexBot.core import user_store
+    from NexBot.utils.formatting import (
+        sc, build_welcome_msg, build_stats_msg, format_balance
+    )
+except ImportError:
+    from utils.config import WEBAPP_URL  # type: ignore
+    from core.nexnum_api import nexnum_client  # type: ignore
+    from core import user_store  # type: ignore
+    from utils.formatting import (  # type: ignore
+        sc, build_welcome_msg, build_stats_msg, format_balance
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -280,7 +297,10 @@ class StartHandler:
     # ── /help ─────────────────────────────────────────────────────────────────
 
     async def handle_help(self, message: Message) -> None:
-        from utils.platforms import get_platforms
+        try:
+            from NexBot.utils.platforms import get_platforms
+        except ImportError:
+            from utils.platforms import get_platforms  # type: ignore
         platforms = get_platforms()
         platform_lines = "\n".join(
             f"  {p.icon}  <b>/{p.command}</b>  —  {p.description}"
@@ -340,7 +360,10 @@ def _home_markup(has_key: bool) -> InlineKeyboardMarkup:
     if has_key:
         kb.add(InlineKeyboardButton(f"🚀  {sc('Open NexChecker WebApp')}", web_app=WebAppInfo(url=WEBAPP_URL)))
         try:
-            from utils.platforms import get_platforms
+            try:
+                from NexBot.utils.platforms import get_platforms
+            except ImportError:
+                from utils.platforms import get_platforms  # type: ignore
             for p in get_platforms().values():
                 kb.add(InlineKeyboardButton(
                     f"{p.icon}  {sc(p.label + ' Checker')}",
