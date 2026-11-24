@@ -44,8 +44,8 @@ class TestNexCheckerAPI(unittest.TestCase):
         self.assertIn("meesho", keys)
         for p in data["platforms"]:
             self.assertIn("service_code", p)
-            self.assertIn("module", p)
-            self.assertIn("mechanism", p)
+            self.assertNotIn("module", p)
+            self.assertNotIn("mechanism", p)
 
     def test_invalid_phone_check(self):
         resp = client.post("/api/checker/phone", json={"target_phone": "123", "platform": "meesho"})
@@ -118,6 +118,7 @@ class TestNexCheckerAPI(unittest.TestCase):
         self.assertNotIn("YOUR_SERVER_API_KEY", js_resp.text)
         self.assertIn("YOUR_NEXNUM_KEY", js_resp.text)
         self.assertIn("&format=json", js_resp.text)
+        self.assertNotIn("api_key=", js_resp.text)
 
     def test_bot_webhook_endpoint(self):
         # Empty or mock update payload
@@ -131,10 +132,13 @@ class TestNexCheckerAPI(unittest.TestCase):
 
         spec = client.get("/openapi.json").json()
         paths = set(spec.get("paths", {}).keys())
-        expected_visible = {"/health", "/api/health", "/api/platforms", "/api/purchase", "/api-docs"}
+        expected_visible = {"/api/health", "/api/platforms", "/api/purchase", "/api-docs"}
         self.assertEqual(paths, expected_visible)
+        self.assertEqual(set(spec["paths"]["/api-docs"].keys()), {"get"})
+        self.assertEqual(client.head("/api-docs").status_code, 200)
 
         hidden_routes = (
+            "/health",
             "/",
             "/checker",
             "/app",
