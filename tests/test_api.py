@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Unit tests for NexChecker FastAPI backend endpoints."""
 
+import os
 import unittest
 import sys
 from pathlib import Path
+
+os.environ["ENVIRONMENT"] = "testing"
 from fastapi.testclient import TestClient
 
 ROOT = Path(__file__).resolve().parent.parent
