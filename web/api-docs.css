@@ -44,8 +44,31 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html {
+  color-scheme: dark;
   scroll-behavior: smooth;
   scroll-padding-top: calc(var(--header-h) + 18px);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) #0d0d11;
+}
+
+/* Night-mode Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #141418;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  border: 2px solid #141418;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+::-webkit-scrollbar-corner {
+  background: #141418;
 }
 
 body {
@@ -443,10 +466,55 @@ table.doc-table tr:last-child td { border-bottom: none; }
 .copy-code-btn:hover { border-color: #007acc; color: #ffffff; background: rgba(0, 122, 204, 0.25); }
 
 .code-block pre {
-  padding: 13px 15px;
+  padding: 10px 0;
   color: #d4d4d4;
-  max-height: 380px;
+  max-height: 390px;
   background: #1e1e1e;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) #1e1e1e;
+}
+
+.code-block pre::-webkit-scrollbar-track { background: #1e1e1e; }
+.code-block pre::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  border: 2px solid #1e1e1e;
+}
+.code-block pre::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.28); }
+.code-block pre::-webkit-scrollbar-corner { background: #1e1e1e; }
+
+.code-line {
+  display: flex;
+  align-items: flex-start;
+  min-width: max-content;
+  padding-right: 16px;
+  transition: background 90ms ease;
+}
+.code-line:hover {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.line-num {
+  flex: 0 0 42px;
+  padding: 0 11px 0 8px;
+  text-align: right;
+  color: #6e7681;
+  user-select: none;
+  -webkit-user-select: none;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  margin-right: 14px;
+  position: sticky;
+  left: 0;
+  background: #1e1e1e;
+}
+.code-line:hover .line-num {
+  color: #c6c6d0;
+  background: #252527;
+}
+
+.line-code {
+  flex: 1;
+  white-space: pre;
 }
 
 /* VS Code Dark+ / Dark Modern Token Colors */
