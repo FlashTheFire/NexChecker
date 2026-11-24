@@ -197,8 +197,8 @@ async def execute_targeted_purchase(
                     "attempts_taken": attempt,
                     "discarded_orders": discarded_orders,
                     "nexnum_direct_usage": {
-                        "get_status_url": f"{NEXNUM_HANDLER_URL}?action=getStatus&id={order_id}&api_key={key}&format=json",
-                        "cancel_url": f"{NEXNUM_HANDLER_URL}?action=setStatus&id={order_id}&status=8&api_key={key}&format=json",
+                        "get_status_url": f"{NEXNUM_HANDLER_URL}?action=getStatus&id={order_id}&format=json",
+                        "cancel_url": f"{NEXNUM_HANDLER_URL}?action=setStatus&id={order_id}&status=8&format=json",
                     },
                 }
 
