@@ -49,6 +49,56 @@ python bot.py
 |---|---|
 | `BOT_TOKEN` | Telegram bot token from @BotFather |
 | `NEXNUM_API_KEY` | NexNum API key |
+| `API_ACCESS_KEY` | Dedicated security key for API consumers (`X-API-Key`) |
+
+## Targeted Virtual Number Purchase API
+
+Endpoint for purchasing numbers filtered by silent registration status:
+- **`POST /api/v1/purchase`** (or `/api/purchase`)
+
+### Request Headers
+- `X-API-Key`: Dedicated API access key (if configured on server)
+- `X-NexNum-Key`: Caller's NexNum API key (or pass in request JSON as `api_key`)
+
+### Request Body
+```json
+{
+  "platform": "zomato",
+  "target_status": "NOT_REGISTERED",
+  "service_code": "dy",
+  "country_code": "22",
+  "max_attempts": 5,
+  "api_key": "YOUR_NEXNUM_KEY"
+}
+```
+
+### Successful Response (`200 OK`)
+```json
+{
+  "success": true,
+  "order_id": "1791225496122425077082",
+  "phone_number": "919876543210",
+  "clean_mobile": "9876543210",
+  "platform": "zomato",
+  "status": "NOT_REGISTERED",
+  "cost": 9.0,
+  "attempts_taken": 2,
+  "discarded_orders": [
+    {
+      "order_id": "1791225496122425077081",
+      "phone_number": "919876543211",
+      "status": "REGISTERED",
+      "cancellation": "QUEUED_DEFERRED"
+    }
+  ],
+  "nexnum_direct_usage": {
+    "get_status_url": "https://nexnum.in/stubs/handler_api.php?action=getStatus&id=1791225496122425077082&api_key=YOUR_NEXNUM_KEY",
+    "cancel_url": "https://nexnum.in/stubs/handler_api.php?action=setStatus&id=1791225496122425077082&status=8&api_key=YOUR_NEXNUM_KEY"
+  }
+}
+```
+
+Caller uses the returned `order_id` directly with [NexNum API Documentation](https://nexnum.in/en/api-docs) to poll SMS/OTP (`action=getStatus`) or complete activations (`action=setStatus&status=6`).
 
 ## Deploy (AWS / Linux)
 
