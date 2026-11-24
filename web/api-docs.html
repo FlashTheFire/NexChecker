@@ -4,19 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#070709">
-  <meta name="description" content="NexChecker API Reference — Security Layer, Targeted Purchase Engine, Deferred Cancel Queue, Dynamic Checker Engines & Diagnostics.">
-  <title>NexChecker — API Documentation</title>
+  <meta name="description" content="NexChecker API Reference — Authentication, Targeted Purchase API, Checker Engines & Error Reference.">
+  <title>NexChecker — API Docs</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="/static/api-docs.css?v=3.0">
+  <link rel="stylesheet" href="/static/api-docs.css?v=4.0">
 </head>
 <body>
 
-  <!-- Top Navigation Header -->
+  <!-- Minimal Header with Dynamic Cycling Service Logo -->
   <header class="docs-header">
     <div class="header-left">
       <button class="menu-toggle" id="menuToggle" aria-label="Toggle Navigation">
@@ -27,32 +27,22 @@
 
       <a href="/api-docs" class="brand-mark" aria-label="NexChecker API Docs">
         <div class="dynamic-logo-frame" id="dynamicLogoFrame">
-          <img src="" alt="Active Service Logo" id="dynamicLogoImg" class="dynamic-logo-img is-hidden">
-          <svg id="dynamicLogoFallback" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <img src="" alt="" id="dynamicLogoImg" class="dynamic-logo-img is-hidden">
+          <svg id="dynamicLogoFallback" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
           </svg>
         </div>
         <div class="brand-copy">
           <span class="brand-title">
             NexChecker
-            <span class="version-badge">v3.0</span>
+            <span class="version-badge">API</span>
           </span>
-          <span class="brand-live-service" id="cyclingServiceLabel">Loading engines...</span>
+          <span class="brand-live-service" id="cyclingServiceLabel">Multi-Service</span>
         </div>
       </a>
     </div>
 
     <div class="header-right">
-      <button class="base-url-pill" id="copyBaseUrlBtn" type="button" title="Copy Base URL">
-        <span id="baseUrlText">http://127.0.0.1:8000</span>
-        <span>📋</span>
-      </button>
-
-      <div class="health-pill" id="liveHealthPill" title="Live status from GET /api/health">
-        <span class="health-dot"></span>
-        <span class="health-label" id="liveHealthText">CHECKING</span>
-      </div>
-
       <a href="/docs" class="nav-btn" target="_blank" rel="noopener">OpenAPI</a>
       <a href="/" class="nav-btn primary" id="backToAppBtn">← WebApp</a>
     </div>
@@ -63,39 +53,24 @@
   <div class="docs-shell">
     <!-- Minimal Sidebar -->
     <aside class="docs-sidebar" id="docsSidebar">
-      <nav id="sidebarNav" aria-label="API Documentation Sections">
-        <div class="nav-group-title">Reference</div>
+      <nav id="sidebarNav" aria-label="API Sections">
         <a href="#auth" class="nav-link active">Security Layer</a>
         <a href="#ep-purchase" class="nav-link">
-          <span>Targeted Purchase</span>
-          <span class="method-tag post">POST</span>
+          <span>Purchase API</span>
+          <span class="method-tag">POST</span>
         </a>
-        <a href="#cancel-queue" class="nav-link">Deferred Cancel Queue</a>
-        <a href="#engines-matrix" class="nav-link">Platform Checkers</a>
+        <a href="#cancel-queue" class="nav-link">Cancel Queue</a>
+        <a href="#engines-matrix" class="nav-link">Checker Engines</a>
         <a href="#error-codes" class="nav-link">Error Reference</a>
       </nav>
     </aside>
 
-    <!-- Main Documentation Content -->
+    <!-- Focused API Reference -->
     <main class="docs-main">
-
-      <!-- Dynamic Active Engines Showcase Strip -->
-      <div class="hero-strip">
-        <div>
-          <div class="hero-strip-title">NexChecker API Documentation</div>
-          <div class="hero-strip-sub">Click any active service to preview its payload &amp; service code across examples.</div>
-        </div>
-        <div class="avatar-stack" id="heroServiceStack" aria-label="Active Platform Engines"></div>
-      </div>
 
       <!-- ══ 1. SECURITY LAYER ══════════════════════════════════════════════ -->
       <section class="doc-section" id="auth">
-        <div class="section-kicker">Security Layer</div>
-        <h2 class="sec-h2">Authentication &amp; Access Control (<code>api/auth.py</code>)</h2>
-        <p class="desc">
-          NexChecker enforces four distinct authentication modes depending on endpoint scope. Never share your <code>BOT_TOKEN</code> or <code>API_ACCESS_KEY</code> in client-side code.
-        </p>
-
+        <h2 class="sec-h2">Security Layer (<code>api/auth.py</code>)</h2>
         <div class="table-wrap">
           <table class="doc-table">
             <thead>
@@ -109,53 +84,50 @@
             <tbody>
               <tr>
                 <td><strong>Dedicated API Key</strong></td>
-                <td><code>X-API-Key</code> or <code>Authorization: Bearer &lt;key&gt;</code></td>
+                <td><code>X-API-Key</code> or <code>Bearer &lt;key&gt;</code></td>
                 <td><code>/api/v1/purchase</code>, <code>/api/purchase</code></td>
-                <td>Constant-time <code>hmac.compare_digest</code> against <code>API_ACCESS_KEY</code> / <code>NEXCHECKER_API_KEY</code> (open if env unset).</td>
+                <td><code>hmac.compare_digest</code> vs <code>API_ACCESS_KEY</code> / <code>NEXCHECKER_API_KEY</code> (open if unset).</td>
               </tr>
               <tr>
                 <td><strong>NexNum Account Key</strong></td>
-                <td><code>X-NexNum-Key</code> or JSON <code>api_key</code></td>
+                <td><code>X-NexNum-Key</code> or body <code>api_key</code></td>
                 <td><code>/api/v1/purchase</code>, <code>/api/purchase</code></td>
-                <td>Forwarded directly to NexNum API so purchases &amp; refunds occur on caller's NexNum balance.</td>
+                <td>Forwarded to NexNum API; billing &amp; refunds use caller's balance.</td>
               </tr>
               <tr>
-                <td><strong>Telegram WebApp HMAC</strong></td>
-                <td><code>X-Telegram-Init-Data</code> or <code>?init_data=</code></td>
+                <td><strong>Telegram HMAC</strong></td>
+                <td><code>X-Telegram-Init-Data</code> / <code>?init_data=</code></td>
                 <td><code>/api/checker/*</code>, <code>/api/auth/me</code>, <code>/api/history*</code></td>
-                <td>HMAC-SHA256 using secret <code>HMAC("WebAppData", BOT_TOKEN)</code>; max age <code>86400s</code> (<code>-120s</code> skew).</td>
+                <td><code>HMAC-SHA256</code> via <code>BOT_TOKEN</code>; max age <code>86400s</code> (<code>-120s</code> skew).</td>
               </tr>
               <tr>
-                <td><strong>Guest / Soft Identity</strong></td>
-                <td><code>X-Guest-ID</code> or cookie <code>nex_guest_id</code></td>
+                <td><strong>Guest Identity</strong></td>
+                <td><code>X-Guest-ID</code> / cookie <code>nex_guest_id</code></td>
                 <td><code>DELETE /api/history/{record_id}</code></td>
-                <td>Sanitized <code>[a-zA-Z0-9_-]</code> fallback to client IP (<code>X-Forwarded-For</code> / <code>X-Real-IP</code>).</td>
+                <td>Sanitized <code>[a-zA-Z0-9_-]</code> fallback to client IP.</td>
               </tr>
               <tr>
                 <td><strong>Webhook Secret</strong></td>
                 <td><code>X-Telegram-Bot-Api-Secret-Token</code></td>
                 <td><code>/bot/webhook</code>, <code>/api/bot/webhook</code></td>
-                <td>Exact string match against <code>WEBHOOK_SECRET</code> env var when configured.</td>
+                <td>Matches <code>WEBHOOK_SECRET</code> env var if configured.</td>
               </tr>
             </tbody>
           </table>
         </div>
-
         <div class="callout info">
-          <div class="callout-title">Test Bypass Mode</div>
-          When <code>ENVIRONMENT=testing</code> is set on the server or <code>X-Test-Bypass: 1</code> is passed while running tests, <code>enforce_authenticated_identity</code> injects a synthetic test identity (<code>tg_99999999</code>). Do not enable <code>ENVIRONMENT=testing</code> in production.
+          <strong>Test Bypass:</strong> <code>ENVIRONMENT=testing</code> or <code>X-Test-Bypass: 1</code> injects <code>tg_99999999</code>. Never enable in production.
         </div>
       </section>
 
       <!-- ══ 2. PURCHASE & NEXNUM INTEGRATION ═══════════════════════════════ -->
       <section class="doc-section" id="ep-purchase">
-        <div class="section-kicker">Purchase &amp; NexNum Integration</div>
         <h2 class="sec-h2">Targeted Virtual Number Purchase</h2>
 
         <div class="endpoint-card">
           <div class="endpoint-head">
             <div class="endpoint-path-wrap">
-              <span class="http-badge post">POST</span>
+              <span class="http-badge">POST</span>
               <span class="endpoint-path">/api/v1/purchase</span>
               <span class="opt-pill">Alias: /api/purchase</span>
               <span class="auth-badge apikey">X-API-Key + X-NexNum-Key</span>
@@ -164,100 +136,94 @@
 
           <div class="endpoint-body">
             <p class="desc">
-              Acquires virtual numbers from NexNum on the caller's own NexNum balance, verifies each acquired number silently against the target platform, automatically queues non-matching numbers for deferred cancellation/refund, and returns the exact NexNum <code>order_id</code> upon matching <code>target_status</code>.
+              Acquires a NexNum number, runs a silent platform check, queues mismatches for refund, and returns the NexNum <code>order_id</code> upon matching <code>target_status</code>.
             </p>
 
-            <h3 class="sub-h3">Request Example</h3>
+            <h3 class="sub-h3">Request</h3>
             <div class="code-block">
               <div class="code-head">
                 <div class="code-tabs">
                   <button type="button" class="code-tab active" data-lang="curl">cURL</button>
-                  <button type="button" class="code-tab" data-lang="python">Python (requests)</button>
-                  <button type="button" class="code-tab" data-lang="js">JavaScript (fetch)</button>
+                  <button type="button" class="code-tab" data-lang="python">Python</button>
+                  <button type="button" class="code-tab" data-lang="js">JS</button>
                 </div>
                 <button type="button" class="copy-code-btn" id="copyReqBtn">Copy</button>
               </div>
               <pre id="codePurchaseReq"></pre>
             </div>
 
-            <h3 class="sub-h3">Request Parameters</h3>
+            <h3 class="sub-h3">Parameters</h3>
             <div class="table-wrap">
               <table class="doc-table">
                 <thead><tr><th>Field</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
                 <tbody>
                   <tr>
-                    <td><code>platform</code> <span class="req-pill">Required</span></td>
+                    <td><code>platform</code> <span class="req-pill">Req</span></td>
                     <td><code>string</code></td>
                     <td><code id="docDefaultPlatform">—</code></td>
-                    <td id="docPlatformListDesc">Active checker slug loaded dynamically from <code>/api/platforms</code>.</td>
+                    <td id="docPlatformListDesc">Active slug from <code>/api/platforms</code>.</td>
                   </tr>
                   <tr>
-                    <td><code>target_status</code> <span class="opt-pill">Optional</span></td>
+                    <td><code>target_status</code> <span class="opt-pill">Opt</span></td>
                     <td><code>string</code></td>
                     <td><code>"NOT_REGISTERED"</code></td>
-                    <td>Filter condition: <code>NOT_REGISTERED</code> (fresh) or <code>REGISTERED</code> (existing account).</td>
+                    <td><code>NOT_REGISTERED</code> (fresh) or <code>REGISTERED</code>.</td>
                   </tr>
                   <tr>
-                    <td><code>service_code</code> <span class="opt-pill">Optional</span></td>
+                    <td><code>service_code</code> <span class="opt-pill">Opt</span></td>
                     <td><code>string</code></td>
-                    <td>Platform map</td>
-                    <td id="docServiceMapDesc">NexNum service code override resolved dynamically per platform.</td>
+                    <td>Auto</td>
+                    <td id="docServiceMapDesc">NexNum service override.</td>
                   </tr>
                   <tr>
-                    <td><code>country_code</code> <span class="opt-pill">Optional</span></td>
+                    <td><code>country_code</code> <span class="opt-pill">Opt</span></td>
                     <td><code>string</code></td>
                     <td><code>"22"</code></td>
-                    <td>NexNum numeric country code (<code>"22"</code> = India).</td>
+                    <td>NexNum country ID (<code>22</code> = India).</td>
                   </tr>
                   <tr>
-                    <td><code>max_attempts</code> <span class="opt-pill">Optional</span></td>
-                    <td><code>integer</code></td>
+                    <td><code>max_attempts</code> <span class="opt-pill">Opt</span></td>
+                    <td><code>int</code></td>
                     <td><code>5</code></td>
-                    <td>Maximum acquire-and-check cycles before aborting. Validated range: <code>1</code> to <code>20</code>.</td>
+                    <td>Max cycles (<code>1..20</code>).</td>
                   </tr>
                   <tr>
-                    <td><code>api_key</code> <span class="opt-pill">Cond.</span></td>
+                    <td><code>api_key</code> <span class="opt-pill">Cond</span></td>
                     <td><code>string</code></td>
                     <td><code>null</code></td>
-                    <td>Caller's NexNum API key. May alternatively be passed via <code>X-NexNum-Key</code> header (header takes precedence).</td>
+                    <td>Caller's NexNum key (or via <code>X-NexNum-Key</code> header).</td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
             <div class="callout warn">
-              <div class="callout-title">Loop Termination &amp; Inconclusive Safety Rules</div>
-              <strong>1. Fatal Account Errors:</strong> <code>BAD_KEY</code> (HTTP 400), <code>NO_BALANCE</code> / <code>BANNED</code> (HTTP 402) stop immediately.<br>
-              <strong>2. Consecutive Inconclusive Break:</strong> If a checker returns <code>ERROR</code>, <code>TIMEOUT</code>, <code>UNKNOWN</code>, or <code>DISABLED</code>, the number is cancelled/queued and retried once. If the next consecutive check is also inconclusive (<code>consecutive &gt;= 2</code>), the loop aborts immediately with HTTP <code>422 CHECKER_INCONCLUSIVE</code>.<br>
-              <strong>3. Nginx Proxy Timeout:</strong> Keep <code>max_attempts</code> modest behind Nginx (<code>proxy_read_timeout 60s</code>).
+              <strong>Rules:</strong> <code>BAD_KEY</code> (400) &amp; <code>NO_BALANCE</code>/<code>BANNED</code> (402) stop immediately. Two consecutive inconclusive checks (<code>ERROR</code>/<code>TIMEOUT</code>/<code>UNKNOWN</code>/<code>DISABLED</code>) abort with <code>422 CHECKER_INCONCLUSIVE</code>. Keep <code>max_attempts</code> within Nginx <code>60s</code> timeout.
             </div>
 
-            <h3 class="sub-h3">200 OK — Matched Number Response</h3>
+            <h3 class="sub-h3">200 OK Response</h3>
             <div class="code-block">
               <div class="code-head">
-                <span>JSON Response (200 OK)</span>
+                <span>JSON</span>
                 <button type="button" class="copy-code-btn" data-copy-target="codePurchaseOk">Copy</button>
               </div>
               <pre id="codePurchaseOk"></pre>
             </div>
             <p class="desc">
-              Use the returned <code>order_id</code> directly with <a href="https://nexnum.in/en/api-docs" target="_blank" rel="noopener">NexNum Official API Docs</a> to poll incoming OTPs (<code>action=getStatus</code>) or finalize activation (<code>action=setStatus&amp;status=6</code>).
+              Poll OTPs (<code>action=getStatus</code>) or complete activation (<code>action=setStatus&amp;status=6</code>) via <a href="https://nexnum.in/en/api-docs" target="_blank" rel="noopener">NexNum API Docs</a>.
             </p>
           </div>
         </div>
 
-        <h3 class="sub-h3" id="cancel-queue">Deferred Cancel Queue Lifecycle (<code>api/cancel_queue.py</code>)</h3>
-        <p class="desc">
-          NexNum rejects immediate cancellations (<code>setStatus=8</code>) during the initial ~60–120 second window with <code>EARLY_CANCEL_DENIED</code>. <code>CancelQueueManager</code> starts on FastAPI lifespan startup and guarantees credit recovery:
-        </p>
+        <h3 class="sub-h3" id="cancel-queue">Deferred Cancel Queue (<code>api/cancel_queue.py</code>)</h3>
         <div class="table-wrap">
           <table class="doc-table">
             <thead><tr><th>Parameter</th><th>Value</th><th>Behavior</th></tr></thead>
             <tbody>
-              <tr><td><code>CANCEL_MIN_AGE</code></td><td><code>60s</code></td><td>Minimum age in queue before background worker attempts cancellation.</td></tr>
-              <tr><td><code>CANCEL_POLL_SECS</code></td><td><code>30s</code></td><td>Background sweep interval firing matured cancellations concurrently via <code>asyncio.gather</code>.</td></tr>
-              <tr><td><code>max_retry</code></td><td><code>4 cycles</code></td><td>Maximum worker retries (~2 minutes) before dropping un-cancellable items.</td></tr>
-              <tr><td><code>CANCEL_TERMINAL</code></td><td><code>BAD_STATUS</code>, <code>BAD_KEY</code>, <code>BANNED</code>, <code>ACCESS_ACTIVATION</code></td><td>Terminal responses immediately remove the order from the queue without further retries.</td></tr>
+              <tr><td><code>CANCEL_MIN_AGE</code></td><td><code>60s</code></td><td>Cooldown before background worker fires <code>setStatus=8</code>.</td></tr>
+              <tr><td><code>CANCEL_POLL_SECS</code></td><td><code>30s</code></td><td>Sweep interval running matured cancellations via <code>asyncio.gather</code>.</td></tr>
+              <tr><td><code>max_retry</code></td><td><code>4 cycles</code></td><td>Max retries (~2 min) before dropping.</td></tr>
+              <tr><td><code>CANCEL_TERMINAL</code></td><td><code>BAD_STATUS, BAD_KEY, BANNED, ACCESS_ACTIVATION</code></td><td>Terminal states drop immediately from queue.</td></tr>
             </tbody>
           </table>
         </div>
@@ -265,42 +231,40 @@
 
       <!-- ══ 3. DYNAMIC PLATFORM CHECKER ENGINES ════════════════════════════ -->
       <section class="doc-section" id="engines-matrix">
-        <div class="section-kicker">Checker Engines</div>
-        <h2 class="sec-h2">Platform Checker Engines (<code>checkers/</code>)</h2>
+        <h2 class="sec-h2">Checker Engines (<code>checkers/</code>)</h2>
         <div class="table-wrap">
           <table class="doc-table">
             <thead>
               <tr>
                 <th>Platform</th>
-                <th>API Status</th>
-                <th>Service Code</th>
-                <th>Mechanism &amp; Module</th>
+                <th>Status</th>
+                <th>Code</th>
+                <th>Module &amp; Mechanism</th>
               </tr>
             </thead>
             <tbody id="enginesTableBody">
-              <tr><td colspan="4" style="color:var(--text-muted);">Hydrating engines from /api/platforms...</td></tr>
+              <tr><td colspan="4" style="color:var(--text-muted);">Loading...</td></tr>
             </tbody>
           </table>
         </div>
       </section>
 
-      <!-- ══ 4. DIAGNOSTICS & ERROR REFERENCE ═══════════════════════════════ -->
+      <!-- ══ 4. ERROR REFERENCE ═════════════════════════════════════════════ -->
       <section class="doc-section" id="error-codes">
-        <div class="section-kicker">Diagnostics</div>
-        <h2 class="sec-h2">HTTP Status &amp; Error Code Reference</h2>
+        <h2 class="sec-h2">Error Reference</h2>
         <div class="table-wrap">
           <table class="doc-table">
-            <thead><tr><th>HTTP</th><th>Error Code</th><th>Source</th><th>Cause &amp; Resolution</th></tr></thead>
+            <thead><tr><th>HTTP</th><th>Error Code</th><th>Source</th><th>Resolution</th></tr></thead>
             <tbody>
-              <tr><td><code>400</code></td><td><code>NEXNUM_KEY_REQUIRED</code></td><td>Purchase API</td><td>Provide caller's NexNum key in <code>X-NexNum-Key</code> header or JSON <code>api_key</code>.</td></tr>
-              <tr><td><code>400</code></td><td><code>INVALID_TARGET_STATUS</code></td><td>Purchase API</td><td><code>target_status</code> must be <code>REGISTERED</code> or <code>NOT_REGISTERED</code>.</td></tr>
-              <tr><td><code>400</code></td><td><code>BAD_KEY</code></td><td>NexNum</td><td>Caller's NexNum API key rejected by NexNum upstream.</td></tr>
-              <tr><td><code>401</code></td><td><code>UNAUTHORIZED</code></td><td>API Key Auth</td><td>Missing or invalid <code>X-API-Key</code> / <code>Authorization: Bearer</code> token.</td></tr>
-              <tr><td><code>401/403</code></td><td><code>AUTH_REQUIRED / AUTH_FAILED</code></td><td>Telegram Auth</td><td>Missing, expired (<code>&gt;24h</code>), or tampered <code>X-Telegram-Init-Data</code> signature.</td></tr>
-              <tr><td><code>402</code></td><td><code>NO_BALANCE / BANNED</code></td><td>NexNum</td><td>Insufficient NexNum account credits or upstream account restriction.</td></tr>
-              <tr><td><code>422</code></td><td><code>CHECKER_INCONCLUSIVE</code></td><td>Purchase API</td><td>Platform checker failed twice consecutively (<code>ERROR</code>/<code>TIMEOUT</code>/<code>UNKNOWN</code>/<code>DISABLED</code>); both numbers queued for cancel.</td></tr>
-              <tr><td><code>422</code></td><td><code>MAX_ATTEMPTS_EXHAUSTED</code></td><td>Purchase API</td><td>No number matched <code>target_status</code> within <code>max_attempts</code>; all discards queued for refund.</td></tr>
-              <tr><td><code>422</code></td><td><code>NO_NUMBERS</code></td><td>NexNum</td><td>No virtual stock available for requested <code>service_code</code> &amp; <code>country_code</code>.</td></tr>
+              <tr><td><code>400</code></td><td><code>NEXNUM_KEY_REQUIRED</code></td><td>Purchase</td><td>Provide key via <code>X-NexNum-Key</code> header or body <code>api_key</code>.</td></tr>
+              <tr><td><code>400</code></td><td><code>INVALID_TARGET_STATUS</code></td><td>Purchase</td><td>Must be <code>REGISTERED</code> or <code>NOT_REGISTERED</code>.</td></tr>
+              <tr><td><code>400</code></td><td><code>BAD_KEY</code></td><td>NexNum</td><td>Invalid caller NexNum API key.</td></tr>
+              <tr><td><code>401</code></td><td><code>UNAUTHORIZED</code></td><td>Auth</td><td>Invalid or missing <code>X-API-Key</code> / <code>Bearer</code> token.</td></tr>
+              <tr><td><code>401/403</code></td><td><code>AUTH_REQUIRED / AUTH_FAILED</code></td><td>Telegram</td><td>Missing, expired (<code>&gt;24h</code>), or tampered <code>X-Telegram-Init-Data</code>.</td></tr>
+              <tr><td><code>402</code></td><td><code>NO_BALANCE / BANNED</code></td><td>NexNum</td><td>Insufficient NexNum balance or restricted account.</td></tr>
+              <tr><td><code>422</code></td><td><code>CHECKER_INCONCLUSIVE</code></td><td>Purchase</td><td>2 consecutive inconclusive checks; numbers queued for cancel.</td></tr>
+              <tr><td><code>422</code></td><td><code>MAX_ATTEMPTS_EXHAUSTED</code></td><td>Purchase</td><td>No match within <code>max_attempts</code>; discards queued for refund.</td></tr>
+              <tr><td><code>422</code></td><td><code>NO_NUMBERS</code></td><td>NexNum</td><td>Out of stock for requested <code>service_code</code> &amp; <code>country_code</code>.</td></tr>
             </tbody>
           </table>
         </div>
@@ -311,6 +275,6 @@
 
   <div class="toast" id="docsToast">Copied!</div>
 
-  <script src="/static/api-docs.js?v=3.0"></script>
+  <script src="/static/api-docs.js?v=4.0"></script>
 </body>
 </html>
