@@ -84,18 +84,104 @@ from api.auth import (
 )
 from api.cancel_queue import cancel_queue
 from api.history_manager import history_manager
-from api.purchase_service import PurchaseRequest, execute_targeted_purchase
+from api.purchase_service import (
+    DEFAULT_PLATFORM_SERVICES,
+    PurchaseRequest,
+    execute_targeted_purchase,
+)
 
-_PLATFORM_LABELS: Dict[str, str] = {
-    "zomato": "Zomato",
-    "flipkart": "Flipkart",
-    "meesho": "Meesho",
-    "bigbasket": "BigBasket",
-    "myntra": "Myntra",
-    "amazon": "Amazon",
-    "swiggy": "Swiggy",
-    "zepto": "Zepto",
-}
+_PLATFORM_REGISTRY: List[Dict[str, Any]] = [
+    {
+        "key": "zomato",
+        "label": "Zomato",
+        "icon": "🍽",
+        "logo": "/static/src/logos/zomato.png",
+        "category": "food",
+        "enabled": True,
+        "engine_fn": check_zomato,
+        "module": "checkers/zomato_check.py",
+        "mechanism": "NexZomato HTTP microservice (ZOMATO_CHECKER_URL) + contact-sync token fallback (data/zomato_accounts).",
+    },
+    {
+        "key": "flipkart",
+        "label": "Flipkart",
+        "icon": "🛍",
+        "logo": "/static/src/logos/flipkart.png",
+        "category": "ecommerce",
+        "enabled": True,
+        "engine_fn": check_flipkart,
+        "module": "checkers/flipkart_check.py",
+        "mechanism": "Direct HTTP POST to rome.api.flipkart.com/api/6/user/signup/status (GUEST / VERIFIED).",
+    },
+    {
+        "key": "meesho",
+        "label": "Meesho",
+        "icon": "✨",
+        "logo": "/static/src/logos/meesho.png",
+        "category": "marketplace",
+        "enabled": True,
+        "engine_fn": check_meesho,
+        "module": "checkers/meesho_check.py",
+        "mechanism": "PriceTrackerPro / Meesho Jamuni silent verification API.",
+    },
+    {
+        "key": "bigbasket",
+        "label": "BigBasket",
+        "icon": "🥬",
+        "logo": "/static/src/logos/bigbasket.png",
+        "category": "grocery",
+        "enabled": False,
+        "engine_fn": check_bigbasket,
+        "module": "checkers/bigbasket_check.py",
+        "mechanism": "Returns DISABLED in API & Bot (Akamai protection / residential IP needed).",
+    },
+    {
+        "key": "myntra",
+        "label": "Myntra",
+        "icon": "👗",
+        "logo": "/static/src/logos/myntra.png",
+        "category": "fashion",
+        "enabled": True,
+        "engine_fn": check_myntra,
+        "module": "checkers/myntra_check.py",
+        "mechanism": "Dual engine: ProMyntra HTTP API (promyntra.eu.cc) + Playwright persistent Chrome auto-heal fallback.",
+    },
+    {
+        "key": "amazon",
+        "label": "Amazon",
+        "icon": "📦",
+        "logo": "/static/src/logos/amazon.png",
+        "category": "ecommerce",
+        "enabled": True,
+        "engine_fn": check_amazon,
+        "module": "checkers/amazon_check.py",
+        "mechanism": "Playwright headless silent verification.",
+    },
+    {
+        "key": "swiggy",
+        "label": "Swiggy",
+        "icon": "🛵",
+        "logo": "/static/src/logos/swiggy.png",
+        "category": "food",
+        "enabled": True,
+        "engine_fn": check_swiggy,
+        "module": "checkers/swiggy_check.py",
+        "mechanism": "Playwright headless silent verification.",
+    },
+    {
+        "key": "zepto",
+        "label": "Zepto",
+        "icon": "⚡",
+        "logo": "/static/src/logos/zepto.png",
+        "category": "qcommerce",
+        "enabled": False,
+        "engine_fn": check_zepto,
+        "module": "checkers/zepto_check.py",
+        "mechanism": "Returns DISABLED in API (AWS WAF challenge).",
+    },
+]
+
+_PLATFORM_LABELS: Dict[str, str] = {p["key"]: p["label"] for p in _PLATFORM_REGISTRY}
 
 
 # ------------------------------------------------------------
@@ -365,18 +451,25 @@ async def health_check():
 
 @app.get("/api/platforms")
 async def list_platforms():
-    """List all 8 supported platforms with metadata."""
+    """List all supported platforms with live engine availability and NexNum service metadata."""
+    platforms = [
+        {
+            "key": p["key"],
+            "label": p["label"],
+            "icon": p["icon"],
+            "logo": p["logo"],
+            "status": "active" if (p["enabled"] and p["engine_fn"] is not None) else "disabled",
+            "category": p["category"],
+            "service_code": DEFAULT_PLATFORM_SERVICES.get(p["key"], ""),
+            "module": p["module"],
+            "mechanism": p["mechanism"],
+        }
+        for p in _PLATFORM_REGISTRY
+    ]
     return {
-        "platforms": [
-            {"key": "zomato",     "label": "Zomato",     "icon": "🍽",  "status": "active",  "category": "food"},
-            {"key": "flipkart",   "label": "Flipkart",   "icon": "🛍",  "status": "active",  "category": "ecommerce"},
-            {"key": "meesho",     "label": "Meesho",     "icon": "✨",  "status": "active",  "category": "marketplace"},
-            {"key": "bigbasket",  "label": "BigBasket",  "icon": "🥬",  "status": "disabled",  "category": "grocery"},
-            {"key": "myntra",     "label": "Myntra",     "icon": "👗",  "status": "active",  "category": "fashion"},
-            {"key": "amazon",     "label": "Amazon",     "icon": "📦",  "status": "active",  "category": "ecommerce"},
-            {"key": "swiggy",     "label": "Swiggy",     "icon": "🛵",  "status": "active",  "category": "food"},
-            {"key": "zepto",      "label": "Zepto",      "icon": "⚡",  "status": "disabled",  "category": "qcommerce"},
-        ]
+        "platforms": platforms,
+        "active_count": sum(1 for p in platforms if p["status"] == "active"),
+        "total_count": len(platforms),
     }
 
 
