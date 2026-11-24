@@ -11,6 +11,7 @@ FastAPI backend exposing multi-platform verification endpoints:
 from __future__ import annotations
 
 import asyncio
+import inspect
 import json
 import os
 import sys
@@ -320,7 +321,7 @@ async def record_check_stat(platform: str, status: str, elapsed_ms: float) -> Di
 async def _run_checker(fn, arg: str) -> Dict[str, Any]:
     """Safely execute sync or async checker functions without unawaited coroutines."""
     try:
-        if asyncio.iscoroutinefunction(fn):
+        if inspect.iscoroutinefunction(fn):
             res = await fn(arg)
         else:
             res = await asyncio.to_thread(fn, arg)
@@ -348,6 +349,7 @@ async def _execute_check(platform: str, phone: str) -> Dict[str, Any]:
         clean = clean[-10:]
 
     t_start = time.perf_counter()
+    result: Dict[str, Any]
 
     if pkey == "zomato":
         if check_zomato:
@@ -412,7 +414,7 @@ async def _execute_check(platform: str, phone: str) -> Dict[str, Any]:
 
     # Record real latency + increment check counter persistently
     elapsed_ms = (time.perf_counter() - t_start) * 1000
-    await record_check_stat(pkey, result.get("status", "UNKNOWN"), elapsed_ms)
+    await record_check_stat(pkey, str(result.get("status", "UNKNOWN")), elapsed_ms)
 
     return result
 
@@ -421,7 +423,7 @@ async def _execute_check(platform: str, phone: str) -> Dict[str, Any]:
 # Core Endpoints
 # ------------------------------------------------------------
 @app.get("/api/health")
-@app.get("/health")
+@app.get("/health", include_in_schema=False)
 async def health_check():
     """Health check endpoint — returns real check count and latency stats."""
     samples = _stats.get("latency_samples", [])
@@ -461,8 +463,6 @@ async def list_platforms():
             "status": "active" if (p["enabled"] and p["engine_fn"] is not None) else "disabled",
             "category": p["category"],
             "service_code": DEFAULT_PLATFORM_SERVICES.get(p["key"], ""),
-            "module": p["module"],
-            "mechanism": p["mechanism"],
         }
         for p in _PLATFORM_REGISTRY
     ]
@@ -539,12 +539,12 @@ async def check_batch_phones(req: BatchCheckRequest, request: Request):
     tasks = [_execute_check(pkey, p) for p in phones]
     results_list = await asyncio.gather(*tasks, return_exceptions=True)
 
-    formatted = {}
+    formatted: Dict[str, Dict[str, Any]] = {}
     brand_name = _PLATFORM_LABELS.get(pkey, pkey.capitalize())
 
     for p, res in zip(phones, results_list):
         clean = "".join(c for c in p if c.isdigit())[-10:]
-        if isinstance(res, Exception):
+        if isinstance(res, BaseException):
             formatted[clean] = {"status": "ERROR", "error": str(res)}
         else:
             formatted[clean] = res
@@ -730,7 +730,7 @@ async def telegram_webhook(request: Request):
 
         data = await request.json()
         update = Update.de_json(data)
-        if update:
+        if update and tele_bot is not None:
             await tele_bot.process_new_updates([update])
         return {"ok": True}
     except Exception as exc:
@@ -750,7 +750,8 @@ async def favicon():
     return Response(status_code=204)
 
 
-@app.api_route("/api-docs", methods=["GET", "HEAD"])
+@app.get("/api-docs")
+@app.head("/api-docs", include_in_schema=False)
 @app.api_route("/api-docs/", methods=["GET", "HEAD"], include_in_schema=False)
 async def serve_api_docs():
     """Serves the NexChecker full-stack API & Architecture documentation portal."""
