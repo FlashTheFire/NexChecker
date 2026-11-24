@@ -71,6 +71,7 @@ class TestNexCheckerAPI(unittest.TestCase):
             self.assertIn("Rules &amp; Notes", resp.text)
             self.assertIn("X-Test-Bypass", resp.text)
             self.assertIn("dynamicLogoImg", resp.text)
+            self.assertNotIn("version-badge", resp.text)
             self.assertNotIn("Error Reference", resp.text)
             self.assertNotIn("Interactive API Playground", resp.text)
             self.assertNotIn("Active Services", resp.text)
@@ -87,6 +88,7 @@ class TestNexCheckerAPI(unittest.TestCase):
         self.assertEqual(js_resp.status_code, 200)
         self.assertIn("highlightJSON", js_resp.text)
         self.assertIn("highlightCode", js_resp.text)
+        self.assertIn("el.cyclingServiceLabel.textContent = p.label;", js_resp.text)
 
     def test_bot_webhook_endpoint(self):
         # Empty or mock update payload
